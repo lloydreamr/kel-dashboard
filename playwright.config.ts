@@ -70,12 +70,13 @@ export const playwrightConfig = defineConfig({
     // ─────────────────────────────────────────────────────────────────
     // Isolated project - runs LAST after all other tests
     // Used for tests that affect auth state (logout tests)
+    // Note: Only depends on 'chromium' to avoid requiring WebKit in CI
     // ─────────────────────────────────────────────────────────────────
     {
       name: 'isolated',
       use: { ...devices['Desktop Chrome'] },
       testMatch: /.*\.isolated\.spec\.ts/,
-      dependencies: ['chromium', 'ipad'],
+      dependencies: ['chromium'],
     },
   ],
   webServer: {
