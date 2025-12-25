@@ -34,12 +34,15 @@ async function authenticateAs(
 ) {
   const isTestMode = process.env.PLAYWRIGHT_TEST_MODE === 'true';
 
+  // Kel sees queue-page, Maho sees dashboard-page
+  const expectedPageTestId = role === 'kel' ? 'queue-page' : 'dashboard-page';
+
   if (isTestMode) {
     // Mock auth: Use test API with role parameter
     await page.goto(`/api/test/mock-login?role=${role}`);
 
-    // Verify we're authenticated by checking redirect to dashboard
-    await expect(page.getByTestId('dashboard-page')).toBeVisible({
+    // Verify we're authenticated by checking redirect to correct page
+    await expect(page.getByTestId(expectedPageTestId)).toBeVisible({
       timeout: 10000,
     });
   } else {
@@ -57,7 +60,7 @@ async function authenticateAs(
       `\n⚠️  Real auth mode for ${role}: Click the magic link in your email\n`
     );
 
-    await expect(page.getByTestId('dashboard-page')).toBeVisible({
+    await expect(page.getByTestId(expectedPageTestId)).toBeVisible({
       timeout: 60000,
     });
   }

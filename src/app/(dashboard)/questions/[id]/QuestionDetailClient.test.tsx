@@ -80,11 +80,52 @@ vi.mock('@/hooks/questions/useMarkViewed', () => ({
   }),
 }));
 
+const mockUseEvidence = vi.fn();
+vi.mock('@/hooks/evidence/useEvidence', () => ({
+  useEvidence: () => mockUseEvidence(),
+}));
+
+vi.mock('@/hooks/evidence/useAddEvidence', () => ({
+  useAddEvidence: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
+}));
+
+vi.mock('@/hooks/evidence/useUpdateEvidence', () => ({
+  useUpdateEvidence: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
+}));
+
+vi.mock('@/hooks/evidence/useDeleteEvidence', () => ({
+  useDeleteEvidence: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
+}));
+
 vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
   },
+}));
+
+// Mock useDecision hook (Story 4-10)
+const mockUseDecision = vi.fn();
+vi.mock('@/hooks/decisions/useDecision', () => ({
+  useDecision: () => mockUseDecision(),
+}));
+
+// Mock DecisionSection component
+vi.mock('@/components/decisions/DecisionSection', () => ({
+  DecisionSection: ({ questionId, questionStatus }: { questionId: string; questionStatus: string }) => (
+    <div data-testid="decision-section" data-question-id={questionId} data-status={questionStatus}>
+      Decision Section Mock
+    </div>
+  ),
 }));
 
 describe('QuestionDetailClient', () => {
@@ -99,6 +140,18 @@ describe('QuestionDetailClient', () => {
 
     mockUseProfile.mockReturnValue({
       data: mockProfile,
+    });
+
+    mockUseEvidence.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+
+    mockUseDecision.mockReturnValue({
+      data: null,
+      isLoading: false,
+      error: null,
     });
 
     mockHasMarked.mockReturnValue(false);
@@ -212,6 +265,354 @@ describe('QuestionDetailClient', () => {
       await user.click(screen.getByTestId('category-option-market'));
 
       expect(mockUpdateQuestion).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('evidence section', () => {
+    it('shows add evidence button for Maho on non-archived questions', async () => {
+      mockUseProfile.mockReturnValue({
+        data: { ...mockProfile, role: 'maho' },
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('add-evidence-button')).toBeInTheDocument();
+      });
+    });
+
+    it('does not show add evidence button for Kel', async () => {
+      mockUseProfile.mockReturnValue({
+        data: { ...mockProfile, role: 'kel' },
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('question-detail')).toBeInTheDocument();
+      });
+
+      expect(
+        screen.queryByTestId('add-evidence-button')
+      ).not.toBeInTheDocument();
+    });
+
+    it('does not show add evidence button for archived questions', async () => {
+      mockUseProfile.mockReturnValue({
+        data: { ...mockProfile, role: 'maho' },
+      });
+
+      mockUseQuestion.mockReturnValue({
+        data: { ...mockQuestion, status: 'archived' },
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('question-detail')).toBeInTheDocument();
+      });
+
+      expect(
+        screen.queryByTestId('add-evidence-button')
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows evidence form when add button clicked', async () => {
+      mockUseProfile.mockReturnValue({
+        data: { ...mockProfile, role: 'maho' },
+      });
+
+      const user = userEvent.setup();
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('add-evidence-button')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId('add-evidence-button'));
+
+      expect(screen.getByTestId('evidence-form')).toBeInTheDocument();
+    });
+  });
+
+  describe('evidence list display', () => {
+    it('shows loading skeleton when evidence is loading', async () => {
+      mockUseEvidence.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        error: null,
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('evidence-list-skeleton')).toBeInTheDocument();
+      });
+    });
+
+    it('shows Maho empty state when no evidence for Maho role', async () => {
+      mockUseProfile.mockReturnValue({
+        data: { ...mockProfile, role: 'maho' },
+      });
+
+      mockUseEvidence.mockReturnValue({
+        data: [],
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('evidence-empty-state')).toBeInTheDocument();
+        expect(screen.getByText(/Add sources to support/)).toBeInTheDocument();
+      });
+    });
+
+    it('shows Kel empty state when no evidence for Kel role', async () => {
+      mockUseProfile.mockReturnValue({
+        data: { ...mockProfile, role: 'kel' },
+      });
+
+      mockUseEvidence.mockReturnValue({
+        data: [],
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('evidence-empty-state')).toBeInTheDocument();
+        expect(
+          screen.getByText(/No supporting evidence provided/)
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('shows evidence items when evidence exists', async () => {
+      mockUseEvidence.mockReturnValue({
+        data: [
+          {
+            id: 'e1',
+            question_id: 'q-1',
+            title: 'Market Research Report',
+            url: 'https://example.com/report',
+            section_anchor: null,
+            excerpt: 'Key findings about the market',
+            created_by: 'user-123',
+            created_at: '2025-12-24T00:00:00Z',
+          },
+        ],
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('evidence-list')).toBeInTheDocument();
+        expect(screen.getByTestId('evidence-item')).toBeInTheDocument();
+        expect(screen.getByText('Market Research Report')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('DecisionSection integration', () => {
+    it('renders DecisionSection with question props', async () => {
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        const section = screen.getByTestId('decision-section');
+        expect(section).toBeInTheDocument();
+        expect(section).toHaveAttribute('data-question-id', 'q-1');
+        expect(section).toHaveAttribute('data-status', 'draft');
+      });
+    });
+
+    it('passes correct status to DecisionSection when approved', async () => {
+      mockUseQuestion.mockReturnValue({
+        data: { ...mockQuestion, status: 'approved' },
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        const section = screen.getByTestId('decision-section');
+        expect(section).toHaveAttribute('data-status', 'approved');
+      });
+    });
+
+    it('passes correct status to DecisionSection when ready_for_kel', async () => {
+      mockUseQuestion.mockReturnValue({
+        data: { ...mockQuestion, status: 'ready_for_kel' },
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        const section = screen.getByTestId('decision-section');
+        expect(section).toHaveAttribute('data-status', 'ready_for_kel');
+      });
+    });
+  });
+
+  describe('EvidencePanel integration', () => {
+    const mockEvidenceItem = {
+      id: 'e1',
+      question_id: 'q-1',
+      title: 'Market Research Report',
+      url: 'https://example.com/report',
+      section_anchor: '#pricing',
+      excerpt: 'Key findings about the market',
+      created_by: 'user-123',
+      created_at: '2025-12-24T00:00:00Z',
+    };
+
+    it('opens evidence panel when evidence item is clicked', async () => {
+      const user = userEvent.setup();
+      mockUseEvidence.mockReturnValue({
+        data: [mockEvidenceItem],
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('evidence-item')).toBeInTheDocument();
+      });
+
+      // Click evidence item
+      await user.click(screen.getByTestId('evidence-item'));
+
+      // Panel should open
+      await waitFor(() => {
+        expect(screen.getByTestId('evidence-panel')).toBeInTheDocument();
+        expect(screen.getByTestId('evidence-panel-title')).toHaveTextContent(
+          'Market Research Report'
+        );
+      });
+    });
+
+    it('closes evidence panel when Escape is pressed', async () => {
+      const user = userEvent.setup();
+      mockUseEvidence.mockReturnValue({
+        data: [mockEvidenceItem],
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('evidence-item')).toBeInTheDocument();
+      });
+
+      // Open panel
+      await user.click(screen.getByTestId('evidence-item'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('evidence-panel')).toBeInTheDocument();
+      });
+
+      // Press Escape to close
+      await user.keyboard('{Escape}');
+
+      // Panel should be closed
+      await waitFor(() => {
+        expect(screen.queryByTestId('evidence-panel')).not.toBeInTheDocument();
+      });
+    });
+
+    it('displays correct evidence details in panel', async () => {
+      const user = userEvent.setup();
+      mockUseEvidence.mockReturnValue({
+        data: [mockEvidenceItem],
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('evidence-item')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId('evidence-item'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('evidence-panel')).toBeInTheDocument();
+        expect(screen.getByTestId('evidence-panel-domain')).toHaveTextContent(
+          'example.com'
+        );
+        expect(screen.getByTestId('evidence-panel-url')).toHaveTextContent(
+          'https://example.com/report#pricing'
+        );
+        expect(screen.getByTestId('evidence-panel-excerpt')).toHaveTextContent(
+          'Key findings about the market'
+        );
+      });
+    });
+  });
+
+  describe('StatusBadge with decisionType (Story 4-10)', () => {
+    it('shows constrained badge when approved with constraint', async () => {
+      mockUseQuestion.mockReturnValue({
+        data: { ...mockQuestion, status: 'approved' },
+        isLoading: false,
+        error: null,
+      });
+
+      mockUseDecision.mockReturnValue({
+        data: {
+          id: 'd-1',
+          question_id: 'q-1',
+          decision_type: 'approved_with_constraint',
+          constraints: [{ type: 'price' }],
+          constraint_context: null,
+          reasoning: null,
+          incorporated_at: null,
+          created_by: 'kel-1',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+        },
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('status-badge-constrained')).toBeInTheDocument();
+        expect(screen.getByTestId('constraint-chip-icon')).toBeInTheDocument();
+      });
+    });
+
+    it('shows approved badge when no decision', async () => {
+      mockUseQuestion.mockReturnValue({
+        data: { ...mockQuestion, status: 'approved' },
+        isLoading: false,
+        error: null,
+      });
+
+      mockUseDecision.mockReturnValue({
+        data: null,
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('status-badge-approved')).toBeInTheDocument();
+      });
     });
   });
 });

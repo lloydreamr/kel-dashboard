@@ -1,9 +1,12 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
+import { QueueView } from '@/components/queue';
 import { createClient } from '@/lib/supabase/server';
 
 import { logout } from './actions';
+
+import type { Profile } from '@/types/database';
 
 /**
  * Get test user from cookie (only in PLAYWRIGHT_TEST_MODE).
@@ -39,10 +42,10 @@ async function getTestUser(): Promise<{ email: string } | null> {
 }
 
 /**
- * Dashboard content component.
- * Extracted to allow reuse between test and production auth flows.
+ * Dashboard content for Maho (existing behavior).
+ * Shows welcome message with navigation to questions.
  */
-function DashboardContent({ email }: { email: string }) {
+function MahoDashboardContent({ email }: { email: string }) {
   return (
     <main
       data-testid="dashboard-page"
@@ -86,30 +89,68 @@ function DashboardContent({ email }: { email: string }) {
 }
 
 /**
- * Dashboard home page - the main authenticated view.
- * Displays welcome message with user's email.
+ * Get profile by email from database (server-side).
+ */
+async function getProfileByEmail(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  email: string
+): Promise<Profile | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('email', email)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching profile by email:', error);
+    return null;
+  }
+
+  return data;
+}
+
+/**
+ * Dashboard home page - role-based rendering.
+ * - Kel sees the decision queue
+ * - Maho sees the standard dashboard
  *
  * Note: Layout already checks auth, but we check again here for:
  * 1. Type safety (user is guaranteed non-null)
  * 2. Race condition protection between layout and page render
  */
 export default async function DashboardPage() {
+  const supabase = await createClient();
+  let email: string;
+  let role: 'maho' | 'kel' = 'maho';
+
   // Check for test user first (only in PLAYWRIGHT_TEST_MODE)
   const testUser = await getTestUser();
+
   if (testUser) {
-    return <DashboardContent email={testUser.email} />;
+    email = testUser.email;
+    // Look up role from profiles for test user
+    const profile = await getProfileByEmail(supabase, email);
+    role = profile?.role ?? 'maho';
+  } else {
+    // Regular Supabase auth flow
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    // Explicit null check - defensive against race conditions
+    if (!user) {
+      redirect('/login');
+    }
+
+    email = user.email ?? 'Unknown';
+    const profile = await getProfileByEmail(supabase, email);
+    role = profile?.role ?? 'maho';
   }
 
-  // Regular Supabase auth flow
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Explicit null check - defensive against race conditions
-  if (!user) {
-    redirect('/login');
+  // Role-based rendering
+  if (role === 'kel') {
+    return <QueueView />;
   }
 
-  return <DashboardContent email={user.email ?? 'Unknown'} />;
+  return <MahoDashboardContent email={email} />;
 }

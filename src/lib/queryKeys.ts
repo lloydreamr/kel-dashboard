@@ -23,6 +23,7 @@ export const queryKeys = {
   evidence: {
     all: ['evidence'] as const,
     byQuestion: (questionId: string) => ['evidence', questionId] as const,
+    count: (questionId: string) => ['evidence', 'count', questionId] as const,
   },
   milestones: {
     all: ['milestones'] as const,

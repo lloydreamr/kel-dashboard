@@ -12,6 +12,7 @@ export { CategorySection } from './CategorySection';
 export { DecisionHistoryPlaceholder } from './DecisionHistoryPlaceholder';
 export { EvidenceCountBadge } from './EvidenceCountBadge';
 export { KelViewedIndicator } from './KelViewedIndicator';
+export type { KelViewedIndicatorProps } from './KelViewedIndicator';
 export { QuestionCard } from './QuestionCard';
 export { QuestionForm } from './QuestionForm';
 export { QuestionFormSkeleton } from './QuestionFormSkeleton';
@@ -31,3 +32,4 @@ export {
 export { RestoreButton } from './RestoreButton';
 export { SendToKelButton } from './SendToKelButton';
 export { StatusBadge } from './StatusBadge';
+export type { StatusBadgeProps } from './StatusBadge';

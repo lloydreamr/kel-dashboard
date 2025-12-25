@@ -6,7 +6,7 @@ import { defineConfig, devices } from '@playwright/test';
  * Projects:
  * - setup: Authenticates and saves session state (runs first)
  * - chromium: Desktop Chrome with auth
- * - ipad: iPad Pro with auth
+ * - iphone: iPhone with auth (Kel's mobile device)
  * - chromium-no-auth: Desktop Chrome without auth (for redirect tests)
  * - isolated: Tests that must run last (logout tests that affect auth state)
  *
@@ -47,15 +47,17 @@ export const playwrightConfig = defineConfig({
       dependencies: ['setup'],
       testIgnore: [/.*\.unauth\.spec\.ts/, /.*\.isolated\.spec\.ts/],
     },
-    // iPad target for Kel's primary device
+    // iPhone target for Kel's mobile device
+    // Note: decisions/ folder excluded - multi-user tests share database state
+    // and only need to run on one browser to verify workflow logic
     {
-      name: 'ipad',
+      name: 'iphone',
       use: {
-        ...devices['iPad Pro 11'],
+        ...devices['iPhone 14 Pro'],
         storageState: 'e2e/.auth/user.json',
       },
       dependencies: ['setup'],
-      testIgnore: [/.*\.unauth\.spec\.ts/, /.*\.isolated\.spec\.ts/],
+      testIgnore: [/.*\.unauth\.spec\.ts/, /.*\.isolated\.spec\.ts/, /decisions\//],
     },
 
     // ─────────────────────────────────────────────────────────────────

@@ -58,4 +58,36 @@ describe('formatRelativeTime', () => {
     const date = new Date('2025-12-23T10:00:00Z');
     expect(formatRelativeTime(date)).toBe('2 hours ago');
   });
+
+  describe('edge cases', () => {
+    it('returns "Unknown" for invalid date strings', () => {
+      expect(formatRelativeTime('invalid-date')).toBe('Unknown');
+    });
+
+    it('returns "Unknown" for empty string', () => {
+      expect(formatRelativeTime('')).toBe('Unknown');
+    });
+
+    it('returns "Just now" for future dates (graceful fallback)', () => {
+      const futureDate = new Date('2025-12-24T12:00:00Z'); // 1 day in future
+      expect(formatRelativeTime(futureDate)).toBe('Just now');
+    });
+
+    it('returns absolute date for dates older than 30 days (same year)', () => {
+      const oldDate = new Date('2025-11-01T12:00:00Z'); // 52 days ago
+      const result = formatRelativeTime(oldDate);
+      expect(result).toBe('Nov 1');
+    });
+
+    it('returns absolute date with year for dates older than 30 days (different year)', () => {
+      const oldDate = new Date('2024-06-15T12:00:00Z'); // ~18 months ago
+      const result = formatRelativeTime(oldDate);
+      expect(result).toBe('Jun 15, 2024');
+    });
+
+    it('returns days for dates exactly 30 days ago', () => {
+      const thirtyDaysAgo = new Date('2025-11-23T12:00:00Z'); // exactly 30 days
+      expect(formatRelativeTime(thirtyDaysAgo)).toBe('30 days ago');
+    });
+  });
 });

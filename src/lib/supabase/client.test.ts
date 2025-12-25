@@ -1,5 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { createClient } from './client';
 
@@ -11,17 +11,21 @@ vi.mock('@supabase/ssr', () => ({
   })),
 }));
 
-// Mock env module
-vi.mock('@/lib/env', () => ({
-  env: {
-    SUPABASE_URL: 'https://test-project.supabase.co',
-    SUPABASE_ANON_KEY: 'test-anon-key',
-  },
-}));
-
 describe('Supabase Browser Client', () => {
+  const originalEnv = process.env;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock process.env for each test (client.ts reads directly from process.env)
+    process.env = {
+      ...originalEnv,
+      NEXT_PUBLIC_SUPABASE_URL: 'https://test-project.supabase.co',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key',
+    };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
   });
 
   it('creates a browser client with correct configuration', () => {
