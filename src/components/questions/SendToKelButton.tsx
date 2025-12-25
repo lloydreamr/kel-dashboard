@@ -69,8 +69,8 @@ export function SendToKelButton({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="min-h-[48px]">Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className="min-h-[48px]">
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
             Send
           </AlertDialogAction>
         </AlertDialogFooter>

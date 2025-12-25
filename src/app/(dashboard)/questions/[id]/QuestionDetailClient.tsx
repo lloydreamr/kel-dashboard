@@ -12,9 +12,17 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { DecisionSection } from '@/components/decisions/DecisionSection';
+import {
+  EvidenceEditForm,
+  EvidenceList,
+  EvidencePanel,
+  EvidenceSection,
+  RemoveEvidenceDialog,
+  type CreateEvidenceFormData,
+} from '@/components/evidence';
 import { ArchiveButton } from '@/components/questions/ArchiveButton';
 import { CategoryBadge } from '@/components/questions/CategoryBadge';
-import { DecisionHistoryPlaceholder } from '@/components/questions/DecisionHistoryPlaceholder';
 import { EvidenceCountBadge } from '@/components/questions/EvidenceCountBadge';
 import { KelViewedIndicator } from '@/components/questions/KelViewedIndicator';
 import { RecommendationDisplay } from '@/components/questions/RecommendationDisplay';
@@ -22,6 +30,10 @@ import { RecommendationForm } from '@/components/questions/RecommendationForm';
 import { SendToKelButton } from '@/components/questions/SendToKelButton';
 import { StatusBadge } from '@/components/questions/StatusBadge';
 import { useProfile } from '@/hooks/auth/useProfile';
+import { useDecision } from '@/hooks/decisions/useDecision';
+import { useDeleteEvidence } from '@/hooks/evidence/useDeleteEvidence';
+import { useEvidence } from '@/hooks/evidence/useEvidence';
+import { useUpdateEvidence } from '@/hooks/evidence/useUpdateEvidence';
 import { useArchiveQuestion } from '@/hooks/questions/useArchiveQuestion';
 import { useMarkReadyForKel } from '@/hooks/questions/useMarkReadyForKel';
 import { useMarkViewed } from '@/hooks/questions/useMarkViewed';
@@ -29,6 +41,7 @@ import { useQuestion } from '@/hooks/questions/useQuestion';
 import { useUpdateQuestion } from '@/hooks/questions/useUpdateQuestion';
 
 import type { RecommendationFormData } from '@/components/questions/recommendationSchema';
+import type { Evidence } from '@/types/evidence';
 
 interface QuestionDetailClientProps {
   questionId: string;
@@ -44,7 +57,16 @@ export function QuestionDetailClient({
   const { mutate: archiveQuestion, isPending: isArchiving } = useArchiveQuestion();
   const { markReadyForKel, isPending: isSending } = useMarkReadyForKel();
   const { markViewed, hasMarked } = useMarkViewed();
+  const { data: evidence, isLoading: isEvidenceLoading } = useEvidence(questionId);
+  const { mutate: updateEvidence, isPending: isUpdating } = useUpdateEvidence(questionId);
+  const { mutate: deleteEvidence, isPending: isDeleting } = useDeleteEvidence(questionId);
+  const { data: decision } = useDecision(questionId);
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedEvidence, setSelectedEvidence] = useState<Evidence | null>(null);
+  const [editingEvidence, setEditingEvidence] = useState<Evidence | null>(null);
+  const [removingEvidence, setRemovingEvidence] = useState<Evidence | null>(null);
+
+  const evidenceCount = evidence?.length ?? 0;
 
   const hasRecommendation = !!question?.recommendation;
   const isDraft = question?.status === 'draft';
@@ -82,6 +104,39 @@ export function QuestionDetailClient({
         },
       }
     );
+  };
+
+  const handleEditEvidence = (data: CreateEvidenceFormData) => {
+    if (!editingEvidence) return;
+    updateEvidence(
+      {
+        id: editingEvidence.id,
+        updates: {
+          title: data.title,
+          url: data.url,
+          section_anchor: data.section_anchor,
+          excerpt: data.excerpt,
+        },
+      },
+      {
+        onSuccess: () => {
+          setEditingEvidence(null);
+        },
+      }
+    );
+  };
+
+  const handleRemoveEvidence = () => {
+    if (!removingEvidence) return;
+    deleteEvidence(removingEvidence.id, {
+      onSuccess: () => {
+        setRemovingEvidence(null);
+        // Close panel if this evidence was being viewed
+        if (selectedEvidence?.id === removingEvidence.id) {
+          setSelectedEvidence(null);
+        }
+      },
+    });
   };
 
   if (isLoading) {
@@ -127,8 +182,12 @@ export function QuestionDetailClient({
                 category={question.category}
                 isEditable={isMaho && !isArchived}
               />
-              <StatusBadge status={question.status} isPending={isSending} />
-              <EvidenceCountBadge count={0} />
+              <StatusBadge
+                status={question.status}
+                decisionType={decision?.decision_type}
+                isPending={isSending}
+              />
+              <EvidenceCountBadge count={evidenceCount} />
             </div>
 
             {/* Kel viewed indicator (shown to Maho only) */}
@@ -203,13 +262,67 @@ export function QuestionDetailClient({
               />
             </div>
           )}
+
+          {/* Evidence list */}
+          <div className="mt-6">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">
+              Supporting Evidence
+            </h3>
+            <EvidenceList
+              evidence={evidence}
+              isLoading={isEvidenceLoading}
+              role={isKel ? 'kel' : 'maho'}
+              onItemClick={(item) => setSelectedEvidence(item)}
+              onEditClick={(item) => setEditingEvidence(item)}
+              onRemoveClick={(item) => setRemovingEvidence(item)}
+            />
+
+            {/* Edit evidence form (shown when editing) */}
+            {editingEvidence && (
+              <div className="mt-4">
+                <EvidenceEditForm
+                  evidence={editingEvidence}
+                  onCancel={() => setEditingEvidence(null)}
+                  onSubmit={handleEditEvidence}
+                  isSubmitting={isUpdating}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Evidence section (Maho only) */}
+          {isMaho && !isArchived && profile?.id && (
+            <EvidenceSection
+              questionId={questionId}
+              userId={profile.id}
+              canAdd={isMaho}
+            />
+          )}
         </div>
 
-        {/* Decision history placeholder (Epic 4) */}
+        {/* Decision section (Story 4-7) */}
         <div className="mt-6">
-          <DecisionHistoryPlaceholder questionId={questionId} />
+          <DecisionSection
+            questionId={questionId}
+            questionStatus={question.status}
+          />
         </div>
       </div>
+
+      {/* Evidence Panel */}
+      <EvidencePanel
+        evidence={selectedEvidence}
+        onClose={() => setSelectedEvidence(null)}
+      />
+
+      {/* Remove Evidence Dialog */}
+      <RemoveEvidenceDialog
+        open={!!removingEvidence}
+        onOpenChange={(open) => !open && setRemovingEvidence(null)}
+        evidenceTitle={removingEvidence?.title ?? ''}
+        onConfirm={handleRemoveEvidence}
+        isPending={isDeleting}
+      />
     </main>
   );
 }

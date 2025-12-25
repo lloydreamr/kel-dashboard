@@ -22,6 +22,108 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      decisions: {
+        Row: {
+          id: string;
+          question_id: string;
+          decision_type: 'approved' | 'approved_with_constraint' | 'explore_alternatives';
+          constraints: Json | null;
+          constraint_context: string | null;
+          reasoning: string | null;
+          incorporated_at: string | null;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          question_id: string;
+          decision_type: 'approved' | 'approved_with_constraint' | 'explore_alternatives';
+          constraints?: Json | null;
+          constraint_context?: string | null;
+          reasoning?: string | null;
+          incorporated_at?: string | null;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          question_id?: string;
+          decision_type?: 'approved' | 'approved_with_constraint' | 'explore_alternatives';
+          constraints?: Json | null;
+          constraint_context?: string | null;
+          reasoning?: string | null;
+          incorporated_at?: string | null;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'decisions_question_id_fkey';
+            columns: ['question_id'];
+            isOneToOne: true;
+            referencedRelation: 'questions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'decisions_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      evidence: {
+        Row: {
+          id: string;
+          question_id: string;
+          title: string;
+          url: string;
+          section_anchor: string | null;
+          excerpt: string | null;
+          created_at: string;
+          created_by: string;
+        };
+        Insert: {
+          id?: string;
+          question_id: string;
+          title: string;
+          url: string;
+          section_anchor?: string | null;
+          excerpt?: string | null;
+          created_at?: string;
+          created_by: string;
+        };
+        Update: {
+          id?: string;
+          question_id?: string;
+          title?: string;
+          url?: string;
+          section_anchor?: string | null;
+          excerpt?: string | null;
+          created_at?: string;
+          created_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'evidence_question_id_fkey';
+            columns: ['question_id'];
+            isOneToOne: false;
+            referencedRelation: 'questions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'evidence_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profiles: {
         Row: {
           id: string;
@@ -124,7 +226,10 @@ export interface Database {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      is_valid_constraints_array: {
+        Args: { constraints: Json };
+        Returns: boolean;
+      };
     };
     Enums: {
       [_ in never]: never;
@@ -152,3 +257,13 @@ export type ProfileUpdate = UpdateTables<'profiles'>;
 export type Question = Tables<'questions'>;
 export type QuestionInsert = InsertTables<'questions'>;
 export type QuestionUpdate = UpdateTables<'questions'>;
+
+// Evidence types
+export type Evidence = Tables<'evidence'>;
+export type EvidenceInsert = InsertTables<'evidence'>;
+export type EvidenceUpdate = UpdateTables<'evidence'>;
+
+// Decision types
+export type Decision = Tables<'decisions'>;
+export type DecisionInsert = InsertTables<'decisions'>;
+export type DecisionUpdate = UpdateTables<'decisions'>;

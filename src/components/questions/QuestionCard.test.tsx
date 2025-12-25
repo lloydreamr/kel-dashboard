@@ -48,10 +48,22 @@ describe('QuestionCard', () => {
     expect(link).toHaveAttribute('href', '/questions/q-123');
   });
 
-  it('displays status badge', () => {
+  it('displays status badge with per-status test-id', () => {
     render(<QuestionCard question={mockQuestion} />);
-    expect(screen.getByTestId('question-status')).toBeInTheDocument();
+    // Story 4-10: Uses per-status test-id now
+    expect(screen.getByTestId('status-badge-draft')).toBeInTheDocument();
     expect(screen.getByText('Draft')).toBeInTheDocument();
+  });
+
+  it('uses simple status in list view (no decisionType)', () => {
+    // Story 4-10: QuestionCard intentionally does NOT fetch decision
+    // to avoid N+1 queries. List view shows question.status only.
+    const approvedQuestion = { ...mockQuestion, status: 'approved' as const };
+    render(<QuestionCard question={approvedQuestion} />);
+
+    // Shows status-badge-approved (not constrained) because no decision data
+    expect(screen.getByTestId('status-badge-approved')).toBeInTheDocument();
+    expect(screen.getByText('Approved')).toBeInTheDocument();
   });
 
   it('displays relative time', () => {

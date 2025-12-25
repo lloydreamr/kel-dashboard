@@ -9,6 +9,7 @@ export { useArchiveQuestion } from './useArchiveQuestion';
 export { useCreateQuestion } from './useCreateQuestion';
 export { useMarkReadyForKel } from './useMarkReadyForKel';
 export { useMarkViewed } from './useMarkViewed';
+export { usePendingQuestions } from './usePendingQuestions';
 export { useQuestion } from './useQuestion';
 export { useQuestions } from './useQuestions';
 export { useRestoreQuestion } from './useRestoreQuestion';

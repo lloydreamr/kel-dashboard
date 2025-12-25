@@ -300,6 +300,38 @@ export const questionsRepo = {
 
     return data;
   },
+
+  /**
+   * Update question status
+   * Used for decision-related status changes (approved, exploring_alternatives)
+   *
+   * @param id - Question ID to update
+   * @param status - New status value
+   * @returns Updated question
+   * @throws RepositoryError if not found or access denied
+   */
+  updateStatus: async (id: string, status: QuestionStatus): Promise<Question> => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('questions')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw mapPostgrestError(error);
+    }
+
+    if (!data) {
+      throw new RepositoryError(
+        'Question not found',
+        RepositoryErrorCode.NOT_FOUND
+      );
+    }
+
+    return data;
+  },
 };
 
 // Re-export types for consumers
