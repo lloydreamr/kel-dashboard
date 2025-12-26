@@ -147,8 +147,7 @@ test.describe('Decision Queue Flow', () => {
     expect(countText).toMatch(/\d+/); // Contains a number
   });
 
-  // TODO: Fix simple approval test - undo toast not appearing, separate issue from constraint fix
-  test.skip('Kel expands card and approves (simple approval)', async () => {
+  test('Kel expands card and approves (simple approval)', async () => {
     await kelPage.goto('/');
     await expect(kelPage.getByTestId('queue-page')).toBeVisible();
 
@@ -197,14 +196,6 @@ test.describe('Decision Queue Flow', () => {
   });
 
   test('Kel approves with constraints', async () => {
-    // Capture console errors
-    const consoleErrors: string[] = [];
-    kelPage.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        consoleErrors.push(msg.text());
-      }
-    });
-
     // Navigate to Kel's queue and wait for it to load
     await kelPage.goto('/');
     await kelPage.waitForLoadState('networkidle');
@@ -227,35 +218,10 @@ test.describe('Decision Queue Flow', () => {
     const approveWithConstraintBtn = expandedCard.getByTestId('approve-with-constraint-button');
     await expect(approveWithConstraintBtn).toBeVisible();
 
-    // Debug: Log URL and take screenshot before clicking
-    console.log('Before click - URL:', kelPage.url());
-
     await approveWithConstraintBtn.click();
 
     // Wait for Sheet animation to complete (bottom sheet slide-up)
     await kelPage.waitForTimeout(500);
-
-    // Debug: Log URL after click
-    console.log('After click - URL:', kelPage.url());
-
-    // Debug: Check if constraint-panel exists in DOM (even if not visible)
-    const panelCount = await kelPage.locator('[data-testid="constraint-panel"]').count();
-    console.log('Constraint panels in DOM:', panelCount);
-
-    // Debug: Check if any Sheet/Dialog is open
-    const dialogCount = await kelPage.locator('[role="dialog"]').count();
-    console.log('Dialogs in DOM:', dialogCount);
-
-    // Debug: Get dialog HTML to see what's rendering
-    if (dialogCount > 0) {
-      const dialogHtml = await kelPage.locator('[role="dialog"]').first().innerHTML();
-      console.log('Dialog HTML:', dialogHtml.substring(0, 500));
-    }
-
-    // Debug: Print console errors
-    if (consoleErrors.length > 0) {
-      console.log('Console errors:', consoleErrors.join('\n'));
-    }
 
     // Verify constraint panel opens (Sheet portals to body so use page-level locator)
     await expect(kelPage.getByTestId('constraint-panel')).toBeVisible({

@@ -67,8 +67,9 @@ function CardHeader({
   onSyncRetry?: () => void;
 }) {
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       data-testid="queue-card-header"
       onClick={onToggle}
       onKeyDown={(e) => {
@@ -78,7 +79,7 @@ function CardHeader({
         }
       }}
       aria-expanded={isExpanded}
-      className="w-full text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-t-lg min-h-[48px] p-4"
+      className="w-full text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-t-lg min-h-[48px] p-4 cursor-pointer"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
@@ -132,7 +133,7 @@ function CardHeader({
           </motion.span>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 

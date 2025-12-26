@@ -221,6 +221,110 @@ export interface Database {
           },
         ];
       };
+      milestones: {
+        Row: {
+          id: string;
+          category: Database['public']['Enums']['clarity_category'];
+          status: Database['public']['Enums']['milestone_status'];
+          completed_at: string | null;
+          completed_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          category: Database['public']['Enums']['clarity_category'];
+          status?: Database['public']['Enums']['milestone_status'];
+          completed_at?: string | null;
+          completed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          category?: Database['public']['Enums']['clarity_category'];
+          status?: Database['public']['Enums']['milestone_status'];
+          completed_at?: string | null;
+          completed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      milestone_notes: {
+        Row: {
+          id: string;
+          milestone_id: string;
+          content: string;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          milestone_id: string;
+          content: string;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          milestone_id?: string;
+          content?: string;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'milestone_notes_milestone_id_fkey';
+            columns: ['milestone_id'];
+            isOneToOne: false;
+            referencedRelation: 'milestones';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      competitor_data: {
+        Row: {
+          id: string;
+          name: string;
+          price_score: number;
+          quality_score: number;
+          category: string | null;
+          notes: string | null;
+          is_kel_position: boolean | null;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          price_score: number;
+          quality_score: number;
+          category?: string | null;
+          notes?: string | null;
+          is_kel_position?: boolean | null;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          price_score?: number;
+          quality_score?: number;
+          category?: string | null;
+          notes?: string | null;
+          is_kel_position?: boolean | null;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -232,7 +336,8 @@ export interface Database {
       };
     };
     Enums: {
-      [_ in never]: never;
+      clarity_category: 'market' | 'product' | 'distribution';
+      milestone_status: 'not_started' | 'in_progress' | 'complete';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -267,3 +372,18 @@ export type EvidenceUpdate = UpdateTables<'evidence'>;
 export type Decision = Tables<'decisions'>;
 export type DecisionInsert = InsertTables<'decisions'>;
 export type DecisionUpdate = UpdateTables<'decisions'>;
+
+// Milestone types
+export type Milestone = Tables<'milestones'>;
+export type MilestoneInsert = InsertTables<'milestones'>;
+export type MilestoneUpdate = UpdateTables<'milestones'>;
+
+// Milestone Note types
+export type MilestoneNote = Tables<'milestone_notes'>;
+export type MilestoneNoteInsert = InsertTables<'milestone_notes'>;
+export type MilestoneNoteUpdate = UpdateTables<'milestone_notes'>;
+
+// Competitor Data types
+export type CompetitorDataPoint = Tables<'competitor_data'>;
+export type CompetitorDataPointInsert = InsertTables<'competitor_data'>;
+export type CompetitorDataPointUpdate = UpdateTables<'competitor_data'>;

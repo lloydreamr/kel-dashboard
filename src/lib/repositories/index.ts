@@ -15,6 +15,7 @@
 // Repositories
 export { profilesRepo } from './profiles';
 export { questionsRepo } from './questions';
+export { milestonesRepo, milestoneNotesRepo } from './milestones';
 
 // Error handling utilities
 export {

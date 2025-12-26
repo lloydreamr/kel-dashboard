@@ -28,6 +28,12 @@ export const queryKeys = {
   milestones: {
     all: ['milestones'] as const,
     byId: (id: string) => ['milestones', id] as const,
+    byCategory: (category: string) => ['milestones', 'category', category] as const,
+    progress: (category: string) => ['milestones', 'progress', category] as const,
+  },
+  milestoneNotes: {
+    all: ['milestoneNotes'] as const,
+    byMilestone: (milestoneId: string) => ['milestoneNotes', milestoneId] as const,
   },
   competitors: {
     all: ['competitors'] as const,

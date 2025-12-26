@@ -15,12 +15,14 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useProfile } from '@/hooks/auth';
+import { profileQueryKey } from '@/hooks/auth';
 import { queryKeys } from '@/lib/queryKeys';
 import { decisionsRepo } from '@/lib/repositories/decisions';
+import { profilesRepo } from '@/lib/repositories/profiles';
 import { questionsRepo } from '@/lib/repositories/questions';
 import { DECISION_TYPES } from '@/types/decision';
 
+import type { Profile } from '@/types/database';
 import type { Decision } from '@/types/decision';
 import type { Question } from '@/types/question';
 
@@ -95,13 +97,25 @@ export interface UseExploreAlternativesResult {
  */
 export function useExploreAlternatives(): UseExploreAlternativesResult {
   const queryClient = useQueryClient();
-  const { data: profile } = useProfile();
 
   const mutation = useMutation({
     mutationFn: async ({
       questionId,
       reasoning,
     }: ExploreAlternativesInput): Promise<ExploreAlternativesResult> => {
+      // Get profile from cache or fetch fresh to avoid closure issues
+      // This ensures we always have the latest profile, not a stale closure value
+      let profile = queryClient.getQueryData<Profile | null>(profileQueryKey);
+
+      if (!profile) {
+        // Profile not in cache, fetch it directly
+        profile = await profilesRepo.getCurrent();
+        if (profile) {
+          // Update cache for future use
+          queryClient.setQueryData(profileQueryKey, profile);
+        }
+      }
+
       if (!profile?.id) {
         throw new Error('User not authenticated');
       }

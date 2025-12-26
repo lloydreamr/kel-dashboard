@@ -17,6 +17,15 @@ export type {
   Question,
   QuestionInsert,
   QuestionUpdate,
+  Milestone,
+  MilestoneInsert,
+  MilestoneUpdate,
+  MilestoneNote,
+  MilestoneNoteInsert,
+  MilestoneNoteUpdate,
+  CompetitorDataPoint,
+  CompetitorDataPointInsert,
+  CompetitorDataPointUpdate,
 } from './database';
 
 // Re-export question domain types
@@ -26,6 +35,23 @@ export type {
   CreateQuestionInput,
   UpdateQuestionInput,
 } from './question';
+
+// Re-export milestone domain types
+export type {
+  ClarityCategory,
+  MilestoneStatus,
+  MilestoneProgress,
+  CreateMilestoneNoteInput,
+  UpdateMilestoneNoteInput,
+  UpdateMilestoneStatusInput,
+  MarkMilestoneCompleteInput,
+} from './milestone';
+
+// Re-export competitor domain types
+export type {
+  CreateCompetitorInput,
+  UpdateCompetitorInput,
+} from './competitor';
 
 import type { Profile } from './database';
 
