@@ -9,6 +9,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { useSetKelPosition } from './useKelPosition';
+import { useCompetitorData } from './useCompetitorData';
 import { queryKeys } from '@/lib/queryKeys';
 import { competitorsRepo } from '@/lib/repositories/competitors';
 
@@ -16,6 +17,7 @@ import type { CompetitorDataPoint } from '@/types';
 
 // Mock dependencies
 vi.mock('@/lib/repositories/competitors');
+vi.mock('@/hooks/competitors/useCompetitorData');
 vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
@@ -59,6 +61,8 @@ describe('useSetKelPosition', () => {
     });
 
     vi.mocked(competitorsRepo.create).mockImplementation(mockCreate);
+    // Mock useCompetitorData to return empty array
+    vi.mocked(useCompetitorData).mockReturnValue({ data: [] } as any);
 
     // Set initial competitors data (no Kel position)
     queryClient.setQueryData<CompetitorDataPoint[]>(queryKeys.competitors.all, []);
@@ -82,6 +86,7 @@ describe('useSetKelPosition', () => {
   });
 
   it('mutation is created and can be triggered', () => {
+    vi.mocked(useCompetitorData).mockReturnValue({ data: [] } as any);
     queryClient.setQueryData<CompetitorDataPoint[]>(queryKeys.competitors.all, []);
 
     const { result } = renderHook(() => useSetKelPosition(), {
@@ -114,7 +119,10 @@ describe('useSetKelPosition', () => {
     });
 
     vi.mocked(competitorsRepo.update).mockImplementation(mockUpdate);
+    // Mock useCompetitorData to return array with existing Kel position
+    vi.mocked(useCompetitorData).mockReturnValue({ data: [existingKel] } as any);
 
+    queryClient = new QueryClient();
     // Set initial competitors data with existing Kel position
     queryClient.setQueryData<CompetitorDataPoint[]>(queryKeys.competitors.all, [existingKel]);
 
@@ -125,12 +133,15 @@ describe('useSetKelPosition', () => {
     result.current.mutate({ price_score: 7, quality_score: 8, notes: 'Updated' });
 
     await waitFor(() => {
-      expect(mockUpdate).toHaveBeenCalledWith('kel-existing', {
-        price_score: 7,
-        quality_score: 8,
-        notes: 'Updated',
-        // Name and category NOT included - preserving existing values
-      });
+      expect(mockUpdate).toHaveBeenCalled();
+    });
+
+    // Verify update was called with correct parameters
+    expect(mockUpdate).toHaveBeenCalledWith('kel-existing', {
+      price_score: 7,
+      quality_score: 8,
+      notes: 'Updated',
+      // Name and category NOT included - preserving existing values
     });
   });
 
@@ -155,7 +166,10 @@ describe('useSetKelPosition', () => {
     });
 
     vi.mocked(competitorsRepo.update).mockImplementation(mockUpdate);
+    // Mock useCompetitorData to return array with existing Kel position
+    vi.mocked(useCompetitorData).mockReturnValue({ data: [existingKel] } as any);
 
+    queryClient = new QueryClient();
     queryClient.setQueryData<CompetitorDataPoint[]>(queryKeys.competitors.all, [existingKel]);
 
     const { result } = renderHook(() => useSetKelPosition(), {
@@ -165,10 +179,13 @@ describe('useSetKelPosition', () => {
     result.current.mutate({ price_score: 8, quality_score: 9, notes: null });
 
     await waitFor(() => {
-      const updateCall = mockUpdate.mock.calls[0];
-      expect(updateCall[1]).not.toHaveProperty('name');
-      expect(updateCall[1]).not.toHaveProperty('category');
-      // Verify name is preserved by NOT being in update payload
+      expect(mockUpdate).toHaveBeenCalled();
     });
+
+    // Verify name and category are preserved by NOT being in update payload
+    const updateCall = mockUpdate.mock.calls[0];
+    expect(updateCall).toBeDefined();
+    expect(updateCall[1]).not.toHaveProperty('name');
+    expect(updateCall[1]).not.toHaveProperty('category');
   });
 });
