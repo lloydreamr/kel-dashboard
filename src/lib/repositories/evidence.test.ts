@@ -120,7 +120,7 @@ describe('evidenceRepo', () => {
   });
 
   describe('getById', () => {
-    it('returns evidence by id', async () => {
+    it('returns evidence by id with updated_at', async () => {
       const mockEvidence = {
         id: 'e1',
         title: 'Source 1',
@@ -130,6 +130,7 @@ describe('evidenceRepo', () => {
         excerpt: null,
         created_by: 'user1',
         created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
       };
       mockEq.mockReturnValueOnce({ single: mockSingle });
       mockSingle.mockResolvedValueOnce({ data: mockEvidence, error: null });
@@ -137,6 +138,7 @@ describe('evidenceRepo', () => {
       const result = await evidenceRepo.getById('e1');
 
       expect(result).toEqual(mockEvidence);
+      expect(result.updated_at).toBeDefined();
     });
 
     it('throws on not found', async () => {
@@ -161,6 +163,7 @@ describe('evidenceRepo', () => {
         excerpt: null,
         created_by: 'user1',
         created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
       };
       mockEq.mockReturnValueOnce({ select: mockSelect });
       mockSelect.mockReturnValueOnce({ single: mockSingle });
@@ -169,6 +172,30 @@ describe('evidenceRepo', () => {
       const result = await evidenceRepo.update('e1', { title: 'Updated Title' });
 
       expect(result).toEqual(updatedEvidence);
+    });
+
+    it('returns updated_at timestamp in response', async () => {
+      const originalTime = '2025-01-01T00:00:00Z';
+      const updatedTime = '2025-01-01T12:00:00Z';
+      const updatedEvidence = {
+        id: 'e1',
+        title: 'Updated Title',
+        url: 'https://example.com',
+        question_id: 'q1',
+        section_anchor: null,
+        excerpt: null,
+        created_by: 'user1',
+        created_at: originalTime,
+        updated_at: updatedTime,
+      };
+      mockEq.mockReturnValueOnce({ select: mockSelect });
+      mockSelect.mockReturnValueOnce({ single: mockSingle });
+      mockSingle.mockResolvedValueOnce({ data: updatedEvidence, error: null });
+
+      const result = await evidenceRepo.update('e1', { title: 'Updated Title' });
+
+      expect(result.updated_at).toBe(updatedTime);
+      expect(result.updated_at).not.toBe(result.created_at);
     });
 
     it('throws on not found', async () => {

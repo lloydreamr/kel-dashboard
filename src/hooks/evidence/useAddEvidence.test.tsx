@@ -73,6 +73,7 @@ describe('useAddEvidence', () => {
       excerpt: null,
       created_by: 'user1',
       created_at: '2025-01-01T00:00:00Z',
+      updated_at: '2025-01-01T00:00:00Z',
     };
     vi.mocked(evidenceRepo.create).mockResolvedValueOnce(createdEvidence);
 
@@ -138,6 +139,7 @@ describe('useAddEvidence', () => {
         excerpt: null,
         created_by: 'user1',
         created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
       },
     ];
 
@@ -190,6 +192,7 @@ describe('useAddEvidence', () => {
       excerpt: null,
       created_by: 'user1',
       created_at: '2025-01-01T00:00:00Z',
+      updated_at: '2025-01-01T00:00:00Z',
     });
 
     await waitFor(() => {
@@ -208,6 +211,7 @@ describe('useAddEvidence', () => {
         excerpt: null,
         created_by: 'user1',
         created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
       },
     ];
 
@@ -288,6 +292,7 @@ describe('useAddEvidence', () => {
       excerpt: null,
       created_by: 'user1',
       created_at: '2025-01-01T00:00:00Z',
+      updated_at: '2025-01-01T00:00:00Z',
     });
 
     await waitFor(() => {

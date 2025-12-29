@@ -47,6 +47,7 @@ export function useAddEvidence(questionId: string) {
         queryClient.getQueryData<Evidence[]>(queryKey) ?? [];
 
       // Optimistically add the new evidence
+      const now = new Date().toISOString();
       const optimisticEvidence: Evidence = {
         id: `temp-${Date.now()}`,
         question_id: questionId,
@@ -55,7 +56,8 @@ export function useAddEvidence(questionId: string) {
         section_anchor: newEvidence.section_anchor ?? null,
         excerpt: newEvidence.excerpt ?? null,
         created_by: newEvidence.created_by,
-        created_at: new Date().toISOString(),
+        created_at: now,
+        updated_at: now,
       };
       queryClient.setQueryData(queryKey, [
         ...previousEvidence,

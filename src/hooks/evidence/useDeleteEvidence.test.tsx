@@ -34,6 +34,7 @@ const mockEvidence: Evidence[] = [
     excerpt: null,
     created_by: 'user1',
     created_at: '2024-12-24T00:00:00Z',
+    updated_at: '2024-12-24T00:00:00Z',
   },
   {
     id: 'e2',
@@ -44,6 +45,7 @@ const mockEvidence: Evidence[] = [
     excerpt: null,
     created_by: 'user1',
     created_at: '2024-12-24T01:00:00Z',
+    updated_at: '2024-12-24T01:00:00Z',
   },
 ];
 

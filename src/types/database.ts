@@ -86,6 +86,7 @@ export interface Database {
           excerpt: string | null;
           created_at: string;
           created_by: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
@@ -96,6 +97,7 @@ export interface Database {
           excerpt?: string | null;
           created_at?: string;
           created_by: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
@@ -106,6 +108,7 @@ export interface Database {
           excerpt?: string | null;
           created_at?: string;
           created_by?: string;
+          updated_at?: string;
         };
         Relationships: [
           {
