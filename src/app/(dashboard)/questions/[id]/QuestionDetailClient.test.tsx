@@ -80,6 +80,13 @@ vi.mock('@/hooks/questions/useMarkViewed', () => ({
   }),
 }));
 
+vi.mock('@/hooks/questions/useMarkQuestionCurrent', () => ({
+  useMarkQuestionCurrent: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
+}));
+
 const mockUseEvidence = vi.fn();
 vi.mock('@/hooks/evidence/useEvidence', () => ({
   useEvidence: () => mockUseEvidence(),

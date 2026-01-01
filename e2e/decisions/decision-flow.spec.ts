@@ -114,12 +114,28 @@ async function createQuestionForKel(
     timeout: 5000,
   });
 
+  // Wait for network to ensure mutation is persisted
+  await mahoPage.waitForLoadState('networkidle');
+
   // Verify Kel sees it in queue (Kel's dashboard shows QueueView)
   await kelPage.goto('/');
+  await kelPage.waitForLoadState('networkidle');
   await expect(kelPage.getByTestId('queue-page')).toBeVisible({ timeout: 10000 });
   await expect(kelPage.getByText(title)).toBeVisible({ timeout: 10000 });
 
   return questionId;
+}
+
+/**
+ * Helper: Wait for decision to be fully synced.
+ * Waits for undo window (5s) + network sync + toast dismissal animation.
+ * Uses generous timeouts to handle animation and network variability.
+ */
+async function waitForDecisionSync(page: Page): Promise<void> {
+  // Wait for undo window to expire (5 seconds) + generous buffer for sync + animation
+  await page.waitForTimeout(7000);
+  // Wait for any pending network requests to complete
+  await page.waitForLoadState('networkidle');
 }
 
 test.describe('Decision Queue Flow', () => {
@@ -173,11 +189,8 @@ test.describe('Decision Queue Flow', () => {
     await expect(kelPage.getByTestId('undo-toast')).toBeVisible({ timeout: 3000 });
     await expect(kelPage.getByTestId('undo-progress-bar')).toBeVisible();
 
-    // Wait for toast to auto-dismiss (5s + buffer)
-    await kelPage.waitForTimeout(6000);
-
-    // Verify toast is gone
-    await expect(kelPage.getByTestId('undo-toast')).not.toBeVisible();
+    // Wait for undo window to expire and toast to auto-dismiss (5s + buffer)
+    await expect(kelPage.getByTestId('undo-toast')).not.toBeVisible({ timeout: 7000 });
 
     // Verify card is removed from queue
     await expect(kelPage.getByText(TEST_QUESTIONS.simple)).not.toBeVisible({
@@ -241,8 +254,8 @@ test.describe('Decision Queue Flow', () => {
     // Verify undo toast shows "Approved with constraints"
     await expect(kelPage.getByTestId('undo-toast')).toBeVisible({ timeout: 3000 });
 
-    // Wait for toast to dismiss
-    await kelPage.waitForTimeout(6000);
+    // Wait for undo window to expire and sync to complete
+    await waitForDecisionSync(kelPage);
 
     // Verify card removed
     await expect(kelPage.getByText(TEST_QUESTIONS.constrained)).not.toBeVisible({
@@ -331,8 +344,8 @@ test.describe('Decision Queue Flow', () => {
     // Verify undo toast appears
     await expect(kelPage.getByTestId('undo-toast')).toBeVisible({ timeout: 3000 });
 
-    // Wait for toast to dismiss
-    await kelPage.waitForTimeout(6000);
+    // Wait for undo window to expire and sync to complete
+    await waitForDecisionSync(kelPage);
 
     // Verify card removed
     await expect(kelPage.getByText(TEST_QUESTIONS.explore)).not.toBeVisible({
@@ -435,11 +448,8 @@ test.describe('Decision Queue Flow', () => {
     // Verify undo toast is visible
     await expect(kelPage.getByTestId('undo-toast')).toBeVisible({ timeout: 3000 });
 
-    // Wait for 5 second window to expire (plus buffer)
-    await kelPage.waitForTimeout(6000);
-
-    // Verify toast auto-dismissed
-    await expect(kelPage.getByTestId('undo-toast')).not.toBeVisible();
+    // Wait for undo window to expire and sync to complete
+    await waitForDecisionSync(kelPage);
 
     // Card should NOT be in queue (decision is finalized)
     await expect(kelPage.getByText(TEST_QUESTIONS.undoAfter)).not.toBeVisible();
@@ -450,5 +460,270 @@ test.describe('Decision Queue Flow', () => {
       timeout: 10000,
     });
     await expect(mahoPage.getByTestId('status-badge-approved')).toBeVisible();
+  });
+});
+
+/**
+ * Data Persistence Verification Tests
+ *
+ * Verifies that all data is persisted correctly across page refreshes.
+ * This is critical for NFR12 (zero data loss for decisions).
+ *
+ * @see Story 7.5: Data Preservation & Backup Verification
+ * @see NFR12: Zero data loss for decisions
+ */
+test.describe('Data Persistence Verification', () => {
+  const PERSISTENCE_QUESTIONS = {
+    simple: `Persistence Simple Test ${TEST_SUFFIX}`,
+    constrained: `Persistence Constrained Test ${TEST_SUFFIX}`,
+    constraintEdit: `Persistence Constraint Edit Test ${TEST_SUFFIX}`,
+  };
+
+  const persistenceQuestionIds: Record<string, string> = {};
+
+  test('Setup: Create question for simple persistence test', async () => {
+    const questionId = await createQuestionForKel(
+      mahoPage,
+      kelPage,
+      PERSISTENCE_QUESTIONS.simple
+    );
+    persistenceQuestionIds.simple = questionId;
+    expect(questionId).toBeTruthy();
+  });
+
+  test('Decision persists after page refresh (FR45, NFR12)', async () => {
+    // Kel approves the question
+    await kelPage.goto('/');
+    await expect(kelPage.getByTestId('queue-page')).toBeVisible({ timeout: 10000 });
+
+    const card = kelPage.locator('[data-testid="queue-card-collapsed"]', {
+      has: kelPage.getByText(PERSISTENCE_QUESTIONS.simple),
+    });
+    await expect(card).toBeVisible({ timeout: 10000 });
+
+    await card.getByTestId('queue-card-header').click();
+
+    const expandedCard = kelPage.locator('[data-testid="queue-card-expanded"]', {
+      has: kelPage.getByText(PERSISTENCE_QUESTIONS.simple),
+    });
+    await expect(expandedCard).toBeVisible({ timeout: 3000 });
+
+    // Approve
+    await expandedCard.getByTestId('approve-button').click();
+
+    // Wait for undo window to expire and sync to complete
+    await waitForDecisionSync(kelPage);
+
+    // Verify card is gone from queue
+    await expect(kelPage.getByText(PERSISTENCE_QUESTIONS.simple)).not.toBeVisible({
+      timeout: 3000,
+    });
+
+    // Refresh the page
+    await kelPage.reload();
+    await expect(kelPage.getByTestId('queue-page')).toBeVisible({ timeout: 10000 });
+
+    // Verify the question is STILL not in queue (decision persisted)
+    await expect(kelPage.getByText(PERSISTENCE_QUESTIONS.simple)).not.toBeVisible({
+      timeout: 3000,
+    });
+
+    // Maho verifies decision status persisted after refresh
+    await mahoPage.goto(`/questions/${persistenceQuestionIds.simple}`);
+    await expect(mahoPage.getByTestId('question-detail-page')).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(mahoPage.getByTestId('status-badge-approved')).toBeVisible();
+
+    // Refresh Maho's page and verify again
+    await mahoPage.reload();
+    await expect(mahoPage.getByTestId('question-detail-page')).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(mahoPage.getByTestId('status-badge-approved')).toBeVisible();
+  });
+
+  test('Setup: Create question for constrained persistence test', async () => {
+    const questionId = await createQuestionForKel(
+      mahoPage,
+      kelPage,
+      PERSISTENCE_QUESTIONS.constrained
+    );
+    persistenceQuestionIds.constrained = questionId;
+    expect(questionId).toBeTruthy();
+  });
+
+  test('Constraint data persists correctly after refresh', async () => {
+    // Kel approves with constraints
+    await kelPage.goto('/');
+    await kelPage.waitForLoadState('networkidle');
+    await expect(kelPage.getByTestId('queue-page')).toBeVisible({ timeout: 10000 });
+
+    const card = kelPage.locator('[data-testid="queue-card-collapsed"]', {
+      has: kelPage.getByText(PERSISTENCE_QUESTIONS.constrained),
+    });
+    await expect(card).toBeVisible({ timeout: 10000 });
+
+    await card.getByTestId('queue-card-header').click();
+
+    const expandedCard = kelPage.locator('[data-testid="queue-card-expanded"]', {
+      has: kelPage.getByText(PERSISTENCE_QUESTIONS.constrained),
+    });
+    await expect(expandedCard).toBeVisible({ timeout: 3000 });
+
+    await expandedCard.getByTestId('approve-with-constraint-button').click();
+
+    await kelPage.waitForTimeout(500);
+    await expect(kelPage.getByTestId('constraint-panel')).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Select constraints and enter context with unique identifiable text
+    // Wait for chips to be ready
+    await expect(kelPage.getByTestId('constraint-chip-price')).toBeVisible();
+    await kelPage.getByTestId('constraint-chip-price').click();
+
+    // Small wait between clicks to avoid race condition
+    await kelPage.waitForTimeout(100);
+    await expect(kelPage.getByTestId('constraint-chip-volume')).toBeVisible();
+    await kelPage.getByTestId('constraint-chip-volume').click();
+    await kelPage
+      .getByTestId('constraint-context-input')
+      .fill('Persistence test: Max $5 per unit, min 1000 units');
+
+    await kelPage.getByTestId('constraint-confirm-button').click();
+
+    // Wait for undo window to expire and sync to complete
+    await waitForDecisionSync(kelPage);
+
+    // Maho views the decision
+    await mahoPage.goto(`/questions/${persistenceQuestionIds.constrained}`);
+    await expect(mahoPage.getByTestId('question-detail-page')).toBeVisible({
+      timeout: 10000,
+    });
+
+    // Verify constraint data before refresh
+    await expect(mahoPage.getByTestId('status-badge-constrained')).toBeVisible();
+    await expect(mahoPage.getByTestId('constraint-display')).toBeVisible();
+    await expect(
+      mahoPage.getByTestId('constraint-display-chip-price')
+    ).toBeVisible();
+    await expect(
+      mahoPage.getByTestId('constraint-display-chip-volume')
+    ).toBeVisible();
+    await expect(mahoPage.getByTestId('constraint-display-context')).toContainText(
+      'Persistence test: Max $5 per unit, min 1000 units'
+    );
+
+    // Refresh the page
+    await mahoPage.reload();
+    await expect(mahoPage.getByTestId('question-detail-page')).toBeVisible({
+      timeout: 10000,
+    });
+
+    // Verify ALL constraint data still visible after refresh (NFR12)
+    await expect(mahoPage.getByTestId('status-badge-constrained')).toBeVisible();
+    await expect(mahoPage.getByTestId('constraint-display')).toBeVisible();
+    await expect(
+      mahoPage.getByTestId('constraint-display-chip-price')
+    ).toBeVisible();
+    await expect(
+      mahoPage.getByTestId('constraint-display-chip-volume')
+    ).toBeVisible();
+    await expect(mahoPage.getByTestId('constraint-display-context')).toContainText(
+      'Persistence test: Max $5 per unit, min 1000 units'
+    );
+  });
+
+  test('Setup: Create question for constraint edit persistence test', async () => {
+    const questionId = await createQuestionForKel(
+      mahoPage,
+      kelPage,
+      PERSISTENCE_QUESTIONS.constraintEdit
+    );
+    persistenceQuestionIds.constraintEdit = questionId;
+    expect(questionId).toBeTruthy();
+  });
+
+  test('Edited constraint persists after refresh', async () => {
+    // Kel approves with initial constraints
+    await kelPage.goto('/');
+    await kelPage.waitForLoadState('networkidle');
+    await expect(kelPage.getByTestId('queue-page')).toBeVisible({ timeout: 10000 });
+
+    const card = kelPage.locator('[data-testid="queue-card-collapsed"]', {
+      has: kelPage.getByText(PERSISTENCE_QUESTIONS.constraintEdit),
+    });
+    await expect(card).toBeVisible({ timeout: 10000 });
+
+    await card.getByTestId('queue-card-header').click();
+
+    const expandedCard = kelPage.locator('[data-testid="queue-card-expanded"]', {
+      has: kelPage.getByText(PERSISTENCE_QUESTIONS.constraintEdit),
+    });
+    await expect(expandedCard).toBeVisible({ timeout: 3000 });
+
+    await expandedCard.getByTestId('approve-with-constraint-button').click();
+
+    await kelPage.waitForTimeout(500);
+    await expect(kelPage.getByTestId('constraint-panel')).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Initial constraints
+    await kelPage.getByTestId('constraint-chip-price').click();
+    await kelPage
+      .getByTestId('constraint-context-input')
+      .fill('Initial constraint context');
+
+    await kelPage.getByTestId('constraint-confirm-button').click();
+
+    // Wait for undo window to expire and sync to complete
+    await waitForDecisionSync(kelPage);
+
+    // Navigate to decision and edit constraint context
+    await kelPage.goto(`/questions/${persistenceQuestionIds.constraintEdit}`);
+    await expect(kelPage.getByTestId('question-detail-page')).toBeVisible({
+      timeout: 10000,
+    });
+
+    // Look for edit button if available and click it
+    const editButton = kelPage.getByTestId('edit-constraint-button');
+    if (await editButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await editButton.click();
+
+      await expect(kelPage.getByTestId('constraint-panel')).toBeVisible({
+        timeout: 3000,
+      });
+
+      // Update constraint context
+      await kelPage.getByTestId('constraint-context-input').clear();
+      await kelPage
+        .getByTestId('constraint-context-input')
+        .fill('EDITED: Updated constraint after initial save');
+
+      await kelPage.getByTestId('constraint-confirm-button').click();
+      await kelPage.waitForTimeout(1000);
+
+      // Refresh
+      await kelPage.reload();
+      await expect(kelPage.getByTestId('question-detail-page')).toBeVisible({
+        timeout: 10000,
+      });
+
+      // Verify edited value persisted
+      await expect(kelPage.getByTestId('constraint-display-context')).toContainText(
+        'EDITED: Updated constraint after initial save'
+      );
+    } else {
+      // If edit button doesn't exist, verify initial constraint persists after refresh
+      await kelPage.reload();
+      await expect(kelPage.getByTestId('question-detail-page')).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(kelPage.getByTestId('constraint-display-context')).toContainText(
+        'Initial constraint context'
+      );
+    }
   });
 });

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import { StaleDataBadge } from '@/components/ui/StaleDataBadge';
 import { formatRelativeTime } from '@/lib/utils/date';
 
 import { StatusBadge } from './StatusBadge';
@@ -21,7 +22,12 @@ export function QuestionCard({ question }: QuestionCardProps) {
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="font-medium text-foreground line-clamp-2">{question.title}</h3>
-        <StatusBadge status={question.status} />
+        <div className="flex items-center gap-1.5">
+          <StatusBadge status={question.status} />
+          <span data-testid="stale-question-badge">
+            <StaleDataBadge updatedAt={question.updated_at} />
+          </span>
+        </div>
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
         {formatRelativeTime(question.created_at)}

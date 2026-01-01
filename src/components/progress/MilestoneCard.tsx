@@ -1,16 +1,23 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useMilestoneProgress } from '@/hooks/milestones';
+import { useStaleQuestionsByCategory } from '@/hooks/questions';
+import { CATEGORY_LABELS } from '@/types/question';
 
 import { ClarityMeter } from './ClarityMeter';
 import { CompletionBadge } from './CompletionBadge';
+import { FreshnessOkIndicator } from './FreshnessOkIndicator';
+import { FreshnessWarningBadge } from './FreshnessWarningBadge';
 import { MarkCompleteButton } from './MarkCompleteButton';
 import { MilestoneCardSkeleton } from './MilestoneCardSkeleton';
 import { MilestoneNotes } from './MilestoneNotes';
 
 import type { Milestone } from '@/types';
+import type { QuestionCategory } from '@/types/question';
 
 interface MilestoneCardProps {
   milestone: Milestone;
@@ -20,12 +27,6 @@ const CATEGORY_ICONS: Record<string, string> = {
   market: '📊',
   product: '📦',
   distribution: '🚚',
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
-  market: 'Market',
-  product: 'Product',
-  distribution: 'Distribution',
 };
 
 const STATUS_DISPLAY: Record<
@@ -38,7 +39,15 @@ const STATUS_DISPLAY: Record<
 };
 
 export function MilestoneCard({ milestone }: MilestoneCardProps) {
+  const router = useRouter();
   const { data: progress, isLoading } = useMilestoneProgress(milestone.category);
+  const { data: stalenessData } = useStaleQuestionsByCategory(
+    milestone.category as QuestionCategory
+  );
+
+  const handleFreshnessBadgeClick = () => {
+    router.push(`/questions/stale/${milestone.category}`);
+  };
 
   if (isLoading) {
     return <MilestoneCardSkeleton />;
@@ -49,7 +58,7 @@ export function MilestoneCard({ milestone }: MilestoneCardProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           {CATEGORY_ICONS[milestone.category]}
-          {CATEGORY_LABELS[milestone.category]}
+          {CATEGORY_LABELS[milestone.category as QuestionCategory]}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -66,6 +75,16 @@ export function MilestoneCard({ milestone }: MilestoneCardProps) {
 
         <div className="mt-4">
           <ClarityMeter progress={progress ?? null} isLoading={isLoading} />
+        </div>
+
+        {/* Freshness Indicator Section */}
+        <div className="mt-4">
+          <FreshnessWarningBadge
+            staleCount={stalenessData?.staleCount ?? 0}
+            category={milestone.category as QuestionCategory}
+            onClick={handleFreshnessBadgeClick}
+          />
+          <FreshnessOkIndicator staleCount={stalenessData?.staleCount ?? 0} />
         </div>
 
         <div className="mt-4">

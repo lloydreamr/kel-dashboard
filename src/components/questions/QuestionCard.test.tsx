@@ -85,4 +85,39 @@ describe('QuestionCard', () => {
     render(<QuestionCard question={readyQuestion} />);
     expect(screen.getByText('Sent to Kel')).toBeInTheDocument();
   });
+
+  describe('stale data badge', () => {
+    it('renders stale-question-badge wrapper', () => {
+      render(<QuestionCard question={mockQuestion} />);
+      expect(screen.getByTestId('stale-question-badge')).toBeInTheDocument();
+    });
+
+    it('does not show stale indicator for fresh data', () => {
+      render(<QuestionCard question={mockQuestion} />);
+      expect(screen.queryByTestId('stale-data-indicator')).not.toBeInTheDocument();
+    });
+
+    it('shows stale indicator for data older than 14 days', () => {
+      const staleDate = new Date(mockDate);
+      staleDate.setDate(staleDate.getDate() - 20); // 20 days ago
+      const staleQuestion = {
+        ...mockQuestion,
+        updated_at: staleDate.toISOString(),
+      };
+      render(<QuestionCard question={staleQuestion} />);
+      expect(screen.getByTestId('stale-data-indicator')).toBeInTheDocument();
+      expect(screen.getByText('Stale')).toBeInTheDocument();
+    });
+
+    it('does not show stale indicator at 14 day boundary', () => {
+      const boundaryDate = new Date(mockDate);
+      boundaryDate.setDate(boundaryDate.getDate() - 14); // Exactly 14 days ago
+      const boundaryQuestion = {
+        ...mockQuestion,
+        updated_at: boundaryDate.toISOString(),
+      };
+      render(<QuestionCard question={boundaryQuestion} />);
+      expect(screen.queryByTestId('stale-data-indicator')).not.toBeInTheDocument();
+    });
+  });
 });

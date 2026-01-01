@@ -24,12 +24,13 @@ vi.mock('@/lib/repositories/questions', () => ({
   },
 }));
 
-// Mock useProfile
+// Mock useProfile and profileQueryKey
 vi.mock('@/hooks/auth', () => ({
   useProfile: () => ({
     data: { id: 'user-123', role: 'kel' },
     isLoading: false,
   }),
+  profileQueryKey: ['profile'],
 }));
 
 const mockDecision = {
@@ -59,6 +60,14 @@ const mockQuestion = {
   viewed_by_kel_at: null,
 };
 
+const mockProfile = {
+  id: 'user-123',
+  email: 'kel@example.com',
+  role: 'kel' as const,
+  created_at: '2025-01-01T00:00:00Z',
+  updated_at: '2025-01-01T00:00:00Z',
+};
+
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -66,6 +75,9 @@ function createWrapper() {
       mutations: { retry: false },
     },
   });
+
+  // Pre-populate with profile data (required by mutation)
+  queryClient.setQueryData(['profile'], mockProfile);
 
   // Pre-populate with questions data
   queryClient.setQueryData(queryKeys.questions.all, [
@@ -212,6 +224,9 @@ describe('useApproveDecision', () => {
         mutations: { retry: false },
       },
     });
+
+    // Pre-populate with profile data (required by mutation)
+    queryClient.setQueryData(['profile'], mockProfile);
 
     queryClient.setQueryData(queryKeys.questions.all, [
       { ...mockQuestion, id: 'q-1', status: 'ready_for_kel' },

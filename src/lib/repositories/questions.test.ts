@@ -401,4 +401,51 @@ describe('questionsRepo', () => {
       }
     });
   });
+
+  describe('touchUpdatedAt', () => {
+    it('updates only the updated_at timestamp', async () => {
+      const question = await questionsRepo.touchUpdatedAt('question-123');
+
+      expect(mockFrom).toHaveBeenCalledWith('questions');
+      expect(mockUpdate).toHaveBeenCalledWith({
+        updated_at: expect.any(String),
+      });
+      expect(mockEq).toHaveBeenCalledWith('id', 'question-123');
+      expect(question).toEqual(mockQuestion);
+    });
+
+    it('throws NOT_FOUND when question does not exist', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: 'PGRST116', message: 'no rows' },
+      });
+
+      try {
+        await questionsRepo.touchUpdatedAt('non-existent');
+        expect.fail('Should have thrown');
+      } catch (error) {
+        expect(isRepositoryError(error)).toBe(true);
+        if (isRepositoryError(error)) {
+          expect(error.code).toBe(RepositoryErrorCode.NOT_FOUND);
+        }
+      }
+    });
+
+    it('throws UNAUTHORIZED on access denied error', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: '42501', message: 'access denied' },
+      });
+
+      try {
+        await questionsRepo.touchUpdatedAt('question-123');
+        expect.fail('Should have thrown');
+      } catch (error) {
+        expect(isRepositoryError(error)).toBe(true);
+        if (isRepositoryError(error)) {
+          expect(error.code).toBe(RepositoryErrorCode.UNAUTHORIZED);
+        }
+      }
+    });
+  });
 });

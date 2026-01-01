@@ -25,10 +25,13 @@ import { ArchiveButton } from '@/components/questions/ArchiveButton';
 import { CategoryBadge } from '@/components/questions/CategoryBadge';
 import { EvidenceCountBadge } from '@/components/questions/EvidenceCountBadge';
 import { KelViewedIndicator } from '@/components/questions/KelViewedIndicator';
+import { MarkCurrentButton } from '@/components/questions/MarkCurrentButton';
 import { RecommendationDisplay } from '@/components/questions/RecommendationDisplay';
 import { RecommendationForm } from '@/components/questions/RecommendationForm';
 import { SendToKelButton } from '@/components/questions/SendToKelButton';
 import { StatusBadge } from '@/components/questions/StatusBadge';
+import { UpdateStaleButton } from '@/components/questions/UpdateStaleButton';
+import { StaleDataBadge } from '@/components/ui/StaleDataBadge';
 import { useProfile } from '@/hooks/auth/useProfile';
 import { useDecision } from '@/hooks/decisions/useDecision';
 import { useDeleteEvidence } from '@/hooks/evidence/useDeleteEvidence';
@@ -188,6 +191,7 @@ export function QuestionDetailClient({
                 isPending={isSending}
               />
               <EvidenceCountBadge count={evidenceCount} />
+              <StaleDataBadge updatedAt={question.updated_at} />
             </div>
 
             {/* Kel viewed indicator (shown to Maho only) */}
@@ -214,6 +218,20 @@ export function QuestionDetailClient({
             </div>
           )}
         </div>
+
+        {/* Stale data action buttons (Maho only, non-archived, when stale) */}
+        {isMaho && !isArchived && (
+          <div className="mt-4 flex items-center gap-2">
+            <UpdateStaleButton
+              updatedAt={question.updated_at}
+              onUpdate={() => setIsEditing(true)}
+            />
+            <MarkCurrentButton
+              questionId={questionId}
+              updatedAt={question.updated_at}
+            />
+          </div>
+        )}
 
         {/* Recommendation section */}
         <div data-testid="question-recommendation" className="mt-6">

@@ -1,13 +1,23 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { useProfile } from '@/hooks/auth';
 import { useMilestoneProgress } from '@/hooks/milestones';
+import { useStaleQuestionsByCategory } from '@/hooks/questions';
 
 import { MilestoneCard } from './MilestoneCard';
 
 import type { Milestone, Profile } from '@/types';
+
+// Mock next/navigation
+const mockPush = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+  }),
+}));
 
 // Mock the hooks
 vi.mock('@/hooks/milestones', () => ({
@@ -38,6 +48,13 @@ vi.mock('@/hooks/milestones', () => ({
   })),
 }));
 
+vi.mock('@/hooks/questions', () => ({
+  useStaleQuestionsByCategory: vi.fn(() => ({
+    data: { staleCount: 0, staleQuestions: [] },
+    isLoading: false,
+  })),
+}));
+
 vi.mock('@/hooks/auth', () => ({
   useProfile: vi.fn(),
 }));
@@ -48,6 +65,15 @@ vi.mock('sonner', () => ({
     success: vi.fn(),
     error: vi.fn(),
   },
+}));
+
+// Mock Tooltip components to simplify testing
+vi.mock('@/components/ui/tooltip', () => ({
+  TooltipProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) =>
+    asChild ? children : <span>{children}</span>,
+  TooltipContent: ({ children }: { children: React.ReactNode }) => <span data-testid="tooltip">{children}</span>,
 }));
 
 const createMockMilestone = (overrides?: Partial<Milestone>): Milestone => ({
@@ -292,5 +318,112 @@ describe('MilestoneCard', () => {
     // Assert
     expect(screen.getByTestId('milestone-status-badge')).toBeInTheDocument();
     expect(screen.queryByTestId('milestone-complete-badge')).not.toBeInTheDocument();
+  });
+
+  // Story 7.4 - Freshness Badge tests
+  describe('Freshness Indicators', () => {
+    it('shows freshness OK indicator when no stale questions (AC: #2)', () => {
+      // Arrange
+      vi.mocked(useStaleQuestionsByCategory).mockReturnValue({
+        data: { staleCount: 0, staleQuestions: [] },
+        isLoading: false,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      const milestone = createMockMilestone({ category: 'market' });
+
+      // Act
+      render(
+        <QueryClientProvider client={queryClient}>
+          <MilestoneCard milestone={milestone} />
+        </QueryClientProvider>
+      );
+
+      // Assert
+      expect(screen.getByTestId('freshness-ok-indicator')).toBeInTheDocument();
+      expect(screen.queryByTestId('freshness-warning-badge')).not.toBeInTheDocument();
+    });
+
+    it('shows freshness warning badge when stale questions exist (AC: #1)', () => {
+      // Arrange
+      vi.mocked(useStaleQuestionsByCategory).mockReturnValue({
+        data: { staleCount: 2, staleQuestions: [] },
+        isLoading: false,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      const milestone = createMockMilestone({ category: 'market' });
+
+      // Act
+      render(
+        <QueryClientProvider client={queryClient}>
+          <MilestoneCard milestone={milestone} />
+        </QueryClientProvider>
+      );
+
+      // Assert
+      expect(screen.getByTestId('freshness-warning-badge')).toBeInTheDocument();
+      expect(screen.queryByTestId('freshness-ok-indicator')).not.toBeInTheDocument();
+    });
+
+    it('shows correct stale count in warning badge (AC: #1)', () => {
+      // Arrange
+      vi.mocked(useStaleQuestionsByCategory).mockReturnValue({
+        data: { staleCount: 3, staleQuestions: [] },
+        isLoading: false,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      const milestone = createMockMilestone({ category: 'product' });
+
+      // Act
+      render(
+        <QueryClientProvider client={queryClient}>
+          <MilestoneCard milestone={milestone} />
+        </QueryClientProvider>
+      );
+
+      // Assert
+      expect(screen.getByTestId('freshness-count')).toHaveTextContent('3 items need attention');
+    });
+
+    it('navigates to stale questions page when badge clicked (AC: #3)', async () => {
+      // Arrange
+      const user = userEvent.setup();
+      vi.mocked(useStaleQuestionsByCategory).mockReturnValue({
+        data: { staleCount: 2, staleQuestions: [] },
+        isLoading: false,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+      const milestone = createMockMilestone({ category: 'distribution' });
+
+      // Act
+      render(
+        <QueryClientProvider client={queryClient}>
+          <MilestoneCard milestone={milestone} />
+        </QueryClientProvider>
+      );
+
+      await user.click(screen.getByTestId('freshness-warning-badge'));
+
+      // Assert
+      expect(mockPush).toHaveBeenCalledWith('/questions/stale/distribution');
+    });
+
+    it('calls useStaleQuestionsByCategory with correct category', () => {
+      // Arrange
+      const milestone = createMockMilestone({ category: 'product' });
+
+      // Act
+      render(
+        <QueryClientProvider client={queryClient}>
+          <MilestoneCard milestone={milestone} />
+        </QueryClientProvider>
+      );
+
+      // Assert
+      expect(useStaleQuestionsByCategory).toHaveBeenCalledWith('product');
+    });
   });
 });

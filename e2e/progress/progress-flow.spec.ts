@@ -256,12 +256,20 @@ test.describe('Milestone Notes CRUD (AC4)', () => {
     // Assert - Note input appears
     await expect(mahoPage.getByTestId('note-input-textarea')).toBeVisible({ timeout: TIMEOUT.ANIMATION });
 
-    // Act - Fill and save note
+    // Act - Fill and save note, wait for mutation to complete
     await mahoPage.getByTestId('note-input-textarea').fill(TEST_DATA.noteContent);
-    await mahoPage.getByTestId('note-save-button').click();
 
-    // Assert - Note appears in notes list (Playwright auto-waits for visibility)
+    // Click save and wait for the network request to complete
+    await Promise.all([
+      mahoPage.waitForResponse(resp => resp.url().includes('rest') && resp.status() === 200),
+      mahoPage.getByTestId('note-save-button').click(),
+    ]);
+
+    // Assert - Note appears in notes list
     await expect(mahoPage.getByText(TEST_DATA.noteContent)).toBeVisible({ timeout: TIMEOUT.NETWORK });
+
+    // Extra wait to ensure database write is fully committed before next test reloads
+    await mahoPage.waitForLoadState('networkidle');
   });
 
   test('4.2: Verify note appears in notes list', async () => {
@@ -291,7 +299,10 @@ test.describe('Milestone Notes CRUD (AC4)', () => {
     await textarea.fill(TEST_DATA.noteUpdated);
     await mahoPage.getByText('Save').click();
 
-    // Assert - Updated note appears (Playwright auto-waits for network completion)
+    // Wait for success toast to confirm mutation completed
+    await expect(mahoPage.getByText('Note updated')).toBeVisible({ timeout: TIMEOUT.NETWORK });
+
+    // Assert - Updated note appears after mutation
     await expect(mahoPage.getByText(TEST_DATA.noteUpdated)).toBeVisible({ timeout: TIMEOUT.NETWORK });
   });
 
@@ -299,6 +310,9 @@ test.describe('Milestone Notes CRUD (AC4)', () => {
     // Arrange - Navigate to progress page and wait for it to load
     await mahoPage.goto('/progress');
     await expect(mahoPage.getByTestId('progress-page')).toBeVisible({ timeout: TIMEOUT.NAVIGATION });
+
+    // Wait for notes to load (network request to complete)
+    await mahoPage.waitForLoadState('networkidle');
 
     // Assert - Updated note persists
     await expect(mahoPage.getByText(TEST_DATA.noteUpdated)).toBeVisible({ timeout: TIMEOUT.NETWORK });

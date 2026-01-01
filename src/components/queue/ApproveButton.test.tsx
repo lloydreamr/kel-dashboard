@@ -25,12 +25,13 @@ vi.mock('@/lib/repositories/questions', () => ({
   },
 }));
 
-// Mock useProfile
+// Mock useProfile and profileQueryKey
 vi.mock('@/hooks/auth', () => ({
   useProfile: () => ({
     data: { id: 'user-123', role: 'kel' },
     isLoading: false,
   }),
+  profileQueryKey: ['profile'],
 }));
 
 // Mock sonner toast
@@ -77,6 +78,14 @@ const mockDecision = {
   incorporated_at: null,
 };
 
+const mockProfile = {
+  id: 'user-123',
+  email: 'kel@example.com',
+  role: 'kel' as const,
+  created_at: '2025-01-01T00:00:00Z',
+  updated_at: '2025-01-01T00:00:00Z',
+};
+
 function renderButton(props = {}) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -84,6 +93,9 @@ function renderButton(props = {}) {
       mutations: { retry: false },
     },
   });
+
+  // Pre-populate with profile data (required by useApproveDecision)
+  queryClient.setQueryData(['profile'], mockProfile);
 
   return render(
     <QueryClientProvider client={queryClient}>

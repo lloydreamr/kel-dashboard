@@ -302,6 +302,37 @@ export const questionsRepo = {
   },
 
   /**
+   * Touch the updated_at timestamp without changing content.
+   * Used for "Mark as Current" to clear stale data warnings.
+   *
+   * @param id - Question ID to touch
+   * @returns Updated question with new updated_at
+   * @throws RepositoryError if not found or access denied
+   */
+  touchUpdatedAt: async (id: string): Promise<Question> => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('questions')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw mapPostgrestError(error);
+    }
+
+    if (!data) {
+      throw new RepositoryError(
+        'Question not found',
+        RepositoryErrorCode.NOT_FOUND
+      );
+    }
+
+    return data;
+  },
+
+  /**
    * Update question status
    * Used for decision-related status changes (approved, exploring_alternatives)
    *

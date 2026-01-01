@@ -21,6 +21,14 @@ vi.mock('framer-motion', () => ({
     }: React.PropsWithChildren<Record<string, unknown>>) => (
       <div {...htmlProps}>{children}</div>
     ),
+    span: ({
+      children,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      initial, animate, exit, transition,
+      ...htmlProps
+    }: React.PropsWithChildren<Record<string, unknown>>) => (
+      <span {...htmlProps}>{children}</span>
+    ),
   },
 }));
 
