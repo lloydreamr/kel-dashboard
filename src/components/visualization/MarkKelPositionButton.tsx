@@ -26,7 +26,7 @@ export function MarkKelPositionButton({ onClick, hasExistingPosition }: MarkKelP
       data-testid="mark-kel-position-button"
     >
       <Star className="mr-2 h-4 w-4" />
-      {hasExistingPosition ? 'Update Kel Position' : 'Mark Kel Position'}
+      {hasExistingPosition ? 'Update Kel Position' : 'Set Kel Position'}
     </Button>
   );
 }

@@ -7,6 +7,7 @@
 
 export { ScatterChart } from './ScatterChart';
 export { ScatterChartSkeleton } from './ScatterChartSkeleton';
+export { ChartLegend } from './ChartLegend';
 export { CompetitorForm } from './CompetitorForm';
 export { CompetitorDialog } from './CompetitorDialog';
 export { DeleteCompetitorDialog } from './DeleteCompetitorDialog';
@@ -16,3 +17,5 @@ export { MarkKelPositionButton } from './MarkKelPositionButton';
 export { KelPositionForm } from './KelPositionForm';
 export { KelPositionDialog } from './KelPositionDialog';
 export { COMPETITOR_CATEGORIES } from './competitorSchema';
+export { ChartClickLayer } from './ChartClickLayer';
+export type { OverlayPoint, ChartClickLayerProps } from './ChartClickLayer';

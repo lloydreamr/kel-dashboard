@@ -10,14 +10,18 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { KelPositionForm } from './KelPositionForm';
+import { kelPositionFormSchema } from './kelPositionSchema';
 
 import type { CompetitorDataPoint } from '@/types';
 
-// Mock the useSetKelPosition hook
+// Mock the useSetKelPosition hook with controllable state
+const mockMutate = vi.fn();
+let mockIsPending = false;
+
 vi.mock('@/hooks/competitors', () => ({
   useSetKelPosition: () => ({
-    mutate: vi.fn(),
-    isPending: false,
+    mutate: mockMutate,
+    isPending: mockIsPending,
   }),
 }));
 
@@ -46,6 +50,7 @@ describe('KelPositionForm', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockIsPending = false; // Reset pending state before each test
   });
 
   it('renders form with sliders and notes field', () => {
@@ -94,11 +99,8 @@ describe('KelPositionForm', () => {
   });
 
   it('submit button is disabled when isPending', () => {
-    // Re-mock with isPending=true
-    vi.mocked(vi.fn()).mockReturnValue({
-      mutate: vi.fn(),
-      isPending: true,
-    });
+    // Set pending state before rendering
+    mockIsPending = true;
 
     renderForm();
 
@@ -106,6 +108,27 @@ describe('KelPositionForm', () => {
     // Form starts valid with default values (5, 5)
     // But isPending should disable it
     expect(submitButton).toBeDisabled();
+  });
+
+  it('calls mutation with correct data on submit', async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    // Form already has valid default values (5, 5)
+    const submitButton = screen.getByTestId('kel-position-submit');
+    await user.click(submitButton);
+
+    // Verify mutation was called with default values
+    expect(mockMutate).toHaveBeenCalledTimes(1);
+    expect(mockMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        price_score: 5,
+        quality_score: 5,
+      }),
+      expect.objectContaining({
+        onSuccess: expect.any(Function),
+      })
+    );
   });
 
   it('cancel button calls onCancel', async () => {
@@ -120,7 +143,6 @@ describe('KelPositionForm', () => {
 
   it('validates price score is between 1-10', () => {
     // Test the kelPositionFormSchema directly
-    const { kelPositionFormSchema } = require('./kelPositionSchema');
 
     // Valid scores
     expect(() => kelPositionFormSchema.parse({ price_score: 1, quality_score: 5 })).not.toThrow();
@@ -137,7 +159,6 @@ describe('KelPositionForm', () => {
   });
 
   it('validates quality score is between 1-10', () => {
-    const { kelPositionFormSchema } = require('./kelPositionSchema');
 
     // Valid scores
     expect(() => kelPositionFormSchema.parse({ price_score: 5, quality_score: 1 })).not.toThrow();
@@ -151,7 +172,6 @@ describe('KelPositionForm', () => {
   });
 
   it('validates notes length (max 500 characters)', () => {
-    const { kelPositionFormSchema } = require('./kelPositionSchema');
 
     // Valid notes
     expect(() =>

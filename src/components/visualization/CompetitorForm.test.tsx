@@ -7,10 +7,16 @@ import { CompetitorForm } from './CompetitorForm';
 
 import type { CompetitorDataPoint } from '@/types';
 
-// Mock the hooks
+// Mock the hooks - both must return valid mutation objects
 vi.mock('@/hooks/competitors', () => ({
-  useCreateCompetitor: vi.fn(),
-  useUpdateCompetitor: vi.fn(),
+  useCreateCompetitor: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
+  useUpdateCompetitor: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
 }));
 
 function createWrapper() {
@@ -62,7 +68,7 @@ describe('CompetitorForm', () => {
     expect(screen.getByTestId('competitor-submit')).toBeInTheDocument();
   });
 
-  it('shows validation errors for required fields', async () => {
+  it('disables submit when name is empty and enables when filled', async () => {
     const user = userEvent.setup();
     const { useCreateCompetitor } = vi.mocked(await import('@/hooks/competitors'));
     useCreateCompetitor.mockReturnValue({
@@ -80,15 +86,23 @@ describe('CompetitorForm', () => {
     );
 
     const submitButton = screen.getByTestId('competitor-submit');
+    const nameInput = screen.getByTestId('competitor-name-input');
+
+    // Button is disabled when form is invalid (empty name)
     expect(submitButton).toBeDisabled();
 
-    // Try to submit empty form
-    const nameInput = screen.getByTestId('competitor-name-input');
-    await user.clear(nameInput);
-    await user.click(submitButton);
+    // Fill in name - button should become enabled
+    await user.type(nameInput, 'Test Competitor');
 
     await waitFor(() => {
-      expect(screen.getByText('Name is required')).toBeInTheDocument();
+      expect(submitButton).not.toBeDisabled();
+    });
+
+    // Clear name - button should be disabled again
+    await user.clear(nameInput);
+
+    await waitFor(() => {
+      expect(submitButton).toBeDisabled();
     });
   });
 

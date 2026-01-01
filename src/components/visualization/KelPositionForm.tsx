@@ -34,6 +34,7 @@ export function KelPositionForm({ defaultValues, onSuccess, onCancel }: KelPosit
 
   const form = useForm<KelPositionFormData>({
     resolver: zodResolver(kelPositionFormSchema),
+    mode: 'onChange', // Show validation errors immediately for better UX
     defaultValues: {
       price_score: defaultValues?.price_score ?? 5,
       quality_score: defaultValues?.quality_score ?? 5,
@@ -44,11 +45,7 @@ export function KelPositionForm({ defaultValues, onSuccess, onCancel }: KelPosit
   const setKelPositionMutation = useSetKelPosition();
   const isPending = setKelPositionMutation.isPending;
 
-  // Sync slider state when defaultValues changes
-  // Safe: This useEffect only runs when the external defaultValues prop changes (e.g., when
-  // editing existing position), not from internal state updates. This is the recommended pattern
-  // for syncing component state with prop changes. The setState calls don't cause infinite loops
-  // because the dependencies are external props, not the state values themselves.
+  // Sync slider state when editing existing position
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setPriceScore(defaultValues?.price_score ?? 5);

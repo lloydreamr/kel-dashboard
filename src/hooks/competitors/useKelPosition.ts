@@ -95,7 +95,8 @@ export function useSetKelPosition() {
 
     // Optimistic update
     onMutate: async (input) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.competitors.all });
+      // Cancel ongoing queries to prevent race conditions
+      await queryClient.cancelQueries({ queryKey: queryKeys.competitors.all, exact: true });
 
       const previousCompetitors = queryClient.getQueryData<CompetitorDataPoint[]>(
         queryKeys.competitors.all

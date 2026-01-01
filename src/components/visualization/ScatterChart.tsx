@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   ScatterChart as RechartsScatter,
   Scatter,
@@ -10,13 +10,17 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  ReferenceArea,
   Cell,
 } from 'recharts';
 
-import { ScatterChartSkeleton } from '@/components/visualization/ScatterChartSkeleton';
+import { ChartClickLayer } from '@/components/visualization/ChartClickLayer';
 import { CompetitorEditPopover } from '@/components/visualization/CompetitorEditPopover';
+import { ScatterChartSkeleton } from '@/components/visualization/ScatterChartSkeleton';
 import { useCompetitorData } from '@/hooks/competitors';
+import { isStale, getStalenessMessage } from '@/lib/utils/staleness';
 
+import type { OverlayPoint } from '@/components/visualization/ChartClickLayer';
 import type { CompetitorDataPoint } from '@/types';
 
 interface ChartPoint {
@@ -25,6 +29,7 @@ interface ChartPoint {
   name: string;
   id: string;
   isKel: boolean;
+  updated_at: string;
 }
 
 interface ScatterChartProps {
@@ -33,10 +38,103 @@ interface ScatterChartProps {
   onDeleteClick: (competitor: CompetitorDataPoint) => void;
 }
 
+type Quadrant = 'premium' | 'value' | 'budget' | 'low-quality';
+
+// Chart configuration constants
+const CHART_MARGIN = { top: 20, right: 20, bottom: 60, left: 60 };
+const CHART_DOMAIN = { min: 1, max: 10 };
+
 export function ScatterChart({ isMaho, onEditClick, onDeleteClick }: ScatterChartProps) {
   const { data: competitors, isLoading, error, refetch } = useCompetitorData();
   const [selectedCompetitor, setSelectedCompetitor] = useState<CompetitorDataPoint | null>(null);
   const [popoverAnchor, setPopoverAnchor] = useState<{ x: number; y: number } | null>(null);
+  const [hoveredQuadrant, setHoveredQuadrant] = useState<Quadrant | null>(null);
+  const [containerSize, setContainerSize] = useState<{ width: number; height: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Measure container size for overlay positioning
+  // Re-run when competitors change to ensure we measure after chart renders
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        // Only update if we have valid dimensions
+        if (rect.width > 0 && rect.height > 0) {
+          setContainerSize({ width: rect.width, height: rect.height });
+        }
+      }
+    };
+
+    // Initial measurement (may run before layout is complete)
+    updateSize();
+
+    // Update on resize
+    const resizeObserver = new ResizeObserver(updateSize);
+    resizeObserver.observe(containerRef.current);
+
+    // Fallback: Retry measurement after layout settles
+    const fallbackTimer = setTimeout(updateSize, 100);
+
+    return () => {
+      resizeObserver.disconnect();
+      clearTimeout(fallbackTimer);
+    };
+  }, [competitors]);
+
+  // Calculate overlay positions when data or container size changes
+  // Using useMemo to derive state without causing cascading renders
+  const overlayPoints = useMemo<OverlayPoint[]>(() => {
+    if (!containerSize || !competitors || competitors.length === 0) return [];
+
+    const { width, height } = containerSize;
+    const chartWidth = width - CHART_MARGIN.left - CHART_MARGIN.right;
+    const chartHeight = height - CHART_MARGIN.top - CHART_MARGIN.bottom;
+    const domainRange = CHART_DOMAIN.max - CHART_DOMAIN.min;
+
+    // Convert data value to pixel position
+    const xToPixel = (value: number) =>
+      CHART_MARGIN.left + ((value - CHART_DOMAIN.min) / domainRange) * chartWidth;
+    const yToPixel = (value: number) =>
+      CHART_MARGIN.top + ((CHART_DOMAIN.max - value) / domainRange) * chartHeight;
+
+    return competitors.map((c) => ({
+      id: c.id,
+      x: xToPixel(c.price_score),
+      y: yToPixel(c.quality_score),
+      name: c.name,
+      priceScore: c.price_score,
+      qualityScore: c.quality_score,
+      isKel: c.is_kel_position ?? false,
+    }));
+  }, [containerSize, competitors]);
+
+  // Handle click from ChartClickLayer
+  // Don't use useCallback to avoid stale closure issues - re-create each render
+  const handleOverlayClick = (competitor: CompetitorDataPoint) => {
+    if (!containerRef.current) return;
+
+    // Get fresh container dimensions directly from the DOM
+    const containerRect = containerRef.current.getBoundingClientRect();
+    if (containerRect.width === 0 || containerRect.height === 0) return;
+
+    // Calculate popover position directly from competitor data
+    const chartWidth = containerRect.width - CHART_MARGIN.left - CHART_MARGIN.right;
+    const chartHeight = containerRect.height - CHART_MARGIN.top - CHART_MARGIN.bottom;
+    const domainRange = CHART_DOMAIN.max - CHART_DOMAIN.min;
+
+    const xToPixel = (value: number) =>
+      CHART_MARGIN.left + ((value - CHART_DOMAIN.min) / domainRange) * chartWidth;
+    const yToPixel = (value: number) =>
+      CHART_MARGIN.top + ((CHART_DOMAIN.max - value) / domainRange) * chartHeight;
+
+    setPopoverAnchor({
+      x: containerRect.left + xToPixel(competitor.price_score),
+      y: containerRect.top + yToPixel(competitor.quality_score),
+    });
+    setSelectedCompetitor(competitor);
+  };
 
   if (isLoading) {
     return <ScatterChartSkeleton />;
@@ -85,32 +183,114 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick }: ScatterChar
     name: c.name,
     id: c.id,
     isKel: c.is_kel_position ?? false,
+    updated_at: c.updated_at,
   }));
+
 
   const kelPosition = chartData.filter((d) => d.isKel);
   const competitorData = chartData.filter((d) => !d.isKel);
 
+  // Calculate gap quadrants (0-1 data points = gap)
+  // Using 5.0 as boundary per AC1 requirement
+  const quadrantCounts = {
+    premium: chartData.filter((d) => d.x > 5 && d.y > 5).length,
+    value: chartData.filter((d) => d.x <= 5 && d.y > 5).length,
+    budget: chartData.filter((d) => d.x <= 5 && d.y <= 5).length,
+    'low-quality': chartData.filter((d) => d.x > 5 && d.y <= 5).length,
+  };
+
+  const gapQuadrants: Quadrant[] = (Object.entries(quadrantCounts) as [Quadrant, number][])
+    .filter(([, count]) => count <= 1)
+    .map(([quadrant]) => quadrant);
+
   return (
     <div data-testid="scatter-chart" className="w-full h-[400px]">
-      <ResponsiveContainer width="100%" height="100%">
+      <div ref={containerRef} className="relative w-full h-full">
+        <ResponsiveContainer width="100%" height="100%">
         <RechartsScatter margin={{ top: 20, right: 20, bottom: 60, left: 60 }}>
           <CartesianGrid strokeDasharray="3 3" />
 
-          {/* Quadrant divider lines */}
+          {/* Quadrant divider lines at 5,5 per AC1 */}
           <ReferenceLine
-            x={5.5}
+            x={5}
             stroke="hsl(var(--muted-foreground))"
             strokeDasharray="3 3"
             opacity={0.5}
             data-testid="chart-quadrant-line-vertical"
           />
           <ReferenceLine
-            y={5.5}
+            y={5}
             stroke="hsl(var(--muted-foreground))"
             strokeDasharray="3 3"
             opacity={0.5}
             data-testid="chart-quadrant-line-horizontal"
           />
+
+          {/* Gap area indicators - show only for quadrants with 0-1 data points */}
+          {gapQuadrants.includes('premium') && (
+            <ReferenceArea
+              x1={5}
+              x2={10}
+              y1={5}
+              y2={10}
+              fill="hsl(var(--muted))"
+              fillOpacity={hoveredQuadrant === 'premium' ? 0.2 : 0.05}
+              stroke="none"
+              data-testid="gap-indicator"
+              onMouseEnter={() => setHoveredQuadrant('premium')}
+              onMouseLeave={() => setHoveredQuadrant(null)}
+              onFocus={() => setHoveredQuadrant('premium')}
+              onBlur={() => setHoveredQuadrant(null)}
+            />
+          )}
+          {gapQuadrants.includes('value') && (
+            <ReferenceArea
+              x1={1}
+              x2={5}
+              y1={5}
+              y2={10}
+              fill="hsl(var(--muted))"
+              fillOpacity={hoveredQuadrant === 'value' ? 0.2 : 0.05}
+              stroke="none"
+              data-testid="gap-indicator"
+              onMouseEnter={() => setHoveredQuadrant('value')}
+              onMouseLeave={() => setHoveredQuadrant(null)}
+              onFocus={() => setHoveredQuadrant('value')}
+              onBlur={() => setHoveredQuadrant(null)}
+            />
+          )}
+          {gapQuadrants.includes('budget') && (
+            <ReferenceArea
+              x1={1}
+              x2={5}
+              y1={1}
+              y2={5}
+              fill="hsl(var(--muted))"
+              fillOpacity={hoveredQuadrant === 'budget' ? 0.2 : 0.05}
+              stroke="none"
+              data-testid="gap-indicator"
+              onMouseEnter={() => setHoveredQuadrant('budget')}
+              onMouseLeave={() => setHoveredQuadrant(null)}
+              onFocus={() => setHoveredQuadrant('budget')}
+              onBlur={() => setHoveredQuadrant(null)}
+            />
+          )}
+          {gapQuadrants.includes('low-quality') && (
+            <ReferenceArea
+              x1={5}
+              x2={10}
+              y1={1}
+              y2={5}
+              fill="hsl(var(--muted))"
+              fillOpacity={hoveredQuadrant === 'low-quality' ? 0.2 : 0.05}
+              stroke="none"
+              data-testid="gap-indicator"
+              onMouseEnter={() => setHoveredQuadrant('low-quality')}
+              onMouseLeave={() => setHoveredQuadrant(null)}
+              onFocus={() => setHoveredQuadrant('low-quality')}
+              onBlur={() => setHoveredQuadrant(null)}
+            />
+          )}
 
           <XAxis
             type="number"
@@ -141,14 +321,33 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick }: ScatterChar
           <Tooltip
             cursor={{ strokeDasharray: '3 3' }}
             content={({ active, payload }) => {
+              // Show gap area tooltip when hovering over a gap quadrant
+              if (hoveredQuadrant) {
+                return (
+                  <div className="bg-popover border rounded-md p-2 shadow-md">
+                    <p className="text-sm font-medium">Potential gap area</p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {hoveredQuadrant.replace('-', ' ')} quadrant
+                    </p>
+                  </div>
+                );
+              }
+
+              // Show data point tooltip when hovering over a competitor
               if (active && payload && payload.length) {
                 const data = payload[0].payload as ChartPoint;
+                const pointIsStale = isStale(data.updated_at);
                 return (
                   <div className="bg-popover border rounded-md p-2 shadow-md">
                     <p className="font-medium">{data.name}</p>
                     <p className="text-sm text-muted-foreground">
                       Price: {data.x} | Quality: {data.y}
                     </p>
+                    {pointIsStale && (
+                      <p className="text-xs text-warning mt-1">
+                        {getStalenessMessage(data.updated_at)}
+                      </p>
+                    )}
                   </div>
                 );
               }
@@ -175,9 +374,19 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick }: ScatterChar
             }}
             style={{ cursor: isMaho ? 'pointer' : 'default' }}
           >
-            {competitorData.map((entry) => (
-              <Cell key={entry.id} data-testid="chart-data-point" />
-            ))}
+            {competitorData.map((entry) => {
+              const pointIsStale = isStale(entry.updated_at);
+              return (
+                <Cell
+                  key={entry.id}
+                  data-testid={pointIsStale ? 'stale-chart-point' : 'chart-data-point'}
+                  fill={pointIsStale
+                    ? 'hsl(var(--muted-foreground) / 0.5)'
+                    : 'hsl(var(--muted-foreground))'
+                  }
+                />
+              );
+            })}
           </Scatter>
 
           {/* Kel's target position - distinct star marker */}
@@ -244,14 +453,26 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick }: ScatterChar
           >
             Low Quality
           </text>
+
         </RechartsScatter>
       </ResponsiveContainer>
+
+      {/* HTML click overlays for reliable E2E testing */}
+      {competitors && (
+        <ChartClickLayer
+          points={overlayPoints}
+          competitors={competitors}
+          onPointClick={handleOverlayClick}
+          isMaho={isMaho}
+        />
+      )}
+      </div>
 
       {/* Edit popover for clicked data points */}
       {selectedCompetitor && popoverAnchor && (
         <CompetitorEditPopover
           competitor={selectedCompetitor}
-          open={!!selectedCompetitor}
+          open={true}
           onOpenChange={(open) => {
             if (!open) {
               setSelectedCompetitor(null);

@@ -51,7 +51,8 @@ describe('CompetitorDialog', () => {
     );
 
     expect(screen.getByTestId('competitor-dialog')).toBeInTheDocument();
-    expect(screen.getByText('Add Competitor')).toBeInTheDocument();
+    // Use heading role to avoid matching button text
+    expect(screen.getByRole('heading', { name: 'Add Competitor' })).toBeInTheDocument();
   });
 
   it('renders in edit mode with editing competitor', () => {
@@ -65,7 +66,7 @@ describe('CompetitorDialog', () => {
     );
 
     expect(screen.getByTestId('competitor-dialog')).toBeInTheDocument();
-    expect(screen.getByText('Edit Competitor')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Edit Competitor' })).toBeInTheDocument();
   });
 
   it('does not render when closed', () => {
