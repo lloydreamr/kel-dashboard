@@ -134,6 +134,7 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
                     <FilterEmptyState
                       filter={statusFilter}
                       totalCount={counts.all}
+                      onShowAll={() => handleFilterChange('all')}
                     />
                   )
                 : undefined

@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { STATUS_FILTER_CONFIG, StatusFilterKey } from '@/types/question';
 
 interface FilterEmptyStateProps {
@@ -7,13 +8,16 @@ interface FilterEmptyStateProps {
   filter: StatusFilterKey;
   /** Total count of all questions (unfiltered) */
   totalCount: number;
+  /** Callback to clear filter and show all questions */
+  onShowAll?: () => void;
 }
 
 /**
  * Empty state shown when a filter returns no results.
- * Displays contextual message based on the selected filter.
+ * Displays contextual message based on the selected filter
+ * with option to view all questions.
  */
-export function FilterEmptyState({ filter, totalCount }: FilterEmptyStateProps) {
+export function FilterEmptyState({ filter, totalCount, onShowAll }: FilterEmptyStateProps) {
   const filterLabel = STATUS_FILTER_CONFIG[filter].label.toLowerCase();
 
   return (
@@ -25,12 +29,17 @@ export function FilterEmptyState({ filter, totalCount }: FilterEmptyStateProps) 
     >
       <p className="text-muted-foreground">
         No {filterLabel} questions.
-        {totalCount > 0 && (
-          <span className="block mt-1 text-sm">
-            Try a different filter to see your {totalCount} question{totalCount !== 1 ? 's' : ''}.
-          </span>
-        )}
       </p>
+      {totalCount > 0 && onShowAll && (
+        <Button
+          variant="link"
+          onClick={onShowAll}
+          data-testid="show-all-button"
+          className="mt-2 text-primary"
+        >
+          Show all {totalCount} question{totalCount !== 1 ? 's' : ''}
+        </Button>
+      )}
     </div>
   );
 }

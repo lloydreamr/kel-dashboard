@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 
 import { FilterEmptyState } from './FilterEmptyState';
 
@@ -11,22 +12,42 @@ describe('FilterEmptyState', () => {
     expect(screen.getByText(/no draft questions/i)).toBeInTheDocument();
   });
 
-  it('shows suggestion when there are other questions', () => {
-    render(<FilterEmptyState filter="sent" totalCount={10} />);
+  it('shows "Show all" button when there are other questions and onShowAll provided', () => {
+    const onShowAll = vi.fn();
+    render(<FilterEmptyState filter="sent" totalCount={10} onShowAll={onShowAll} />);
 
-    expect(screen.getByText(/try a different filter to see your 10 questions/i)).toBeInTheDocument();
+    expect(screen.getByTestId('show-all-button')).toBeInTheDocument();
+    expect(screen.getByText(/show all 10 questions/i)).toBeInTheDocument();
   });
 
-  it('uses singular "question" when totalCount is 1', () => {
-    render(<FilterEmptyState filter="decided" totalCount={1} />);
+  it('uses singular "question" in button when totalCount is 1', () => {
+    const onShowAll = vi.fn();
+    render(<FilterEmptyState filter="decided" totalCount={1} onShowAll={onShowAll} />);
 
-    expect(screen.getByText(/try a different filter to see your 1 question\./i)).toBeInTheDocument();
+    expect(screen.getByText(/show all 1 question$/i)).toBeInTheDocument();
   });
 
-  it('does not show suggestion when totalCount is 0', () => {
-    render(<FilterEmptyState filter="draft" totalCount={0} />);
+  it('does not show button when totalCount is 0', () => {
+    const onShowAll = vi.fn();
+    render(<FilterEmptyState filter="draft" totalCount={0} onShowAll={onShowAll} />);
 
-    expect(screen.queryByText(/try a different filter/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('show-all-button')).not.toBeInTheDocument();
+  });
+
+  it('does not show button when onShowAll is not provided', () => {
+    render(<FilterEmptyState filter="draft" totalCount={5} />);
+
+    expect(screen.queryByTestId('show-all-button')).not.toBeInTheDocument();
+  });
+
+  it('calls onShowAll when button is clicked', async () => {
+    const user = userEvent.setup();
+    const onShowAll = vi.fn();
+    render(<FilterEmptyState filter="sent" totalCount={10} onShowAll={onShowAll} />);
+
+    await user.click(screen.getByTestId('show-all-button'));
+
+    expect(onShowAll).toHaveBeenCalledTimes(1);
   });
 
   it('has proper accessibility attributes', () => {
