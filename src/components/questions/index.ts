@@ -14,6 +14,7 @@ export { EvidenceCountBadge } from './EvidenceCountBadge';
 export { KelViewedIndicator } from './KelViewedIndicator';
 export type { KelViewedIndicatorProps } from './KelViewedIndicator';
 export { QuestionCard } from './QuestionCard';
+export { QuestionEditForm, type QuestionEditFormData } from './QuestionEditForm';
 export { QuestionForm } from './QuestionForm';
 export { QuestionFormSkeleton } from './QuestionFormSkeleton';
 export {

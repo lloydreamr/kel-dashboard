@@ -9,6 +9,8 @@ export function QueueEmptyState() {
   return (
     <div
       data-testid="queue-empty-state"
+      role="status"
+      aria-label="No pending decisions"
       className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 p-12 text-center"
     >
       {/* Relaxed illustration - simple checkmark circle */}

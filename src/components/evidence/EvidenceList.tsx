@@ -9,8 +9,8 @@ import type { Evidence } from '@/types/evidence';
 interface EvidenceListProps {
   evidence: Evidence[] | undefined;
   isLoading: boolean;
-  /** User role for empty state message */
-  role: 'maho' | 'kel';
+  /** User role for empty state message (default: Kel) */
+  isMaho?: boolean;
   /** Called when an evidence item is clicked */
   onItemClick?: (evidence: Evidence) => void;
   /** Called when edit button is clicked on an evidence item */
@@ -26,12 +26,12 @@ interface EvidenceListProps {
 export function EvidenceList({
   evidence,
   isLoading,
-  role,
+  isMaho = false,
   onItemClick,
   onEditClick,
   onRemoveClick,
 }: EvidenceListProps) {
-  const canModify = role === 'maho';
+  const canModify = isMaho;
 
   // Loading state
   if (isLoading) {
@@ -40,7 +40,7 @@ export function EvidenceList({
 
   // Empty state
   if (!evidence || evidence.length === 0) {
-    return <EvidenceEmptyState role={role} />;
+    return <EvidenceEmptyState isMaho={isMaho} />;
   }
 
   // Populated state

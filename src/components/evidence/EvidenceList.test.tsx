@@ -37,7 +37,7 @@ describe('EvidenceList', () => {
       <EvidenceList
         evidence={undefined}
         isLoading={true}
-        role="maho"
+        isMaho
       />
     );
 
@@ -50,7 +50,7 @@ describe('EvidenceList', () => {
       <EvidenceList
         evidence={[]}
         isLoading={false}
-        role="maho"
+        isMaho
       />
     );
 
@@ -58,12 +58,11 @@ describe('EvidenceList', () => {
     expect(screen.getByText(/Add sources to support/)).toBeInTheDocument();
   });
 
-  it('renders Kel empty state when no evidence', () => {
+  it('renders Kel empty state when no evidence (default)', () => {
     render(
       <EvidenceList
         evidence={[]}
         isLoading={false}
-        role="kel"
       />
     );
 
@@ -76,7 +75,7 @@ describe('EvidenceList', () => {
       <EvidenceList
         evidence={mockEvidence}
         isLoading={false}
-        role="maho"
+        isMaho
       />
     );
 
@@ -96,7 +95,7 @@ describe('EvidenceList', () => {
       <EvidenceList
         evidence={mockEvidence}
         isLoading={false}
-        role="maho"
+        isMaho
         onItemClick={onItemClick}
       />
     );
@@ -112,7 +111,7 @@ describe('EvidenceList', () => {
       <EvidenceList
         evidence={undefined}
         isLoading={false}
-        role="maho"
+        isMaho
       />
     );
 
@@ -126,7 +125,7 @@ describe('EvidenceList', () => {
       <EvidenceList
         evidence={mockEvidence}
         isLoading={false}
-        role="maho"
+        isMaho
         onEditClick={onEditClick}
       />
     );
@@ -144,7 +143,7 @@ describe('EvidenceList', () => {
       <EvidenceList
         evidence={mockEvidence}
         isLoading={false}
-        role="maho"
+        isMaho
         onRemoveClick={onRemoveClick}
       />
     );
@@ -155,12 +154,12 @@ describe('EvidenceList', () => {
     expect(onRemoveClick).toHaveBeenCalledWith(mockEvidence[1]);
   });
 
-  it('hides edit/remove buttons when role is kel', () => {
+  it('hides edit/remove buttons when isMaho is false (Kel)', () => {
     render(
       <EvidenceList
         evidence={mockEvidence}
         isLoading={false}
-        role="kel"
+        isMaho={false}
         onEditClick={vi.fn()}
         onRemoveClick={vi.fn()}
       />

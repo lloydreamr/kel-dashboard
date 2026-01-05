@@ -71,6 +71,8 @@ export function NotesList({
     return (
       <div
         data-testid="notes-empty-state"
+        role="status"
+        aria-label="No notes available"
         className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center"
       >
         <p className="text-muted-foreground">

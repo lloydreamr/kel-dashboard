@@ -14,6 +14,8 @@ export function CategoryEmptyState({ category, isMaho = false }: CategoryEmptySt
   return (
     <div
       data-testid="category-empty-state"
+      role="status"
+      aria-label={`No ${label} questions`}
       className="rounded-lg border border-dashed border-border bg-muted/20 p-4 text-center"
     >
       <p className="text-sm text-muted-foreground">

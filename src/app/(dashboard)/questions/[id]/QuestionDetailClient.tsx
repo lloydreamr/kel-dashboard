@@ -26,6 +26,7 @@ import { CategoryBadge } from '@/components/questions/CategoryBadge';
 import { EvidenceCountBadge } from '@/components/questions/EvidenceCountBadge';
 import { KelViewedIndicator } from '@/components/questions/KelViewedIndicator';
 import { MarkCurrentButton } from '@/components/questions/MarkCurrentButton';
+import { QuestionEditForm } from '@/components/questions/QuestionEditForm';
 import { RecommendationDisplay } from '@/components/questions/RecommendationDisplay';
 import { RecommendationForm } from '@/components/questions/RecommendationForm';
 import { SendToKelButton } from '@/components/questions/SendToKelButton';
@@ -43,6 +44,7 @@ import { useMarkViewed } from '@/hooks/questions/useMarkViewed';
 import { useQuestion } from '@/hooks/questions/useQuestion';
 import { useUpdateQuestion } from '@/hooks/questions/useUpdateQuestion';
 
+import type { QuestionEditFormData } from '@/components/questions/QuestionEditForm';
 import type { RecommendationFormData } from '@/components/questions/recommendationSchema';
 import type { Evidence } from '@/types/evidence';
 
@@ -65,6 +67,7 @@ export function QuestionDetailClient({
   const { mutate: deleteEvidence, isPending: isDeleting } = useDeleteEvidence(questionId);
   const { data: decision } = useDecision(questionId);
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [selectedEvidence, setSelectedEvidence] = useState<Evidence | null>(null);
   const [editingEvidence, setEditingEvidence] = useState<Evidence | null>(null);
   const [removingEvidence, setRemovingEvidence] = useState<Evidence | null>(null);
@@ -104,6 +107,23 @@ export function QuestionDetailClient({
       {
         onSuccess: () => {
           setIsEditing(false);
+        },
+      }
+    );
+  };
+
+  const handleSubmitTitleEdit = (data: QuestionEditFormData) => {
+    updateQuestion(
+      {
+        id: questionId,
+        updates: {
+          title: data.title,
+          description: data.description,
+        },
+      },
+      {
+        onSuccess: () => {
+          setIsEditingTitle(false);
         },
       }
     );
@@ -200,15 +220,57 @@ export function QuestionDetailClient({
             )}
           </div>
 
-          <h1
-            data-testid="question-title"
-            className="text-xl font-semibold text-foreground"
-          >
-            {question.title}
-          </h1>
+          {/* Title and description - editable or read-only */}
+          {isEditingTitle ? (
+            <QuestionEditForm
+              initialValues={{
+                title: question.title,
+                description: question.description,
+              }}
+              onSubmit={handleSubmitTitleEdit}
+              onCancel={() => setIsEditingTitle(false)}
+              isSubmitting={isPending}
+            />
+          ) : (
+            <>
+              <div className="flex items-start justify-between gap-2">
+                <h1
+                  data-testid="question-title"
+                  className="text-xl font-semibold text-foreground"
+                >
+                  {question.title}
+                </h1>
+                {/* Edit button - Maho only, non-archived */}
+                {isMaho && !isArchived && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingTitle(true)}
+                    data-testid="question-edit-button"
+                    className="flex-shrink-0 p-2 text-muted-foreground hover:text-foreground"
+                    aria-label="Edit question title and description"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                      <path d="m15 5 4 4" />
+                    </svg>
+                  </button>
+                )}
+              </div>
 
-          {question.description && (
-            <p className="text-foreground">{question.description}</p>
+              {question.description && (
+                <p className="text-foreground">{question.description}</p>
+              )}
+            </>
           )}
 
           {/* Archive action (Maho only, non-archived questions) */}
@@ -289,7 +351,7 @@ export function QuestionDetailClient({
             <EvidenceList
               evidence={evidence}
               isLoading={isEvidenceLoading}
-              role={isKel ? 'kel' : 'maho'}
+              isMaho={!isKel}
               onItemClick={(item) => setSelectedEvidence(item)}
               onEditClick={(item) => setEditingEvidence(item)}
               onRemoveClick={(item) => setRemovingEvidence(item)}

@@ -51,6 +51,8 @@ export function QuestionsList() {
     return (
       <div
         data-testid="questions-empty-state"
+        role="status"
+        aria-label="No questions available"
         className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center"
       >
         <p className="text-muted-foreground">

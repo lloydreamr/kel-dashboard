@@ -4,6 +4,7 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vitest';
 
 import { ScatterChart } from '@/components/visualization/ScatterChart';
@@ -247,6 +248,36 @@ describe('ScatterChart', () => {
       expect(screen.getByText(/add your first competitor to see the positioning chart/i)).toBeInTheDocument();
       expect(screen.getByTestId('empty-state-action')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /add competitor/i })).toBeInTheDocument();
+    });
+
+    it('calls onAddClick when Maho clicks Add button in empty state', async () => {
+      // Arrange
+      const mockOnAddClick = vi.fn();
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: [],
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(
+        <ScatterChart
+          isMaho={true}
+          onEditClick={vi.fn()}
+          onDeleteClick={vi.fn()}
+          onAddClick={mockOnAddClick}
+        />
+      );
+
+      // Click the Add Competitor button
+      const addButton = screen.getByRole('button', { name: /add competitor/i });
+      await userEvent.click(addButton);
+
+      // Assert
+      expect(mockOnAddClick).toHaveBeenCalledTimes(1);
     });
 
     it('displays Kel-specific empty state without action button (AC #2)', () => {

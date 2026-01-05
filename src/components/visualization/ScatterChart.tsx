@@ -168,6 +168,8 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
     return (
       <div
         data-testid="visualization-empty-state"
+        role="status"
+        aria-label="No competitor data available"
         className="w-full h-[400px] flex items-center justify-center rounded-lg border border-dashed border-border bg-muted/20"
       >
         <div className="text-center p-8">
