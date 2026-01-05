@@ -16,4 +16,5 @@ export { useQuestion } from './useQuestion';
 export { useQuestions } from './useQuestions';
 export { useRestoreQuestion } from './useRestoreQuestion';
 export { useStaleQuestionsByCategory } from './useStaleQuestionsByCategory';
+export { useFilteredQuestions } from './useFilteredQuestions';
 export { useUpdateQuestion } from './useUpdateQuestion';

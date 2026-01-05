@@ -1,12 +1,17 @@
 'use client';
 
 import { Archive } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { ArchivedQuestionsList } from '@/components/questions/ArchivedQuestionsList';
+import { FilterEmptyState } from '@/components/questions/FilterEmptyState';
 import { QuestionForm } from '@/components/questions/QuestionForm';
 import { QuestionsList } from '@/components/questions/QuestionsList';
+import { StatusFilter } from '@/components/questions/StatusFilter';
 import { Button } from '@/components/ui/button';
+import { useFilteredQuestions } from '@/hooks/questions/useFilteredQuestions';
+import { StatusFilterKey, STATUS_FILTER_KEYS } from '@/types/question';
 
 interface QuestionsPageClientProps {
   userId: string;
@@ -17,8 +22,31 @@ interface QuestionsPageClientProps {
  * Handles state for showing/hiding the create form and archived view.
  */
 export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+
+  // Parse and validate filter from URL
+  const rawFilter = searchParams.get('status');
+  const statusFilter: StatusFilterKey =
+    rawFilter && STATUS_FILTER_KEYS.includes(rawFilter as StatusFilterKey)
+      ? (rawFilter as StatusFilterKey)
+      : 'all';
+
+  // Get filtered questions and counts
+  const { questions, counts, isLoading, error } = useFilteredQuestions(statusFilter);
+
+  // Update URL without page reload
+  const handleFilterChange = (filter: StatusFilterKey) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (filter === 'all') {
+      params.delete('status'); // Clean URL for default state
+    } else {
+      params.set('status', filter);
+    }
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   const handleNewQuestion = () => {
     setShowForm(true);
@@ -81,8 +109,37 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
           </div>
         )}
 
+        {/* Status Filter - show only for active questions view */}
+        {!showForm && !showArchived && (
+          <div className="mb-6">
+            <StatusFilter
+              value={statusFilter}
+              counts={counts}
+              onChange={handleFilterChange}
+            />
+          </div>
+        )}
+
         {/* Questions List or Archived List */}
-        {!showForm && (showArchived ? <ArchivedQuestionsList /> : <QuestionsList />)}
+        {!showForm && (showArchived ? (
+          <ArchivedQuestionsList />
+        ) : (
+          <QuestionsList
+            questions={questions}
+            isLoading={isLoading}
+            error={error}
+            renderEmptyState={
+              statusFilter !== 'all'
+                ? () => (
+                    <FilterEmptyState
+                      filter={statusFilter}
+                      totalCount={counts.all}
+                    />
+                  )
+                : undefined
+            }
+          />
+        ))}
       </div>
     </main>
   );

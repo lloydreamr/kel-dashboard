@@ -12,8 +12,18 @@ import { CategorySection } from './CategorySection';
 import { QuestionCard } from './QuestionCard';
 import { QuestionsListSkeleton } from './QuestionsListSkeleton';
 
-
 import type { Question, QuestionCategory } from '@/types/question';
+
+interface QuestionsListProps {
+  /** Optional questions to display. If not provided, fetches from useQuestions. */
+  questions?: Question[];
+  /** Optional loading state override. Only used when questions prop is provided. */
+  isLoading?: boolean;
+  /** Optional error override. Only used when questions prop is provided. */
+  error?: Error | null;
+  /** Render prop for custom empty state. Used when filtered results are empty. */
+  renderEmptyState?: () => React.ReactNode;
+}
 
 function groupByCategory(questions: Question[]): Record<QuestionCategory, Question[]> {
   const grouped: Record<QuestionCategory, Question[]> = {
@@ -29,10 +39,24 @@ function groupByCategory(questions: Question[]): Record<QuestionCategory, Questi
   return grouped;
 }
 
-export function QuestionsList() {
+export function QuestionsList({
+  questions: propQuestions,
+  isLoading: propIsLoading,
+  error: propError,
+  renderEmptyState,
+}: QuestionsListProps = {}) {
   const { data: profile } = useProfile();
-  const { data: questions, isLoading, error } = useQuestions();
+  const {
+    data: fetchedQuestions,
+    isLoading: fetchIsLoading,
+    error: fetchError,
+  } = useQuestions();
   const isMaho = profile?.role === 'maho';
+
+  // Use prop values if provided, otherwise use fetched values
+  const questions = propQuestions ?? fetchedQuestions;
+  const isLoading = propQuestions !== undefined ? (propIsLoading ?? false) : fetchIsLoading;
+  const error = propQuestions !== undefined ? propError : fetchError;
 
   if (isLoading) {
     return <QuestionsListSkeleton />;
@@ -44,6 +68,11 @@ export function QuestionsList() {
         <p className="text-destructive">Failed to load questions</p>
       </div>
     );
+  }
+
+  // Custom empty state for filtered results
+  if ((!questions || questions.length === 0) && renderEmptyState) {
+    return <>{renderEmptyState()}</>;
   }
 
   // Global empty state - role-specific messaging (AC: #3, #4, #5)

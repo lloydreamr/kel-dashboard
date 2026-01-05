@@ -97,12 +97,12 @@ async function createStaleQuestion(
   return data.id;
 }
 
-// Helper to get Maho's profile ID
+// Helper to get Maho's profile ID (using the test user email)
 async function getMahoProfileId(client: SupabaseClient): Promise<string> {
   const { data, error } = await client
     .from('profiles')
     .select('id')
-    .eq('role', 'maho')
+    .eq('email', 'maho@test.kel-dashboard.local')
     .single();
 
   if (error) {
