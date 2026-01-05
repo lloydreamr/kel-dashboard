@@ -15,122 +15,61 @@
  * It will be skipped if the environment variable is not available.
  */
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import * as fs from 'fs';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import path from 'path';
 
-// Load environment variables from .env.local if not already set
-const envPath = path.join(__dirname, '../../.env.local');
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, 'utf-8');
-  for (const line of envContent.split('\n')) {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith('#')) {
-      const [key, ...valueParts] = trimmed.split('=');
-      const value = valueParts.join('=').replace(/^["']|["']$/g, '');
-      if (key && !process.env[key]) {
-        process.env[key] = value;
-      }
-    }
-  }
-}
+import {
+  loadEnvFromFile,
+  hasSupabaseConfig,
+  createServiceClient,
+  getStorageStatePaths,
+  getMahoProfileId,
+  createStaleQuestion,
+  createFreshQuestion,
+  cleanupQuestionsByPrefix,
+  createTestPrefix,
+  TIMEOUTS,
+} from '../utils/test-helpers';
+
+// Load environment variables
+loadEnvFromFile(path.join(__dirname, '../..'));
 
 // Use serial mode - tests depend on each other
 test.describe.configure({ mode: 'serial' });
 
-// Timeout constants for consistency
-const TIMEOUT = {
-  NAVIGATION: 10000,
-  NETWORK: 5000,
-  ANIMATION: 3000,
-} as const;
+// Auth state paths
+const STORAGE_STATE = getStorageStatePaths(path.join(__dirname, '..'));
 
-const STORAGE_STATE = {
-  maho: path.join(__dirname, '../.auth/maho.json'),
-  kel: path.join(__dirname, '../.auth/kel.json'),
-};
+// Unique test prefix for this test file
+const TEST_PREFIX = 'E2E Freshness Badge Test';
 
-// Generate unique test question title
-const TEST_QUESTION_TITLE_PREFIX = 'E2E Freshness Badge Test';
-const UNIQUE_ID = Date.now();
-const TEST_STALE_QUESTION_1 = `${TEST_QUESTION_TITLE_PREFIX} Stale Market 1 ${UNIQUE_ID}`;
-const TEST_STALE_QUESTION_2 = `${TEST_QUESTION_TITLE_PREFIX} Stale Market 2 ${UNIQUE_ID}`;
-const TEST_FRESH_QUESTION = `${TEST_QUESTION_TITLE_PREFIX} Fresh Product ${UNIQUE_ID}`;
-
-// Staleness threshold is 14 days, so we use 20 days ago for stale
-const STALE_DATE = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString();
-// Fresh date is now
-const FRESH_DATE = new Date().toISOString();
-
-// Check for required environment variables
-const hasSupabaseConfig =
-  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY;
-
+// Test state
 let mahoContext: BrowserContext;
 let mahoPage: Page;
 let staleQuestionId1: string;
 let staleQuestionId2: string;
 let freshQuestionId: string;
 let supabase: SupabaseClient | null = null;
-
-// Initialize Supabase client if credentials are available
-if (hasSupabaseConfig) {
-  supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
-
-// Helper to create a question directly in the database
-async function createQuestion(
-  client: SupabaseClient,
-  title: string,
-  category: string,
-  profileId: string,
-  updatedAt: string
-): Promise<string> {
-  const { data, error } = await client
-    .from('questions')
-    .insert({
-      title,
-      description: 'E2E test question for freshness badge testing',
-      category,
-      status: 'draft',
-      created_by: profileId,
-      created_at: updatedAt,
-      updated_at: updatedAt,
-    })
-    .select('id')
-    .single();
-
-  if (error) {
-    throw new Error(`Failed to create question: ${error.message}`);
-  }
-
-  return data.id;
-}
-
-// Helper to get Maho's profile ID
-async function getMahoProfileId(client: SupabaseClient): Promise<string> {
-  const { data, error } = await client
-    .from('profiles')
-    .select('id')
-    .eq('role', 'maho')
-    .single();
-
-  if (error) {
-    throw new Error(`Failed to get Maho profile: ${error.message}`);
-  }
-
-  return data.id;
-}
+let testPrefix: string;
+let staleQuestionTitle1: string;
+let staleQuestionTitle2: string;
 
 test.beforeAll(async ({ browser }) => {
   // Skip setup if Supabase config is missing
-  if (!hasSupabaseConfig || !supabase) {
+  if (!hasSupabaseConfig()) {
     console.warn('Skipping freshness badge tests: missing SUPABASE_SERVICE_ROLE_KEY');
     return;
   }
+
+  supabase = createServiceClient();
+  if (!supabase) return;
+
+  // Generate unique prefix for this test run
+  testPrefix = createTestPrefix(TEST_PREFIX);
+
+  // Generate unique titles for verification in tests
+  staleQuestionTitle1 = `${testPrefix} Stale Market 1`;
+  staleQuestionTitle2 = `${testPrefix} Stale Market 2`;
 
   // Create context for Maho with auth state
   mahoContext = await browser.newContext({
@@ -143,29 +82,27 @@ test.beforeAll(async ({ browser }) => {
   const mahoId = await getMahoProfileId(supabase);
 
   // Create 2 stale questions in 'market' category
-  staleQuestionId1 = await createQuestion(
-    supabase,
-    TEST_STALE_QUESTION_1,
-    'market',
-    mahoId,
-    STALE_DATE
-  );
-  staleQuestionId2 = await createQuestion(
-    supabase,
-    TEST_STALE_QUESTION_2,
-    'market',
-    mahoId,
-    STALE_DATE
-  );
+  staleQuestionId1 = await createStaleQuestion(supabase, {
+    title: staleQuestionTitle1,
+    category: 'market',
+    profileId: mahoId,
+    description: 'E2E test question for freshness badge testing',
+  });
+
+  staleQuestionId2 = await createStaleQuestion(supabase, {
+    title: staleQuestionTitle2,
+    category: 'market',
+    profileId: mahoId,
+    description: 'E2E test question for freshness badge testing',
+  });
 
   // Create 1 fresh question in 'product' category
-  freshQuestionId = await createQuestion(
-    supabase,
-    TEST_FRESH_QUESTION,
-    'product',
-    mahoId,
-    FRESH_DATE
-  );
+  freshQuestionId = await createFreshQuestion(supabase, {
+    title: `${testPrefix} Fresh Product`,
+    category: 'product',
+    profileId: mahoId,
+    description: 'E2E test question for freshness badge testing',
+  });
 
   console.log(
     `Created test questions: stale=[${staleQuestionId1}, ${staleQuestionId2}], fresh=${freshQuestionId}`
@@ -174,25 +111,9 @@ test.beforeAll(async ({ browser }) => {
 
 test.afterAll(async () => {
   // Cleanup test data if Supabase is available
-  if (supabase) {
-    try {
-      const { error, data } = await supabase
-        .from('questions')
-        .delete()
-        .ilike('title', `${TEST_QUESTION_TITLE_PREFIX}%`)
-        .select('id');
-
-      if (error) {
-        console.error('E2E cleanup failed:', error.message);
-      } else {
-        console.log(`E2E cleanup: removed ${data?.length ?? 0} test questions`);
-      }
-    } catch (err) {
-      console.error(
-        'E2E cleanup error:',
-        err instanceof Error ? err.message : 'Unknown error'
-      );
-    }
+  if (supabase && testPrefix) {
+    const count = await cleanupQuestionsByPrefix(supabase, testPrefix);
+    console.log(`E2E cleanup: removed ${count} test questions`);
   }
 
   // Close context if it was created
@@ -201,19 +122,19 @@ test.afterAll(async () => {
 
 test.describe('Freshness Badge per Category Flow', () => {
   // Skip all tests in this describe block if Supabase config is missing
-  test.skip(!hasSupabaseConfig, 'Skipping: SUPABASE_SERVICE_ROLE_KEY not set');
+  test.skip(!hasSupabaseConfig(), 'Skipping: SUPABASE_SERVICE_ROLE_KEY not set');
 
   test('Milestone with stale questions shows freshness warning badge', async () => {
     // Navigate to progress page
     await mahoPage.goto('/progress');
     await expect(mahoPage.getByTestId('progress-page')).toBeVisible({
-      timeout: TIMEOUT.NAVIGATION,
+      timeout: TIMEOUTS.NAVIGATION,
     });
 
     // Market card should show freshness warning badge (has stale questions)
     const marketCard = mahoPage.getByTestId('milestone-card-market');
     await expect(marketCard.getByTestId('freshness-warning-badge')).toBeVisible({
-      timeout: TIMEOUT.NETWORK,
+      timeout: TIMEOUTS.NETWORK,
     });
   });
 
@@ -262,7 +183,7 @@ test.describe('Freshness Badge per Category Flow', () => {
 
     // Should navigate to stale questions page for market category
     await expect(mahoPage).toHaveURL(/\/questions\/stale\/market/, {
-      timeout: TIMEOUT.NAVIGATION,
+      timeout: TIMEOUTS.NAVIGATION,
     });
 
     // Page should show stale questions title
@@ -275,12 +196,12 @@ test.describe('Freshness Badge per Category Flow', () => {
     // Should be on /questions/stale/market from previous test
     // Wait for the questions list to load
     await expect(mahoPage.getByTestId('stale-questions-list')).toBeVisible({
-      timeout: TIMEOUT.NETWORK,
+      timeout: TIMEOUTS.NETWORK,
     });
 
     // Should show our test stale questions
-    await expect(mahoPage.getByText(TEST_STALE_QUESTION_1)).toBeVisible();
-    await expect(mahoPage.getByText(TEST_STALE_QUESTION_2)).toBeVisible();
+    await expect(mahoPage.getByText(staleQuestionTitle1)).toBeVisible();
+    await expect(mahoPage.getByText(staleQuestionTitle2)).toBeVisible();
   });
 
   test('Back navigation returns to progress page', async () => {
@@ -291,7 +212,7 @@ test.describe('Freshness Badge per Category Flow', () => {
 
     // Should be back on progress page
     await expect(mahoPage.getByTestId('progress-page')).toBeVisible({
-      timeout: TIMEOUT.NAVIGATION,
+      timeout: TIMEOUTS.NAVIGATION,
     });
   });
 
@@ -301,7 +222,7 @@ test.describe('Freshness Badge per Category Flow', () => {
 
     // Should show error state
     await expect(mahoPage.getByTestId('invalid-category-error')).toBeVisible({
-      timeout: TIMEOUT.NAVIGATION,
+      timeout: TIMEOUTS.NAVIGATION,
     });
     await expect(mahoPage.getByText(/Invalid category: invalid-category/)).toBeVisible();
   });

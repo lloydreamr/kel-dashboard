@@ -3,21 +3,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { DeleteCompetitorDialog } from './DeleteCompetitorDialog';
+import { createMockCompetitor } from '@/test/factories';
 
-import type { CompetitorDataPoint } from '@/types';
-
-const mockCompetitor: CompetitorDataPoint = {
+// Use factory with minimal overrides for dialog tests
+const mockCompetitor = createMockCompetitor({
   id: '1',
   name: 'Test Competitor',
   price_score: 7,
   quality_score: 8,
-  category: null,
-  notes: null,
-  is_kel_position: false,
-  created_by: 'user1',
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
+});
 
 describe('DeleteCompetitorDialog', () => {
   it('shows competitor name in message', () => {

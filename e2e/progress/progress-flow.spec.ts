@@ -17,24 +17,16 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import path from 'path';
 
-// Timeout constants for consistency
-const TIMEOUT = {
-  NAVIGATION: 10000,
-  NETWORK: 5000,
-  ANIMATION: 3000,
-} as const;
+import { getStorageStatePaths, generateTestId, TIMEOUTS } from '../utils/test-helpers';
 
 test.describe.configure({ mode: 'serial' });
 
-const STORAGE_STATE = {
-  maho: path.join(__dirname, '../.auth/maho.json'),
-  kel: path.join(__dirname, '../.auth/kel.json'),
-};
+// Auth state paths
+const STORAGE_STATE = getStorageStatePaths(path.join(__dirname, '..'));
 
 // Generate unique test data per project (chromium/iphone)
-// Use Math.random to ensure uniqueness even in parallel execution
 function getTestData(projectSuffix: string) {
-  const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}-${projectSuffix}`;
+  const uniqueId = `${generateTestId()}-${projectSuffix}`;
   return {
     noteContent: `Progress Test Note ${uniqueId}`,
     noteUpdated: `Updated Progress Note ${uniqueId}`,
@@ -72,7 +64,9 @@ test.describe('Progress Page View (AC1)', () => {
     await mahoPage.goto('/progress');
 
     // Assert
-    await expect(mahoPage.getByTestId('progress-page')).toBeVisible({ timeout: 10000 });
+    await expect(mahoPage.getByTestId('progress-page')).toBeVisible({
+      timeout: TIMEOUTS.NAVIGATION,
+    });
   });
 
   test('1.2: Verify three milestone cards are displayed', async () => {
@@ -99,7 +93,9 @@ test.describe('Progress Page View (AC1)', () => {
     expect(productMeterCount + productEmptyCount).toBeGreaterThan(0);
 
     const distributionMeterCount = await distributionCard.getByTestId('clarity-meter').count();
-    const distributionEmptyCount = await distributionCard.getByTestId('clarity-meter-empty').count();
+    const distributionEmptyCount = await distributionCard
+      .getByTestId('clarity-meter-empty')
+      .count();
     expect(distributionMeterCount + distributionEmptyCount).toBeGreaterThan(0);
 
     // If meter is visible, verify count is also visible
@@ -119,7 +115,9 @@ test.describe('Progress Page View (AC1)', () => {
     await mahoPage.reload();
 
     // Note: Skeleton may be too fast to catch, so we just verify page eventually loads
-    await expect(mahoPage.getByTestId('progress-page')).toBeVisible({ timeout: TIMEOUT.NAVIGATION });
+    await expect(mahoPage.getByTestId('progress-page')).toBeVisible({
+      timeout: TIMEOUTS.NAVIGATION,
+    });
   });
 });
 
@@ -133,7 +131,9 @@ test.describe('WOFEX Countdown Display (AC2)', () => {
     await mahoPage.goto('/progress');
 
     // Assert
-    await expect(mahoPage.getByTestId('wofex-countdown-banner')).toBeVisible({ timeout: TIMEOUT.NAVIGATION });
+    await expect(mahoPage.getByTestId('wofex-countdown-banner')).toBeVisible({
+      timeout: TIMEOUTS.NAVIGATION,
+    });
   });
 
   test('2.2: Verify countdown text format shows days until WOFEX 2026', async () => {
@@ -158,7 +158,9 @@ test.describe('WOFEX Countdown Display (AC2)', () => {
     // Calculate expected days
     const today = new Date();
     const wofexDate = new Date('2026-07-29');
-    const expectedDays = Math.ceil((wofexDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const expectedDays = Math.ceil(
+      (wofexDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
 
     // Assert - Displayed days should match calculated days (within 1 day tolerance for timezone)
     expect(Math.abs(displayedDays - expectedDays)).toBeLessThanOrEqual(1);
@@ -185,16 +187,23 @@ test.describe('Mark Milestone Complete (AC3)', () => {
       await markButton.click();
 
       // Assert - Dialog appears
-      await expect(mahoPage.getByTestId('milestone-complete-dialog')).toBeVisible({ timeout: TIMEOUT.ANIMATION });
+      await expect(mahoPage.getByTestId('milestone-complete-dialog')).toBeVisible({
+        timeout: TIMEOUTS.ANIMATION,
+      });
 
       // Act - Confirm completion
       await mahoPage.getByTestId('milestone-complete-confirm').click();
 
       // Assert - Completion badge appears after network call
-      await expect(productCard.getByTestId('milestone-complete-badge')).toBeVisible({ timeout: TIMEOUT.NETWORK });
+      await expect(productCard.getByTestId('milestone-complete-badge')).toBeVisible({
+        timeout: TIMEOUTS.NETWORK,
+      });
     } else {
       // Milestone already complete or not in_progress - skip this test
-      test.skip(buttonCount === 0, 'Mark complete button not available (milestone may already be complete)');
+      test.skip(
+        buttonCount === 0,
+        'Mark complete button not available (milestone may already be complete)'
+      );
     }
   });
 
@@ -213,7 +222,10 @@ test.describe('Mark Milestone Complete (AC3)', () => {
       expect(['Complete', 'In Progress', 'Not Started']).toContain(badgeText);
     } else {
       // No status badge means milestone is complete (shows completion badge instead)
-      test.skip(badgeCount === 0, 'Status badge not shown (milestone may show completion badge instead)');
+      test.skip(
+        badgeCount === 0,
+        'Status badge not shown (milestone may show completion badge instead)'
+      );
     }
   });
 
@@ -235,7 +247,10 @@ test.describe('Mark Milestone Complete (AC3)', () => {
       expect(dateText).toBeTruthy();
     } else {
       // No completion badge means milestone not complete yet
-      test.skip(completionBadgeCount === 0, 'Completion badge not shown (milestone not yet complete)');
+      test.skip(
+        completionBadgeCount === 0,
+        'Completion badge not shown (milestone not yet complete)'
+      );
     }
   });
 });
@@ -254,19 +269,23 @@ test.describe('Milestone Notes CRUD (AC4)', () => {
     await marketCard.getByTestId('add-note-button').click();
 
     // Assert - Note input appears
-    await expect(mahoPage.getByTestId('note-input-textarea')).toBeVisible({ timeout: TIMEOUT.ANIMATION });
+    await expect(mahoPage.getByTestId('note-input-textarea')).toBeVisible({
+      timeout: TIMEOUTS.ANIMATION,
+    });
 
     // Act - Fill and save note, wait for mutation to complete
     await mahoPage.getByTestId('note-input-textarea').fill(TEST_DATA.noteContent);
 
     // Click save and wait for the network request to complete
     await Promise.all([
-      mahoPage.waitForResponse(resp => resp.url().includes('rest') && resp.status() === 200),
+      mahoPage.waitForResponse((resp) => resp.url().includes('rest') && resp.status() === 200),
       mahoPage.getByTestId('note-save-button').click(),
     ]);
 
     // Assert - Note appears in notes list
-    await expect(mahoPage.getByText(TEST_DATA.noteContent)).toBeVisible({ timeout: TIMEOUT.NETWORK });
+    await expect(mahoPage.getByText(TEST_DATA.noteContent)).toBeVisible({
+      timeout: TIMEOUTS.NETWORK,
+    });
 
     // Extra wait to ensure database write is fully committed before next test reloads
     await mahoPage.waitForLoadState('networkidle');
@@ -275,10 +294,14 @@ test.describe('Milestone Notes CRUD (AC4)', () => {
   test('4.2: Verify note appears in notes list', async () => {
     // Arrange - Navigate to progress page and wait for it to load
     await mahoPage.goto('/progress');
-    await expect(mahoPage.getByTestId('progress-page')).toBeVisible({ timeout: TIMEOUT.NAVIGATION });
+    await expect(mahoPage.getByTestId('progress-page')).toBeVisible({
+      timeout: TIMEOUTS.NAVIGATION,
+    });
 
     // Assert - Note persists after reload
-    await expect(mahoPage.getByText(TEST_DATA.noteContent)).toBeVisible({ timeout: TIMEOUT.NETWORK });
+    await expect(mahoPage.getByText(TEST_DATA.noteContent)).toBeVisible({
+      timeout: TIMEOUTS.NETWORK,
+    });
   });
 
   test('4.3: Maho edits own note', async () => {
@@ -292,7 +315,7 @@ test.describe('Milestone Notes CRUD (AC4)', () => {
 
     // Assert - Edit mode activated (textarea appears)
     const textarea = mahoPage.getByRole('textbox');
-    await expect(textarea).toBeVisible({ timeout: TIMEOUT.ANIMATION });
+    await expect(textarea).toBeVisible({ timeout: TIMEOUTS.ANIMATION });
 
     // Act - Clear and update note
     await textarea.clear();
@@ -300,22 +323,30 @@ test.describe('Milestone Notes CRUD (AC4)', () => {
     await mahoPage.getByText('Save').click();
 
     // Wait for success toast to confirm mutation completed
-    await expect(mahoPage.getByText('Note updated')).toBeVisible({ timeout: TIMEOUT.NETWORK });
+    await expect(mahoPage.getByText('Note updated')).toBeVisible({
+      timeout: TIMEOUTS.NETWORK,
+    });
 
     // Assert - Updated note appears after mutation
-    await expect(mahoPage.getByText(TEST_DATA.noteUpdated)).toBeVisible({ timeout: TIMEOUT.NETWORK });
+    await expect(mahoPage.getByText(TEST_DATA.noteUpdated)).toBeVisible({
+      timeout: TIMEOUTS.NETWORK,
+    });
   });
 
   test('4.4: Verify note content updated', async () => {
     // Arrange - Navigate to progress page and wait for it to load
     await mahoPage.goto('/progress');
-    await expect(mahoPage.getByTestId('progress-page')).toBeVisible({ timeout: TIMEOUT.NAVIGATION });
+    await expect(mahoPage.getByTestId('progress-page')).toBeVisible({
+      timeout: TIMEOUTS.NAVIGATION,
+    });
 
     // Wait for notes to load (network request to complete)
     await mahoPage.waitForLoadState('networkidle');
 
     // Assert - Updated note persists
-    await expect(mahoPage.getByText(TEST_DATA.noteUpdated)).toBeVisible({ timeout: TIMEOUT.NETWORK });
+    await expect(mahoPage.getByText(TEST_DATA.noteUpdated)).toBeVisible({
+      timeout: TIMEOUTS.NETWORK,
+    });
 
     // Assert - Old note content gone
     await expect(mahoPage.getByText(TEST_DATA.noteContent)).not.toBeVisible();
@@ -326,7 +357,9 @@ test.describe('Milestone Notes CRUD (AC4)', () => {
     await kelPage.goto('/progress');
 
     // Wait for page to load
-    await expect(kelPage.getByTestId('progress-page')).toBeVisible({ timeout: TIMEOUT.NAVIGATION });
+    await expect(kelPage.getByTestId('progress-page')).toBeVisible({
+      timeout: TIMEOUTS.NAVIGATION,
+    });
 
     // Find Maho's note
     const noteItem = kelPage.locator('[data-testid="note-item"]', {
@@ -359,21 +392,29 @@ test.describe('Milestone Notes CRUD (AC4)', () => {
     await noteItem.getByTestId('note-delete-button').click();
 
     // Assert - Delete dialog appears
-    await expect(mahoPage.getByTestId('note-delete-dialog')).toBeVisible({ timeout: TIMEOUT.ANIMATION });
+    await expect(mahoPage.getByTestId('note-delete-dialog')).toBeVisible({
+      timeout: TIMEOUTS.ANIMATION,
+    });
 
     // Act - Confirm deletion
     await mahoPage.getByTestId('note-delete-confirm').click();
 
     // Assert - Note removed from list (Playwright auto-waits for network completion)
-    await expect(mahoPage.getByText(TEST_DATA.noteUpdated)).not.toBeVisible({ timeout: TIMEOUT.NETWORK });
+    await expect(mahoPage.getByText(TEST_DATA.noteUpdated)).not.toBeVisible({
+      timeout: TIMEOUTS.NETWORK,
+    });
   });
 
   test('4.7: Verify note removed persists after reload', async () => {
     // Arrange - Navigate to progress page and wait for it to load
     await mahoPage.goto('/progress');
-    await expect(mahoPage.getByTestId('progress-page')).toBeVisible({ timeout: TIMEOUT.NAVIGATION });
+    await expect(mahoPage.getByTestId('progress-page')).toBeVisible({
+      timeout: TIMEOUTS.NAVIGATION,
+    });
 
     // Assert - Deleted note stays gone
-    await expect(mahoPage.getByText(TEST_DATA.noteUpdated)).not.toBeVisible({ timeout: TIMEOUT.NETWORK });
+    await expect(mahoPage.getByText(TEST_DATA.noteUpdated)).not.toBeVisible({
+      timeout: TIMEOUTS.NETWORK,
+    });
   });
 });

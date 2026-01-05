@@ -3,20 +3,17 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { EvidenceItem } from './EvidenceItem';
+import { createMockEvidence } from '@/test/factories';
 
-import type { Evidence } from '@/types/evidence';
-
-const mockEvidence: Evidence = {
+// Use factory with specific overrides for display tests
+const mockEvidence = createMockEvidence({
   id: 'e1',
   question_id: 'q1',
   title: 'Market Research Report',
   url: 'https://example.com/report',
   section_anchor: '#pricing',
   excerpt: 'This report shows pricing trends in the market.',
-  created_by: 'user1',
-  created_at: '2024-12-24T00:00:00Z',
-  updated_at: '2024-12-24T00:00:00Z',
-};
+});
 
 describe('EvidenceItem', () => {
   it('renders evidence details', () => {

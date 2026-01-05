@@ -2,8 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { QuestionCard } from './QuestionCard';
-
-import type { Question } from '@/types/question';
+import { createMockQuestion } from '@/test/factories';
 
 // Mock date to get consistent relative time output
 const mockDate = new Date('2025-12-23T12:00:00Z');
@@ -18,19 +17,16 @@ describe('QuestionCard', () => {
     vi.useRealTimers();
   });
 
-  const mockQuestion: Question = {
+  // Use factory with specific overrides for time-sensitive tests
+  const mockQuestion = createMockQuestion({
     id: 'q-123',
     title: 'What is the target market size?',
     description: 'Research the total addressable market',
     category: 'market',
     status: 'draft',
-    recommendation: null,
-    recommendation_rationale: null,
-    viewed_by_kel_at: null,
-    created_by: 'user-123',
     created_at: '2025-12-23T10:00:00Z', // 2 hours ago from mockDate
     updated_at: '2025-12-23T10:00:00Z',
-  };
+  });
 
   it('renders with correct test ID', () => {
     render(<QuestionCard question={mockQuestion} />);

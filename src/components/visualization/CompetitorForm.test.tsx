@@ -4,8 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { CompetitorForm } from './CompetitorForm';
-
-import type { CompetitorDataPoint } from '@/types';
+import { createMockCompetitor } from '@/test/factories';
 
 // Mock the hooks - both must return valid mutation objects
 vi.mock('@/hooks/competitors', () => ({
@@ -28,18 +27,15 @@ function createWrapper() {
   };
 }
 
-const mockCompetitor: CompetitorDataPoint = {
+// Use factory with specific overrides for form testing
+const mockCompetitor = createMockCompetitor({
   id: '1',
   name: 'Test Competitor',
   price_score: 7,
   quality_score: 8,
   category: 'Chips',
   notes: 'Test notes',
-  is_kel_position: false,
-  created_by: 'user1',
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
+});
 
 describe('CompetitorForm', () => {
   it('renders all form fields', async () => {

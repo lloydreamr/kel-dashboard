@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { ScatterChart, AddCompetitorButton, CompetitorDialog, DeleteCompetitorDialog, MarkKelPositionButton, KelPositionDialog, ChartLegend, ScatterChartSkeleton } from '@/components/visualization';
 import { useProfile } from '@/hooks/auth';
@@ -28,7 +28,6 @@ export default function VisualizationPage() {
   const [editingCompetitor, setEditingCompetitor] = useState<CompetitorDataPoint | null>(null);
   const [deletingCompetitor, setDeletingCompetitor] = useState<CompetitorDataPoint | null>(null);
   const [kelDialogOpen, setKelDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const deleteMutation = useDeleteCompetitor();
   const { data: competitors, isLoading: competitorsLoading } = useCompetitorData();
@@ -36,12 +35,6 @@ export default function VisualizationPage() {
   // Find existing Kel position for conditional button text
   const existingKelPosition = competitors?.find((c) => c.is_kel_position);
   const hasKelPosition = !!existingKelPosition;
-
-  // Memoize category extraction to avoid recalculation on every render
-  const categories = useMemo(
-    () => [...new Set(competitors?.map((c) => c.category).filter(Boolean))] as string[],
-    [competitors]
-  );
 
   const handleAddClick = () => {
     setEditingCompetitor(null);
@@ -114,13 +107,7 @@ export default function VisualizationPage() {
           onEditClick={handleEditClick}
           onDeleteClick={handleDeleteClick}
         />
-        <ChartLegend
-          hasKelPosition={hasKelPosition}
-          categories={categories.length > 0 ? categories : undefined}
-          selectedCategory={selectedCategory}
-          onCategoryClick={setSelectedCategory}
-          isLoading={competitorsLoading}
-        />
+        <ChartLegend hasKelPosition={hasKelPosition} isLoading={competitorsLoading} />
       </div>
 
       {/* Add/Edit Dialog */}

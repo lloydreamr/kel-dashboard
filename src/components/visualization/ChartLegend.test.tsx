@@ -1,13 +1,14 @@
 /**
  * ChartLegend Component Tests
  *
- * Tests for the chart legend component including marker visibility,
- * category display, and loading state handling.
+ * Tests for the chart legend component including marker visibility
+ * and loading state handling.
+ *
+ * Note: Category toggle tests removed per Epic 6 retrospective action item.
  */
 
 import { render, screen } from '@testing-library/react';
-import { userEvent } from '@testing-library/user-event';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 import { ChartLegend } from './ChartLegend';
 
@@ -42,68 +43,6 @@ describe('ChartLegend', () => {
     });
   });
 
-  // AC2: Category label tests
-  describe('Category labels', () => {
-    it('renders category labels when provided', () => {
-      // Arrange
-      const categories = ['Chips', 'Crackers', 'Cookies'];
-      const mockOnClick = vi.fn();
-
-      // Act
-      render(
-        <ChartLegend
-          hasKelPosition={false}
-          categories={categories}
-          onCategoryClick={mockOnClick}
-        />
-      );
-
-      // Assert
-      expect(screen.getByText('Categories:')).toBeInTheDocument();
-      categories.forEach((category) => {
-        expect(screen.getByText(category)).toBeInTheDocument();
-      });
-    });
-
-    it('does NOT render category section when categories is empty array', () => {
-      // Arrange & Act
-      render(
-        <ChartLegend
-          hasKelPosition={false}
-          categories={[]}
-          onCategoryClick={vi.fn()}
-        />
-      );
-
-      // Assert
-      expect(screen.queryByTestId('legend-category-filter')).not.toBeInTheDocument();
-      expect(screen.queryByText('Categories:')).not.toBeInTheDocument();
-    });
-
-    it('does NOT render category section when categories is undefined', () => {
-      // Arrange & Act
-      render(<ChartLegend hasKelPosition={false} />);
-
-      // Assert
-      expect(screen.queryByTestId('legend-category-filter')).not.toBeInTheDocument();
-      expect(screen.queryByText('Categories:')).not.toBeInTheDocument();
-    });
-
-    it('does NOT render category section when onCategoryClick is missing', () => {
-      // Arrange & Act
-      render(
-        <ChartLegend
-          hasKelPosition={false}
-          categories={['Chips', 'Crackers']}
-        />
-      );
-
-      // Assert
-      expect(screen.queryByTestId('legend-category-filter')).not.toBeInTheDocument();
-      expect(screen.queryByText('Categories:')).not.toBeInTheDocument();
-    });
-  });
-
   // AC3: Responsive layout (tested via className presence)
   describe('Responsive layout', () => {
     it('applies responsive flex classes for wrapping', () => {
@@ -122,72 +61,6 @@ describe('ChartLegend', () => {
       // Assert
       const container = screen.getByTestId('chart-legend');
       expect(container).toHaveClass('mt-4');
-    });
-  });
-
-  // AC4: Category selection interaction
-  describe('Category selection interaction', () => {
-    it('calls onCategoryClick with category name when clicked', async () => {
-      // Arrange
-      const mockOnClick = vi.fn();
-      const categories = ['Chips', 'Crackers'];
-      const user = userEvent.setup();
-      render(
-        <ChartLegend
-          hasKelPosition={false}
-          categories={categories}
-          onCategoryClick={mockOnClick}
-        />
-      );
-
-      // Act
-      await user.click(screen.getByText('Chips'));
-
-      // Assert
-      expect(mockOnClick).toHaveBeenCalledWith('Chips');
-      expect(mockOnClick).toHaveBeenCalledTimes(1);
-    });
-
-    it('calls onCategoryClick with null when selected category clicked again', async () => {
-      // Arrange
-      const mockOnClick = vi.fn();
-      const categories = ['Chips'];
-      const user = userEvent.setup();
-      render(
-        <ChartLegend
-          hasKelPosition={false}
-          categories={categories}
-          selectedCategory="Chips"
-          onCategoryClick={mockOnClick}
-        />
-      );
-
-      // Act
-      await user.click(screen.getByText('Chips'));
-
-      // Assert
-      expect(mockOnClick).toHaveBeenCalledWith(null);
-    });
-
-    it('applies selected styling to selected category', () => {
-      // Arrange & Act
-      render(
-        <ChartLegend
-          hasKelPosition={false}
-          categories={['Chips', 'Crackers']}
-          selectedCategory="Chips"
-          onCategoryClick={vi.fn()}
-        />
-      );
-
-      // Assert
-      const chipsButton = screen.getByText('Chips');
-      const crackersButton = screen.getByText('Crackers');
-
-      expect(chipsButton).toHaveClass('bg-primary/10', 'text-primary', 'font-medium');
-      expect(chipsButton).toHaveAttribute('aria-pressed', 'true');
-      expect(crackersButton).not.toHaveClass('bg-primary/10');
-      expect(crackersButton).toHaveAttribute('aria-pressed', 'false');
     });
   });
 
@@ -229,21 +102,6 @@ describe('ChartLegend', () => {
       const container = screen.getByTestId('chart-legend');
       expect(container).toHaveAttribute('role', 'group');
       expect(container).toHaveAttribute('aria-label', 'Chart legend');
-    });
-
-    it('has 48px minimum height on category buttons', () => {
-      // Arrange & Act
-      render(
-        <ChartLegend
-          hasKelPosition={false}
-          categories={['Chips']}
-          onCategoryClick={vi.fn()}
-        />
-      );
-
-      // Assert
-      const button = screen.getByText('Chips');
-      expect(button).toHaveClass('min-h-[48px]');
     });
   });
 });

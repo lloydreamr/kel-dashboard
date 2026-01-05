@@ -5,8 +5,8 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConstraintEditButton } from './ConstraintEditButton';
-
-import type { Decision } from '@/types/decision';
+import { createMockDecisionWithConstraints } from '@/test/factories';
+import type { Decision } from '@/types/database';
 
 // Mock haptic hook
 const mockTrigger = vi.fn();
@@ -30,18 +30,13 @@ vi.mock('sonner', () => ({
   },
 }));
 
-const mockDecision: Decision = {
+// Use factory for constrained decision mock
+const mockDecision = createMockDecisionWithConstraints({
   id: 'decision-1',
   question_id: 'q-1',
-  decision_type: 'approved_with_constraint',
-  constraints: [{ type: 'volume' }],
+  constraints: [{ type: 'volume', context: '' }],
   constraint_context: 'Updated',
-  reasoning: null,
-  created_by: 'user-1',
-  incorporated_at: null,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
-};
+});
 
 function createWrapper() {
   const queryClient = new QueryClient({
