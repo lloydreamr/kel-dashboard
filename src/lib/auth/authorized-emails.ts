@@ -13,6 +13,20 @@ const AUTHORIZED_EMAIL_PATTERNS = [
   /^kel@/i, // kel@anything.com
 ];
 
+// Specific authorized emails (for production use)
+const AUTHORIZED_EMAILS = [
+  'lloydiee2570@gmail.com', // Maho's actual email
+];
+
+/**
+ * Checks if an email exactly matches an authorized email.
+ */
+function isExactAuthorizedEmail(email: string): boolean {
+  return AUTHORIZED_EMAILS.some(
+    (authorized) => authorized.toLowerCase() === email.toLowerCase()
+  );
+}
+
 /**
  * Checks if an email is authorized to access the dashboard.
  *
@@ -25,5 +39,8 @@ const AUTHORIZED_EMAIL_PATTERNS = [
  * isAuthorizedEmail('other@test.com')   // false
  */
 export function isAuthorizedEmail(email: string): boolean {
-  return AUTHORIZED_EMAIL_PATTERNS.some((pattern) => pattern.test(email));
+  return (
+    isExactAuthorizedEmail(email) ||
+    AUTHORIZED_EMAIL_PATTERNS.some((pattern) => pattern.test(email))
+  );
 }

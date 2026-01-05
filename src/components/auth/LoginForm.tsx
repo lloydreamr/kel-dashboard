@@ -1,18 +1,22 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { useSignInWithOtp } from '@/hooks/auth/useAuth';
+import { useSignInWithOtp, useSignInWithPassword } from '@/hooks/auth/useAuth';
 
 import { LoginSkeleton } from './LoginSkeleton';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
+  password: z.string().optional(),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
+
+type AuthMethod = 'password' | 'magic-link';
 
 interface LoginFormProps {
   /** Pre-filled email for retry after expired link */
@@ -22,11 +26,19 @@ interface LoginFormProps {
 }
 
 /**
- * Login form component for magic link authentication.
- * Validates email and sends magic link via Supabase Auth.
+ * Login form component supporting both password and magic link authentication.
+ * Validates email and authenticates via Supabase Auth.
  */
 export function LoginForm({ defaultEmail = '', errorFromUrl }: LoginFormProps) {
-  const { signIn, error, isLoading, isSuccess, isError } = useSignInWithOtp();
+  const [authMethod, setAuthMethod] = useState<AuthMethod>('password');
+
+  const otpAuth = useSignInWithOtp();
+  const passwordAuth = useSignInWithPassword();
+
+  const isLoading = authMethod === 'magic-link' ? otpAuth.isLoading : passwordAuth.isLoading;
+  const isSuccess = authMethod === 'magic-link' ? otpAuth.isSuccess : passwordAuth.isSuccess;
+  const isError = authMethod === 'magic-link' ? otpAuth.isError : passwordAuth.isError;
+  const error = authMethod === 'magic-link' ? otpAuth.error : passwordAuth.error;
 
   // Map URL error codes to user-friendly messages
   const getErrorMessage = (): string | null => {
@@ -45,15 +57,23 @@ export function LoginForm({ defaultEmail = '', errorFromUrl }: LoginFormProps) {
     watch,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: defaultEmail },
+    defaultValues: { email: defaultEmail, password: '' },
     mode: 'onChange',
   });
 
   const emailValue = watch('email');
-  const isButtonDisabled = !emailValue || !isValid || isLoading;
+  const passwordValue = watch('password');
+
+  const isButtonDisabled = authMethod === 'password'
+    ? !emailValue || !passwordValue || isLoading
+    : !emailValue || !isValid || isLoading;
 
   const onSubmit = async (data: LoginFormData) => {
-    await signIn(data.email);
+    if (authMethod === 'password') {
+      await passwordAuth.signIn(data.email, data.password || '');
+    } else {
+      await otpAuth.signIn(data.email);
+    }
   };
 
   if (isLoading) {
@@ -61,71 +81,121 @@ export function LoginForm({ defaultEmail = '', errorFromUrl }: LoginFormProps) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4"
-      data-testid="login-form"
-    >
-      <div className="space-y-2">
-        <label
-          htmlFor="email"
-          className="block text-sm font-medium text-foreground"
+    <div className="space-y-6">
+      {/* Auth method tabs */}
+      <div className="flex rounded-lg bg-muted p-1">
+        <button
+          type="button"
+          onClick={() => setAuthMethod('password')}
+          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            authMethod === 'password'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+          data-testid="auth-method-password"
         >
-          Email
-        </label>
-        <input
-          {...register('email')}
-          id="email"
-          type="email"
-          autoFocus
-          autoComplete="email"
-          placeholder="you@example.com"
-          data-testid="login-email-input"
-          className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
-        />
-        {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
-        )}
+          Password
+        </button>
+        <button
+          type="button"
+          onClick={() => setAuthMethod('magic-link')}
+          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            authMethod === 'magic-link'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+          data-testid="auth-method-magic-link"
+        >
+          Magic Link
+        </button>
       </div>
 
-      {isSessionExpired && (
-        <div
-          data-testid="session-expired-message"
-          className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-          role="alert"
-        >
-          Session expired. Please log in again.
-        </div>
-      )}
-
-      {(isError || displayError) && (
-        <div
-          data-testid="login-error"
-          className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-          role="alert"
-        >
-          {displayError}
-        </div>
-      )}
-
-      {isSuccess && (
-        <div
-          data-testid="login-success"
-          className="rounded-md bg-success/10 p-3 text-sm text-success"
-          role="status"
-        >
-          Check your email for a magic link
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={isButtonDisabled}
-        data-testid="login-submit"
-        className="min-h-[48px] w-full rounded-md bg-primary px-4 py-3 font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-4"
+        data-testid="login-form"
       >
-        Send Magic Link
-      </button>
-    </form>
+        <div className="space-y-2">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-foreground"
+          >
+            Email
+          </label>
+          <input
+            {...register('email')}
+            id="email"
+            type="email"
+            autoFocus
+            autoComplete="email"
+            placeholder="you@example.com"
+            data-testid="login-email-input"
+            className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+          />
+          {errors.email && (
+            <p className="text-sm text-destructive">{errors.email.message}</p>
+          )}
+        </div>
+
+        {authMethod === 'password' && (
+          <div className="space-y-2">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-foreground"
+            >
+              Password
+            </label>
+            <input
+              {...register('password')}
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="••••••••"
+              data-testid="login-password-input"
+              className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+            />
+          </div>
+        )}
+
+        {isSessionExpired && (
+          <div
+            data-testid="session-expired-message"
+            className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+            role="alert"
+          >
+            Session expired. Please log in again.
+          </div>
+        )}
+
+        {(isError || displayError) && (
+          <div
+            data-testid="login-error"
+            className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+            role="alert"
+          >
+            {displayError}
+          </div>
+        )}
+
+        {isSuccess && authMethod === 'magic-link' && (
+          <div
+            data-testid="login-success"
+            className="rounded-md bg-success/10 p-3 text-sm text-success"
+            role="status"
+          >
+            Check your email for a magic link
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isButtonDisabled}
+          data-testid="login-submit"
+          className="min-h-[48px] w-full rounded-md bg-primary px-4 py-3 font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {authMethod === 'password' ? 'Sign In' : 'Send Magic Link'}
+        </button>
+      </form>
+    </div>
   );
 }
