@@ -56,6 +56,17 @@ export const ANIMATION = {
     duration: 0.2,
     ease: [0.4, 0, 1, 1], // Ease in
   },
+
+  /**
+   * Slide in animation - used for drawers and panels sliding in from edge.
+   * Duration: 0.2s with spring physics for natural feel.
+   */
+  slideIn: {
+    type: 'spring',
+    stiffness: 400,
+    damping: 30,
+    duration: 0.2,
+  },
 } as const;
 
 /**
