@@ -1,5 +1,7 @@
 'use client';
 
+import { ErrorState } from '@/components/ui/error-state';
+
 import { EvidenceEmptyState } from './EvidenceEmptyState';
 import { EvidenceItem } from './EvidenceItem';
 import { EvidenceListSkeleton } from './EvidenceListSkeleton';
@@ -9,6 +11,10 @@ import type { Evidence } from '@/types/evidence';
 interface EvidenceListProps {
   evidence: Evidence[] | undefined;
   isLoading: boolean;
+  /** Error from data fetch */
+  error?: Error | null;
+  /** Callback for retry button in error state */
+  onRetry?: () => void;
   /** User role for empty state message (default: Kel) */
   isMaho?: boolean;
   /** Called when an evidence item is clicked */
@@ -26,6 +32,8 @@ interface EvidenceListProps {
 export function EvidenceList({
   evidence,
   isLoading,
+  error,
+  onRetry,
   isMaho = false,
   onItemClick,
   onEditClick,
@@ -36,6 +44,16 @@ export function EvidenceList({
   // Loading state
   if (isLoading) {
     return <EvidenceListSkeleton />;
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <ErrorState
+        message="Failed to load evidence"
+        onRetry={onRetry}
+      />
+    );
   }
 
   // Empty state

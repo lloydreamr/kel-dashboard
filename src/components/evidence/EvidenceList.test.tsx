@@ -168,4 +168,50 @@ describe('EvidenceList', () => {
     expect(screen.queryByTestId('evidence-edit-button')).not.toBeInTheDocument();
     expect(screen.queryByTestId('evidence-remove-button')).not.toBeInTheDocument();
   });
+
+  it('renders error state when error is provided', () => {
+    const error = new Error('Network error');
+    render(
+      <EvidenceList
+        evidence={undefined}
+        isLoading={false}
+        error={error}
+      />
+    );
+
+    expect(screen.getByTestId('error-state')).toBeInTheDocument();
+    expect(screen.getByText('Failed to load evidence')).toBeInTheDocument();
+  });
+
+  it('calls onRetry when retry button clicked in error state', async () => {
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+    const error = new Error('Network error');
+    render(
+      <EvidenceList
+        evidence={undefined}
+        isLoading={false}
+        error={error}
+        onRetry={onRetry}
+      />
+    );
+
+    await user.click(screen.getByTestId('error-retry-button'));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows error state before empty state (correct order)', () => {
+    const error = new Error('Network error');
+    render(
+      <EvidenceList
+        evidence={[]}
+        isLoading={false}
+        error={error}
+      />
+    );
+
+    // Error state should show, not empty state
+    expect(screen.getByTestId('error-state')).toBeInTheDocument();
+    expect(screen.queryByTestId('evidence-empty-state')).not.toBeInTheDocument();
+  });
 });

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
+import { ErrorState } from '@/components/ui/error-state';
 import { useProfile } from '@/hooks/auth';
 import { useQuestions } from '@/hooks/questions/useQuestions';
 import { QUESTION_CATEGORIES } from '@/types/question';
@@ -21,6 +22,8 @@ interface QuestionsListProps {
   isLoading?: boolean;
   /** Optional error override. Only used when questions prop is provided. */
   error?: Error | null;
+  /** Optional refetch callback for error retry. Only used when questions prop is provided. */
+  onRetry?: () => void;
   /** Render prop for custom empty state. Used when filtered results are empty. */
   renderEmptyState?: () => React.ReactNode;
 }
@@ -43,6 +46,7 @@ export function QuestionsList({
   questions: propQuestions,
   isLoading: propIsLoading,
   error: propError,
+  onRetry: propOnRetry,
   renderEmptyState,
 }: QuestionsListProps = {}) {
   const { data: profile } = useProfile();
@@ -50,6 +54,7 @@ export function QuestionsList({
     data: fetchedQuestions,
     isLoading: fetchIsLoading,
     error: fetchError,
+    refetch,
   } = useQuestions();
   const isMaho = profile?.role === 'maho';
 
@@ -57,6 +62,7 @@ export function QuestionsList({
   const questions = propQuestions ?? fetchedQuestions;
   const isLoading = propQuestions !== undefined ? (propIsLoading ?? false) : fetchIsLoading;
   const error = propQuestions !== undefined ? propError : fetchError;
+  const handleRetry = propQuestions !== undefined ? propOnRetry : refetch;
 
   if (isLoading) {
     return <QuestionsListSkeleton />;
@@ -64,9 +70,10 @@ export function QuestionsList({
 
   if (error) {
     return (
-      <div className="rounded-lg border border-destructive bg-destructive/10 p-6 text-center">
-        <p className="text-destructive">Failed to load questions</p>
-      </div>
+      <ErrorState
+        message="Failed to load questions"
+        onRetry={handleRetry}
+      />
     );
   }
 
