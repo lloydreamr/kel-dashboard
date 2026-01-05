@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
@@ -30,17 +31,13 @@ export function SendToKelButton({
   isPending = false,
 }: SendToKelButtonProps) {
   const buttonContent = (
-    <button
+    <Button
       data-testid="send-to-kel-button"
       disabled={!hasRecommendation || isPending}
-      className={`w-full rounded-md px-4 py-3 min-h-[48px] text-sm font-medium transition-colors ${
-        hasRecommendation
-          ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-          : 'bg-muted text-muted-foreground cursor-not-allowed'
-      } ${isPending ? 'opacity-50' : ''}`}
+      className="w-full"
     >
       {isPending ? 'Sending...' : 'Send to Kel'}
-    </button>
+    </Button>
   );
 
   // Show tooltip when disabled

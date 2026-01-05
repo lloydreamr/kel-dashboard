@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { Button } from '@/components/ui/button';
 import { useSignInWithOtp, useSignInWithPassword } from '@/hooks/auth/useAuth';
 
 import { LoginSkeleton } from './LoginSkeleton';
@@ -187,14 +188,14 @@ export function LoginForm({ defaultEmail = '', errorFromUrl }: LoginFormProps) {
           </div>
         )}
 
-        <button
+        <Button
           type="submit"
           disabled={isButtonDisabled}
           data-testid="login-submit"
-          className="min-h-[48px] w-full rounded-md bg-primary px-4 py-3 font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full"
         >
           {authMethod === 'password' ? 'Sign In' : 'Send Magic Link'}
-        </button>
+        </Button>
       </form>
     </div>
   );

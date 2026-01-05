@@ -13,6 +13,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -129,22 +130,23 @@ export function QuestionEditForm({
 
       {/* Form actions */}
       <div className="flex gap-3">
-        <button
+        <Button
           type="button"
           onClick={onCancel}
           data-testid="question-edit-cancel"
-          className="flex-1 rounded-md border border-border bg-background px-4 py-3 min-h-[48px] text-sm font-medium text-foreground hover:bg-muted"
+          variant="outline"
+          className="flex-1"
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
           disabled={isButtonDisabled}
           data-testid="question-edit-save"
-          className="flex-1 rounded-md bg-primary px-4 py-3 min-h-[48px] text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1"
         >
           {isSubmitting ? 'Saving...' : 'Save'}
-        </button>
+        </Button>
       </div>
     </form>
   );

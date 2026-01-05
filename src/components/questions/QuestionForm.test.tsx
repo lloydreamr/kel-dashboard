@@ -70,11 +70,12 @@ describe('QuestionForm', () => {
     expect(submitButton).toBeDisabled();
   });
 
-  it('enables submit button when title is filled', async () => {
+  it('enables submit button when title AND category are filled', async () => {
     const user = userEvent.setup();
     render(<QuestionForm userId="user-123" />, { wrapper: createWrapper() });
 
     await user.type(screen.getByTestId('question-title-input'), 'Test Question');
+    await user.selectOptions(screen.getByTestId('question-category-select'), 'product');
 
     await waitFor(() => {
       expect(screen.getByTestId('question-submit')).toBeEnabled();
@@ -96,13 +97,60 @@ describe('QuestionForm', () => {
     });
   });
 
-  it('has default category set to product', () => {
+  it('initializes with no category selected (placeholder)', () => {
     render(<QuestionForm userId="user-123" />, { wrapper: createWrapper() });
 
     const categorySelect = screen.getByTestId(
       'question-category-select'
     ) as HTMLSelectElement;
-    expect(categorySelect.value).toBe('product');
+    expect(categorySelect.value).toBe('');
+  });
+
+  it('shows placeholder text in category select', () => {
+    render(<QuestionForm userId="user-123" />, { wrapper: createWrapper() });
+
+    expect(screen.getByText('Select category...')).toBeInTheDocument();
+  });
+
+  it('disables submit when category not selected', async () => {
+    const user = userEvent.setup();
+    render(<QuestionForm userId="user-123" />, { wrapper: createWrapper() });
+
+    // Fill title but NOT category
+    await user.type(screen.getByTestId('question-title-input'), 'Test Question');
+
+    // Submit should still be disabled because category is empty
+    expect(screen.getByTestId('question-submit')).toBeDisabled();
+  });
+
+  it('enables submit when both title and category are filled', async () => {
+    const user = userEvent.setup();
+    render(<QuestionForm userId="user-123" />, { wrapper: createWrapper() });
+
+    await user.type(screen.getByTestId('question-title-input'), 'Test Question');
+    await user.selectOptions(screen.getByTestId('question-category-select'), 'market');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('question-submit')).toBeEnabled();
+    });
+  });
+
+  it('keeps submit disabled after category touched but not selected', async () => {
+    const user = userEvent.setup();
+    render(<QuestionForm userId="user-123" />, { wrapper: createWrapper() });
+
+    // Fill title first
+    await user.type(screen.getByTestId('question-title-input'), 'Test Question');
+
+    // Focus and blur the category select without selecting
+    const categorySelect = screen.getByTestId('question-category-select');
+    await user.click(categorySelect);
+    await user.tab(); // Blur without selecting
+
+    // Submit should remain disabled - this IS the validation feedback
+    // Note: Error message doesn't appear until field value changes (react-hook-form onChange mode)
+    expect(screen.getByTestId('question-submit')).toBeDisabled();
+    expect(categorySelect).toHaveValue('');
   });
 
   it('allows selecting different categories', async () => {
@@ -183,9 +231,17 @@ describe('QuestionForm', () => {
     render(<QuestionForm userId="user-123" />, { wrapper: createWrapper() });
 
     const categorySelect = screen.getByTestId('question-category-select');
+    const options = categorySelect.querySelectorAll('option');
 
-    expect(categorySelect).toContainHTML('<option value="market">Market</option>');
-    expect(categorySelect).toContainHTML('<option value="product">Product</option>');
-    expect(categorySelect).toContainHTML('<option value="distribution">Distribution</option>');
+    // Should have 4 options: placeholder + 3 categories
+    expect(options).toHaveLength(4);
+    expect(options[0]).toHaveValue('');
+    expect(options[0]).toHaveTextContent('Select category...');
+    expect(options[1]).toHaveValue('market');
+    expect(options[1]).toHaveTextContent('Market');
+    expect(options[2]).toHaveValue('product');
+    expect(options[2]).toHaveTextContent('Product');
+    expect(options[3]).toHaveValue('distribution');
+    expect(options[3]).toHaveTextContent('Distribution');
   });
 });

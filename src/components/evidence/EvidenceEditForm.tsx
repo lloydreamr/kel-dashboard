@@ -3,6 +3,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 
+import { Button } from '@/components/ui/button';
+
 import {
   createEvidenceSchema,
   type CreateEvidenceFormData,
@@ -155,22 +157,12 @@ export function EvidenceEditForm({
 
       {/* Form actions */}
       <div className="flex justify-end gap-3 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          className="min-h-[48px] rounded-md px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50"
-        >
+        <Button type="button" onClick={onCancel} disabled={isSubmitting} variant="ghost">
           Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={isButtonDisabled}
-          data-testid="evidence-edit-submit"
-          className="min-h-[48px] rounded-md bg-primary px-6 py-3 font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        </Button>
+        <Button type="submit" disabled={isButtonDisabled} data-testid="evidence-edit-submit">
           {isSubmitting ? 'Saving...' : 'Save Changes'}
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -14,6 +14,7 @@
 
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useMarkIncorporated } from '@/hooks/decisions/useMarkIncorporated';
 
 export interface MarkIncorporatedButtonProps {
@@ -40,14 +41,15 @@ export function MarkIncorporatedButton({
   };
 
   return (
-    <button
+    <Button
       type="button"
       data-testid="mark-incorporated-button"
       onClick={handleClick}
       disabled={isPending}
-      className="min-h-[48px] px-4 py-2 text-sm font-medium text-success bg-success/10 hover:bg-success/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
+      variant="secondary"
+      className="text-success bg-success/10 hover:bg-success/20"
     >
       {isPending ? 'Marking...' : 'Mark Incorporated'}
-    </button>
+    </Button>
   );
 }
