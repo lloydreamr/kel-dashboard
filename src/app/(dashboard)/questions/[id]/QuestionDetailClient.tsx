@@ -9,7 +9,7 @@
  */
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { DecisionSection } from '@/components/decisions/DecisionSection';
@@ -56,6 +56,7 @@ export function QuestionDetailClient({
   questionId,
 }: QuestionDetailClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: question, isLoading, error } = useQuestion(questionId);
   const { data: profile } = useProfile();
   const { mutate: updateQuestion, isPending } = useUpdateQuestion();
@@ -94,6 +95,15 @@ export function QuestionDetailClient({
       markViewed(questionId);
     }
   }, [isKel, question, questionId, markViewed, hasMarked]);
+
+  // Auto-open edit mode when ?edit=true is in URL (from QuestionCardActions)
+  useEffect(() => {
+    if (searchParams.get('edit') === 'true' && isMaho && !isArchived) {
+      setIsEditingTitle(true);
+      // Clear the query param for cleaner URL
+      router.replace(`/questions/${questionId}`, { scroll: false });
+    }
+  }, [searchParams, isMaho, isArchived, questionId, router]);
 
   const handleSubmitRecommendation = (data: RecommendationFormData) => {
     updateQuestion(

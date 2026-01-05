@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { QuestionCard } from './QuestionCard';
@@ -7,10 +8,33 @@ import { createMockQuestion } from '@/test/factories';
 // Mock date to get consistent relative time output
 const mockDate = new Date('2025-12-23T12:00:00Z');
 
+// Mock hooks
+const mockPush = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+  }),
+}));
+
+// Default mock: Kel role (no actions visible)
+vi.mock('@/hooks/auth/useProfile', () => ({
+  useProfile: () => ({
+    data: { role: 'kel' },
+  }),
+}));
+
+// Mock the QuestionCardActions component to simplify tests
+vi.mock('./QuestionCardActions', () => ({
+  QuestionCardActions: ({ questionId }: { questionId: string }) => (
+    <div data-testid="question-card-actions" data-question-id={questionId} />
+  ),
+}));
+
 describe('QuestionCard', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(mockDate);
+    mockPush.mockClear();
   });
 
   afterEach(() => {
@@ -38,10 +62,18 @@ describe('QuestionCard', () => {
     expect(screen.getByText('What is the target market size?')).toBeInTheDocument();
   });
 
-  it('links to the question detail page', () => {
+  it('navigates to the question detail page on click', async () => {
+    // Use real timers for this test - navigation doesn't need fake timers
+    vi.useRealTimers();
+    const user = userEvent.setup();
     render(<QuestionCard question={mockQuestion} />);
-    const link = screen.getByTestId('question-card');
-    expect(link).toHaveAttribute('href', '/questions/q-123');
+
+    await user.click(screen.getByTestId('question-card'));
+
+    expect(mockPush).toHaveBeenCalledWith('/questions/q-123');
+    // Restore fake timers for subsequent tests
+    vi.useFakeTimers();
+    vi.setSystemTime(mockDate);
   });
 
   it('displays status badge with per-status test-id', () => {

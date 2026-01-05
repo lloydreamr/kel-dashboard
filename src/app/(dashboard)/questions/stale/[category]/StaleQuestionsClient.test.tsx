@@ -12,6 +12,27 @@ import { useStaleQuestionsByCategory } from '@/hooks/questions';
 
 import { StaleQuestionsClient } from './StaleQuestionsClient';
 
+// Mock Next.js navigation (needed by QuestionCard)
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
+
+// Mock useProfile (needed by QuestionCard)
+vi.mock('@/hooks/auth/useProfile', () => ({
+  useProfile: () => ({
+    data: { role: 'maho' },
+  }),
+}));
+
+// Mock QuestionCardActions to avoid QueryClient dependency
+vi.mock('@/components/questions/QuestionCardActions', () => ({
+  QuestionCardActions: ({ questionId }: { questionId: string }) => (
+    <div data-testid="question-card-actions" data-question-id={questionId} />
+  ),
+}));
+
 // Mock the hook
 vi.mock('@/hooks/questions', () => ({
   useStaleQuestionsByCategory: vi.fn(),

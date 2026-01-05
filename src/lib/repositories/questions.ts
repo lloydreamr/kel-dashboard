@@ -363,6 +363,25 @@ export const questionsRepo = {
 
     return data;
   },
+
+  /**
+   * Permanently delete a question
+   * WARNING: This cannot be undone - use archive() for soft delete
+   *
+   * @param id - Question ID to delete
+   * @throws RepositoryError if not found or access denied
+   */
+  delete: async (id: string): Promise<void> => {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('questions')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw mapPostgrestError(error);
+    }
+  },
 };
 
 // Re-export types for consumers

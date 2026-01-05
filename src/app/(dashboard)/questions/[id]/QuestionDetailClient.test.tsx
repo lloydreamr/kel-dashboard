@@ -10,6 +10,10 @@ import type { Profile, Question } from '@/types';
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
+    replace: vi.fn(),
+  }),
+  useSearchParams: () => ({
+    get: () => null, // Default: no edit param
   }),
 }));
 

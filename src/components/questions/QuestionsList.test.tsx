@@ -6,6 +6,20 @@ import { QuestionsList } from './QuestionsList';
 import type { Question } from '@/types/question';
 import type { Profile } from '@/types';
 
+// Mock Next.js navigation (needed by QuestionCard)
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
+
+// Mock QuestionCardActions to avoid QueryClient dependency
+vi.mock('./QuestionCardActions', () => ({
+  QuestionCardActions: ({ questionId }: { questionId: string }) => (
+    <div data-testid="question-card-actions" data-question-id={questionId} />
+  ),
+}));
+
 // Mock the useQuestions hook directly
 const mockUseQuestions = vi.fn();
 vi.mock('@/hooks/questions/useQuestions', () => ({
@@ -15,6 +29,11 @@ vi.mock('@/hooks/questions/useQuestions', () => ({
 // Mock the useProfile hook for role-specific testing
 const mockUseProfile = vi.fn();
 vi.mock('@/hooks/auth', () => ({
+  useProfile: () => mockUseProfile(),
+}));
+
+// Also mock the direct import path used by QuestionCard
+vi.mock('@/hooks/auth/useProfile', () => ({
   useProfile: () => mockUseProfile(),
 }));
 

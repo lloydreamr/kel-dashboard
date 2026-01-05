@@ -7,6 +7,7 @@
 export { useArchivedQuestions } from './useArchivedQuestions';
 export { useArchiveQuestion } from './useArchiveQuestion';
 export { useCreateQuestion } from './useCreateQuestion';
+export { useDeleteQuestion } from './useDeleteQuestion';
 export { useMarkQuestionCurrent } from './useMarkQuestionCurrent';
 export { useMarkReadyForKel } from './useMarkReadyForKel';
 export { useMarkViewed } from './useMarkViewed';
