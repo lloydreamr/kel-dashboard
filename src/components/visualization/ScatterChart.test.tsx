@@ -198,11 +198,8 @@ describe('ScatterChart', () => {
       renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
 
       // Assert
-      expect(screen.getByTestId('scatter-chart-empty')).toBeInTheDocument();
+      expect(screen.getByTestId('visualization-empty-state')).toBeInTheDocument();
       expect(screen.getByText(/no competitor data yet/i)).toBeInTheDocument();
-      expect(
-        screen.getByText(/add competitors to see the positioning chart/i)
-      ).toBeInTheDocument();
     });
 
     it('displays empty state when data is undefined', () => {
@@ -220,7 +217,84 @@ describe('ScatterChart', () => {
       renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
 
       // Assert
-      expect(screen.getByTestId('scatter-chart-empty')).toBeInTheDocument();
+      expect(screen.getByTestId('visualization-empty-state')).toBeInTheDocument();
+    });
+
+    it('displays Maho-specific empty state with action button (AC #1)', () => {
+      // Arrange
+      const mockOnAddClick = vi.fn();
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: [],
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(
+        <ScatterChart
+          isMaho={true}
+          onEditClick={vi.fn()}
+          onDeleteClick={vi.fn()}
+          onAddClick={mockOnAddClick}
+        />
+      );
+
+      // Assert
+      expect(screen.getByTestId('visualization-empty-state')).toBeInTheDocument();
+      expect(screen.getByText(/add your first competitor to see the positioning chart/i)).toBeInTheDocument();
+      expect(screen.getByTestId('empty-state-action')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /add competitor/i })).toBeInTheDocument();
+    });
+
+    it('displays Kel-specific empty state without action button (AC #2)', () => {
+      // Arrange
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: [],
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(
+        <ScatterChart
+          isMaho={false}
+          onEditClick={vi.fn()}
+          onDeleteClick={vi.fn()}
+        />
+      );
+
+      // Assert
+      expect(screen.getByTestId('visualization-empty-state')).toBeInTheDocument();
+      expect(screen.getByText(/maho will add competitors for positioning analysis/i)).toBeInTheDocument();
+      expect(screen.queryByTestId('empty-state-action')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /add competitor/i })).not.toBeInTheDocument();
+    });
+
+    it('uses consistent dashed border styling (AC #5)', () => {
+      // Arrange
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: [],
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
+
+      // Assert
+      const emptyState = screen.getByTestId('visualization-empty-state');
+      expect(emptyState).toHaveClass('border-dashed');
+      expect(emptyState).toHaveClass('border-border');
+      expect(emptyState).toHaveClass('bg-muted/20');
     });
   });
 

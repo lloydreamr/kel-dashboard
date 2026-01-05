@@ -66,11 +66,12 @@ export function NotesList({
     );
   }
 
+  // Empty state - both roles can add notes, no role-specific messaging needed (AC: #5)
   if (!notes || notes.length === 0) {
     return (
       <div
         data-testid="notes-empty-state"
-        className="flex items-center justify-center py-8"
+        className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center"
       >
         <p className="text-muted-foreground">
           No notes yet. Add one to capture decisions.

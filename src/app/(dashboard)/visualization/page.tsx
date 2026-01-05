@@ -106,6 +106,7 @@ export default function VisualizationPage() {
           isMaho={isMaho}
           onEditClick={handleEditClick}
           onDeleteClick={handleDeleteClick}
+          onAddClick={handleAddClick}
         />
         <ChartLegend hasKelPosition={hasKelPosition} isLoading={competitorsLoading} />
       </div>

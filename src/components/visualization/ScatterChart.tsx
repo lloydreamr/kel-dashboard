@@ -14,6 +14,7 @@ import {
   Cell,
 } from 'recharts';
 
+import { Button } from '@/components/ui/button';
 import { ChartClickLayer } from '@/components/visualization/ChartClickLayer';
 import { CompetitorEditPopover } from '@/components/visualization/CompetitorEditPopover';
 import { ScatterChartSkeleton } from '@/components/visualization/ScatterChartSkeleton';
@@ -36,6 +37,8 @@ interface ScatterChartProps {
   isMaho: boolean;
   onEditClick: (competitor: CompetitorDataPoint) => void;
   onDeleteClick: (competitor: CompetitorDataPoint) => void;
+  /** Callback to open add competitor dialog (used in empty state for Maho) */
+  onAddClick?: () => void;
 }
 
 type Quadrant = 'premium' | 'value' | 'budget' | 'low-quality';
@@ -44,7 +47,7 @@ type Quadrant = 'premium' | 'value' | 'budget' | 'low-quality';
 const CHART_MARGIN = { top: 20, right: 20, bottom: 60, left: 60 };
 const CHART_DOMAIN = { min: 1, max: 10 };
 
-export function ScatterChart({ isMaho, onEditClick, onDeleteClick }: ScatterChartProps) {
+export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }: ScatterChartProps) {
   const { data: competitors, isLoading, error, refetch } = useCompetitorData();
   const [selectedCompetitor, setSelectedCompetitor] = useState<CompetitorDataPoint | null>(null);
   const [popoverAnchor, setPopoverAnchor] = useState<{ x: number; y: number } | null>(null);
@@ -160,18 +163,29 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick }: ScatterChar
     );
   }
 
-  // Empty state - no data yet
+  // Empty state - role-specific messaging (AC: #1, #2, #5)
   if (!competitors || competitors.length === 0) {
     return (
       <div
-        data-testid="scatter-chart-empty"
-        className="w-full h-[400px] flex items-center justify-center"
+        data-testid="visualization-empty-state"
+        className="w-full h-[400px] flex items-center justify-center rounded-lg border border-dashed border-border bg-muted/20"
       >
-        <div className="text-center">
+        <div className="text-center p-8">
           <p className="text-muted-foreground mb-2">No competitor data yet</p>
-          <p className="text-sm text-muted-foreground">
-            Add competitors to see the positioning chart
+          <p className="text-sm text-muted-foreground mb-4">
+            {isMaho
+              ? 'Add your first competitor to see the positioning chart.'
+              : 'Maho will add competitors for positioning analysis.'}
           </p>
+          {isMaho && onAddClick && (
+            <Button
+              onClick={onAddClick}
+              data-testid="empty-state-action"
+              className="min-h-[48px]"
+            >
+              Add Competitor
+            </Button>
+          )}
         </div>
       </div>
     );

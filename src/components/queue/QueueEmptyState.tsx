@@ -9,7 +9,7 @@ export function QueueEmptyState() {
   return (
     <div
       data-testid="queue-empty-state"
-      className="flex flex-col items-center justify-center rounded-lg border border-border bg-surface p-12 text-center"
+      className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 p-12 text-center"
     >
       {/* Relaxed illustration - simple checkmark circle */}
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
