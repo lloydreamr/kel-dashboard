@@ -12,7 +12,11 @@ import { isValidEvidenceUrl } from '@/types/evidence';
 import { mapPostgrestError, RepositoryError, RepositoryErrorCode } from './base';
 
 import type { Evidence } from '@/types/database';
-import type { CreateEvidenceInput, UpdateEvidenceInput } from '@/types/evidence';
+import type {
+  CreateEvidenceInput,
+  CreatePhotoEvidenceInput,
+  UpdateEvidenceInput,
+} from '@/types/evidence';
 
 
 /**
@@ -124,6 +128,62 @@ export const evidenceRepo = {
   },
 
   /**
+   * Create new photo evidence from quick capture (Story 10-5)
+   *
+   * @param input - Photo evidence data to create
+   * @returns Created evidence
+   * @throws RepositoryError on validation or database errors
+   */
+  createPhotoEvidence: async (
+    input: CreatePhotoEvidenceInput
+  ): Promise<Evidence> => {
+    // Validate required fields
+    const trimmedTitle = input.title.trim();
+    if (!trimmedTitle) {
+      throw new RepositoryError(
+        'Evidence title is required',
+        RepositoryErrorCode.VALIDATION
+      );
+    }
+
+    if (!input.image_url) {
+      throw new RepositoryError(
+        'Photo URL is required for photo evidence',
+        RepositoryErrorCode.VALIDATION
+      );
+    }
+
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('evidence')
+      .insert({
+        question_id: input.question_id,
+        title: trimmedTitle,
+        url: null,
+        image_url: input.image_url,
+        source_type: 'photo',
+        section_anchor: input.section_anchor ?? null,
+        excerpt: input.excerpt ?? null,
+        created_by: input.created_by,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw mapPostgrestError(error);
+    }
+
+    if (!data) {
+      throw new RepositoryError(
+        'Failed to create photo evidence',
+        RepositoryErrorCode.UNKNOWN
+      );
+    }
+
+    return data;
+  },
+
+  /**
    * Update an evidence item
    *
    * @param id - Evidence ID to update
@@ -192,4 +252,9 @@ export const evidenceRepo = {
 };
 
 // Re-export types for consumers
-export type { Evidence, CreateEvidenceInput, UpdateEvidenceInput };
+export type {
+  Evidence,
+  CreateEvidenceInput,
+  CreatePhotoEvidenceInput,
+  UpdateEvidenceInput,
+};

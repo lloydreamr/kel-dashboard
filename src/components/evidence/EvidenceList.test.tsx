@@ -3,11 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { EvidenceList } from './EvidenceList';
+import { createMockEvidence } from '@/test/factories/evidence';
 
-import type { Evidence } from '@/types/evidence';
-
-const mockEvidence: Evidence[] = [
-  {
+const mockEvidence = [
+  createMockEvidence({
     id: 'e1',
     question_id: 'q1',
     title: 'Source 1',
@@ -17,8 +16,8 @@ const mockEvidence: Evidence[] = [
     created_by: 'user1',
     created_at: '2024-12-24T00:00:00Z',
     updated_at: '2024-12-24T00:00:00Z',
-  },
-  {
+  }),
+  createMockEvidence({
     id: 'e2',
     question_id: 'q1',
     title: 'Source 2',
@@ -28,7 +27,7 @@ const mockEvidence: Evidence[] = [
     created_by: 'user1',
     created_at: '2024-12-24T01:00:00Z',
     updated_at: '2024-12-24T01:00:00Z',
-  },
+  }),
 ];
 
 describe('EvidenceList', () => {

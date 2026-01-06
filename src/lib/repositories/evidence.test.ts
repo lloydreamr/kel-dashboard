@@ -282,4 +282,109 @@ describe('evidenceRepo', () => {
       });
     });
   });
+
+  describe('createPhotoEvidence', () => {
+    it('creates photo evidence with image_url', async () => {
+      const photoEvidence = {
+        question_id: 'q1',
+        title: 'Market shelf photo',
+        image_url: 'https://storage.example.com/user123/1234_abc.jpg',
+        source_type: 'photo' as const,
+        created_by: 'user1',
+      };
+      const createdEvidence = {
+        id: 'e1',
+        ...photoEvidence,
+        url: null,
+        section_anchor: null,
+        excerpt: null,
+        created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
+      };
+
+      mockSelect.mockReturnValueOnce({ single: mockSingle });
+      mockSingle.mockResolvedValueOnce({ data: createdEvidence, error: null });
+
+      const result = await evidenceRepo.createPhotoEvidence(photoEvidence);
+
+      expect(result).toEqual(createdEvidence);
+      expect(result.source_type).toBe('photo');
+      expect(result.url).toBeNull();
+      expect(result.image_url).toBe(photoEvidence.image_url);
+    });
+
+    it('throws on empty title', async () => {
+      await expect(
+        evidenceRepo.createPhotoEvidence({
+          question_id: 'q1',
+          title: '   ',
+          image_url: 'https://storage.example.com/image.jpg',
+          source_type: 'photo',
+          created_by: 'user1',
+        })
+      ).rejects.toMatchObject({
+        message: 'Evidence title is required',
+        code: RepositoryErrorCode.VALIDATION,
+      });
+    });
+
+    it('throws on missing image_url', async () => {
+      await expect(
+        evidenceRepo.createPhotoEvidence({
+          question_id: 'q1',
+          title: 'Valid Title',
+          image_url: '',
+          source_type: 'photo',
+          created_by: 'user1',
+        })
+      ).rejects.toMatchObject({
+        message: 'Photo URL is required for photo evidence',
+        code: RepositoryErrorCode.VALIDATION,
+      });
+    });
+
+    it('throws on database error', async () => {
+      mockSelect.mockReturnValueOnce({ single: mockSingle });
+      mockSingle.mockResolvedValueOnce({
+        data: null,
+        error: { code: '23503', message: 'Foreign key violation' },
+      });
+
+      await expect(
+        evidenceRepo.createPhotoEvidence({
+          question_id: 'invalid',
+          title: 'Test',
+          image_url: 'https://storage.example.com/image.jpg',
+          source_type: 'photo',
+          created_by: 'user1',
+        })
+      ).rejects.toThrow();
+    });
+
+    it('supports optional excerpt field', async () => {
+      const photoEvidence = {
+        question_id: 'q1',
+        title: 'Market photo',
+        image_url: 'https://storage.example.com/image.jpg',
+        source_type: 'photo' as const,
+        excerpt: 'Competitor products on top shelf',
+        created_by: 'user1',
+      };
+      const createdEvidence = {
+        id: 'e1',
+        ...photoEvidence,
+        url: null,
+        section_anchor: null,
+        created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
+      };
+
+      mockSelect.mockReturnValueOnce({ single: mockSingle });
+      mockSingle.mockResolvedValueOnce({ data: createdEvidence, error: null });
+
+      const result = await evidenceRepo.createPhotoEvidence(photoEvidence);
+
+      expect(result.excerpt).toBe('Competitor products on top shelf');
+    });
+  });
 });

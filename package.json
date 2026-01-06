@@ -69,6 +69,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.0",
     "eslint-plugin-import-x": "^4.16.1",
+    "fake-indexeddb": "^6.2.5",
     "jsdom": "^27.3.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",

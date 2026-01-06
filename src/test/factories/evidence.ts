@@ -29,6 +29,8 @@ export function createMockEvidence(overrides?: Partial<Evidence>): Evidence {
     question_id: crypto.randomUUID(),
     title: 'Test Evidence',
     url: 'https://example.com/evidence',
+    image_url: null,
+    source_type: 'url',
     section_anchor: null,
     excerpt: null,
     created_by: 'maho@example.com',
@@ -49,6 +51,23 @@ export function createMockEvidenceWithDetails(
     section_anchor: '#key-findings',
     excerpt:
       'The market analysis shows a 15% growth opportunity in the target segment.',
+    ...overrides,
+  });
+}
+
+/**
+ * Creates a mock photo Evidence (quick capture).
+ * Uses image_url instead of url.
+ */
+export function createMockPhotoEvidence(
+  overrides?: Partial<Evidence>
+): Evidence {
+  return createMockEvidence({
+    url: null,
+    image_url: 'https://storage.example.com/quick-captures/test-image.jpg',
+    source_type: 'photo',
+    title: 'Field Photo',
+    question_id: null, // Unattached capture
     ...overrides,
   });
 }

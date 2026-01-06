@@ -43,7 +43,7 @@ export function EvidenceEditForm({
     resolver: zodResolver(createEvidenceSchema),
     defaultValues: {
       title: evidence.title,
-      url: evidence.url,
+      url: evidence.url ?? '',
       section_anchor: evidence.section_anchor ?? '',
       excerpt: evidence.excerpt ?? '',
     },

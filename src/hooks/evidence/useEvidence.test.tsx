@@ -36,6 +36,8 @@ describe('useEvidence', () => {
         question_id: 'q1',
         title: 'Source 1',
         url: 'https://example.com',
+        image_url: null,
+        source_type: 'url' as const,
         section_anchor: null,
         excerpt: null,
         created_by: 'user1',

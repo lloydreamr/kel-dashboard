@@ -81,9 +81,11 @@ export interface Database {
       evidence: {
         Row: {
           id: string;
-          question_id: string;
+          question_id: string | null;
           title: string;
-          url: string;
+          url: string | null;
+          image_url: string | null;
+          source_type: 'url' | 'photo';
           section_anchor: string | null;
           excerpt: string | null;
           created_at: string;
@@ -92,9 +94,11 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          question_id: string;
+          question_id?: string | null;
           title: string;
-          url: string;
+          url?: string | null;
+          image_url?: string | null;
+          source_type?: 'url' | 'photo';
           section_anchor?: string | null;
           excerpt?: string | null;
           created_at?: string;
@@ -103,9 +107,11 @@ export interface Database {
         };
         Update: {
           id?: string;
-          question_id?: string;
+          question_id?: string | null;
           title?: string;
-          url?: string;
+          url?: string | null;
+          image_url?: string | null;
+          source_type?: 'url' | 'photo';
           section_anchor?: string | null;
           excerpt?: string | null;
           created_at?: string;

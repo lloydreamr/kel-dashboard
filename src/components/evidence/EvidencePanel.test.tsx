@@ -4,8 +4,7 @@ import { toast } from 'sonner';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { EvidencePanel } from './EvidencePanel';
-
-import type { Evidence } from '@/types/evidence';
+import { createMockEvidence } from '@/test/factories/evidence';
 
 // Mock sonner toast
 vi.mock('sonner', () => ({
@@ -27,7 +26,7 @@ vi.mock('next/image', () => ({
   ),
 }));
 
-const mockEvidence: Evidence = {
+const mockEvidence = createMockEvidence({
   id: 'e1',
   question_id: 'q1',
   title: 'Market Research Report',
@@ -37,7 +36,7 @@ const mockEvidence: Evidence = {
   created_by: 'user1',
   created_at: '2024-12-24T00:00:00Z',
   updated_at: '2024-12-24T00:00:00Z',
-};
+});
 
 describe('EvidencePanel', () => {
   const mockOnClose = vi.fn();

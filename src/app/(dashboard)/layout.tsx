@@ -2,22 +2,30 @@
  * Dashboard Layout
  *
  * Protected layout with navigation sidebar and mobile drawer.
- * Fetches user email server-side and passes to navigation components.
+ * Fetches user info server-side and passes to navigation components.
  *
  * Authentication is handled by middleware - this layout provides
  * structural organization and navigation UI.
+ *
+ * Includes the QuickCapture FAB for Maho to take photos during research.
  */
 
 import { cookies } from 'next/headers';
 
+import { QuickCaptureWidget } from '@/components/capture';
 import { Sidebar, MobileNav } from '@/components/layout';
 import { OfflineBanner } from '@/components/offline';
 import { createClient } from '@/lib/supabase/server';
 
+interface UserInfo {
+  email: string;
+  id: string;
+}
+
 /**
- * Get user email from session (handles both real auth and test mode).
+ * Get user info from session (handles both real auth and test mode).
  */
-async function getUserEmail(): Promise<string> {
+async function getUserInfo(): Promise<UserInfo> {
   // Check for test user first (PLAYWRIGHT_TEST_MODE)
   if (process.env.PLAYWRIGHT_TEST_MODE === 'true') {
     const cookieStore = await cookies();
@@ -26,7 +34,11 @@ async function getUserEmail(): Promise<string> {
       try {
         const session = JSON.parse(testSession.value);
         if (session.is_test_session && session.user?.email) {
-          return session.user.email;
+          return {
+            email: session.user.email,
+            // Use email as ID for test users (consistent with other test patterns)
+            id: session.user.id ?? session.user.email,
+          };
         }
       } catch {
         // Fall through to real auth
@@ -39,7 +51,10 @@ async function getUserEmail(): Promise<string> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return user?.email ?? 'Unknown';
+  return {
+    email: user?.email ?? 'Unknown',
+    id: user?.id ?? '',
+  };
 }
 
 export default async function DashboardLayout({
@@ -47,7 +62,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const userEmail = await getUserEmail();
+  const userInfo = await getUserInfo();
 
   return (
     <>
@@ -57,19 +72,22 @@ export default async function DashboardLayout({
       <div className="flex min-h-screen bg-background">
         {/* Desktop Sidebar - hidden on mobile */}
         <Sidebar
-          userEmail={userEmail}
+          userEmail={userInfo.email}
           className="hidden md:flex w-64 flex-shrink-0"
         />
 
         {/* Main Content Area */}
         <div className="flex flex-col flex-1 min-w-0">
           {/* Mobile Header - hidden on desktop */}
-          <MobileNav userEmail={userEmail} className="flex md:hidden" />
+          <MobileNav userEmail={userInfo.email} className="flex md:hidden" />
 
           {/* Page Content */}
           <main className="flex-1 p-4 md:p-6 overflow-auto">{children}</main>
         </div>
       </div>
+
+      {/* Quick Capture FAB - shown on all dashboard pages */}
+      {userInfo.id && <QuickCaptureWidget userId={userInfo.id} />}
     </>
   );
 }

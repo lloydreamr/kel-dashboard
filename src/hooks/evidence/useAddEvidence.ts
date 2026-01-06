@@ -60,6 +60,8 @@ export function useAddEvidence(questionId: string) {
         question_id: questionId,
         title: newEvidence.title,
         url: newEvidence.url,
+        image_url: null,
+        source_type: 'url',
         section_anchor: newEvidence.section_anchor ?? null,
         excerpt: newEvidence.excerpt ?? null,
         created_by: newEvidence.created_by,

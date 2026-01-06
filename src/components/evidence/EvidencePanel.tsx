@@ -38,13 +38,18 @@ export function EvidencePanel({ evidence, onClose }: EvidencePanelProps) {
 
   if (!evidence) return null;
 
+  const isPhotoEvidence = evidence.source_type === 'photo';
   const domain = extractDomain(evidence.url);
   const fullUrl = buildUrlWithAnchor(evidence.url, evidence.section_anchor);
-  const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+  const faviconUrl = isPhotoEvidence
+    ? null
+    : `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
 
   const handleCopyUrl = async () => {
+    const urlToCopy = fullUrl ?? evidence.image_url;
+    if (!urlToCopy) return;
     try {
-      await navigator.clipboard.writeText(fullUrl);
+      await navigator.clipboard.writeText(urlToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -54,7 +59,9 @@ export function EvidencePanel({ evidence, onClose }: EvidencePanelProps) {
   };
 
   const handleOpenSource = () => {
-    window.open(fullUrl, '_blank', 'noopener,noreferrer');
+    const urlToOpen = fullUrl ?? evidence.image_url;
+    if (!urlToOpen) return;
+    window.open(urlToOpen, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -70,17 +77,40 @@ export function EvidencePanel({ evidence, onClose }: EvidencePanelProps) {
           className="bg-green-50/50 dark:bg-green-900/20 -mx-6 -mt-6 px-6 pt-6 pb-4 mb-4"
         >
           <div className="flex items-center gap-3">
-            <Image
-              src={faviconUrl}
-              alt=""
-              width={24}
-              height={24}
-              className="rounded"
-              unoptimized
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+            {faviconUrl ? (
+              <Image
+                src={faviconUrl}
+                alt=""
+                width={24}
+                height={24}
+                className="rounded"
+                unoptimized
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : (
+              <svg
+                className="h-6 w-6 text-muted-foreground"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+            )}
             <div className="flex-1 min-w-0">
               <SheetTitle
                 data-testid="evidence-panel-title"
@@ -99,29 +129,50 @@ export function EvidencePanel({ evidence, onClose }: EvidencePanelProps) {
         </SheetHeader>
 
         <div className="space-y-6">
-          {/* Full URL with copy button */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">
-              Source URL
-            </label>
-            <div className="flex items-center gap-2">
-              <code
-                data-testid="evidence-panel-url"
-                className="flex-1 text-sm bg-muted px-3 py-2 rounded-md overflow-x-auto whitespace-nowrap"
-              >
-                {fullUrl}
-              </code>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyUrl}
-                className="min-h-[48px] min-w-[48px] shrink-0"
-                aria-label="Copy URL"
-              >
-                {copied ? '✓' : 'Copy'}
-              </Button>
+          {/* Photo preview for photo evidence */}
+          {isPhotoEvidence && evidence.image_url && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">
+                Photo
+              </label>
+              <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border">
+                <Image
+                  src={evidence.image_url}
+                  alt={evidence.title}
+                  fill
+                  className="object-contain"
+                  unoptimized
+                  data-testid="evidence-panel-photo"
+                />
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Full URL with copy button (URL evidence only) */}
+          {!isPhotoEvidence && fullUrl && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">
+                Source URL
+              </label>
+              <div className="flex items-center gap-2">
+                <code
+                  data-testid="evidence-panel-url"
+                  className="flex-1 text-sm bg-muted px-3 py-2 rounded-md overflow-x-auto whitespace-nowrap"
+                >
+                  {fullUrl}
+                </code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyUrl}
+                  className="min-h-[48px] min-w-[48px] shrink-0"
+                  aria-label="Copy URL"
+                >
+                  {copied ? '✓' : 'Copy'}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Excerpt if provided */}
           {evidence.excerpt && (
@@ -146,14 +197,14 @@ export function EvidencePanel({ evidence, onClose }: EvidencePanelProps) {
             </div>
           )}
 
-          {/* Open Source button - primary action */}
+          {/* Open Source/Photo button - primary action */}
           <Button
             data-testid="evidence-panel-open-source"
             onClick={handleOpenSource}
             className="w-full min-h-[48px]"
             size="lg"
           >
-            Open Source
+            {isPhotoEvidence ? 'View Full Photo' : 'Open Source'}
             <svg
               className="ml-2 h-4 w-4"
               fill="none"

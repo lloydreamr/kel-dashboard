@@ -29,6 +29,8 @@ const mockEvidence: Evidence = {
   question_id: 'q1',
   title: 'Original Title',
   url: 'https://example.com',
+  image_url: null,
+  source_type: 'url',
   section_anchor: null,
   excerpt: null,
   created_by: 'user1',

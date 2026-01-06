@@ -9,13 +9,29 @@
 export type { Evidence, EvidenceInsert, EvidenceUpdate } from './database';
 
 /**
- * Input type for creating new evidence.
+ * Input type for creating new URL-based evidence.
  * Excludes auto-generated fields (id, created_at).
  */
 export interface CreateEvidenceInput {
-  question_id: string;
+  question_id?: string | null;
   title: string;
   url: string;
+  image_url?: null;
+  source_type?: 'url';
+  section_anchor?: string | null;
+  excerpt?: string | null;
+  created_by: string;
+}
+
+/**
+ * Input type for creating new photo evidence (quick capture).
+ */
+export interface CreatePhotoEvidenceInput {
+  question_id?: string | null;
+  title: string;
+  url?: null;
+  image_url: string;
+  source_type: 'photo';
   section_anchor?: string | null;
   excerpt?: string | null;
   created_by: string;
@@ -52,10 +68,11 @@ export function isValidEvidenceUrl(url: string): boolean {
 /**
  * Extracts domain from a URL for display.
  *
- * @param url - Full URL
- * @returns Domain string (e.g., "example.com")
+ * @param url - Full URL (or null for photo evidence)
+ * @returns Domain string (e.g., "example.com") or 'Photo' for null URL
  */
-export function extractDomain(url: string): string {
+export function extractDomain(url: string | null): string {
+  if (!url) return 'Photo';
   try {
     const parsed = new URL(url);
     return parsed.hostname.replace(/^www\./, '');
@@ -67,14 +84,15 @@ export function extractDomain(url: string): string {
 /**
  * Constructs full URL with optional section anchor.
  *
- * @param baseUrl - Base URL without anchor
+ * @param baseUrl - Base URL without anchor (or null for photo evidence)
  * @param anchor - Optional section anchor (with or without #)
- * @returns Full URL with anchor appended
+ * @returns Full URL with anchor appended, or null if no base URL
  */
 export function buildUrlWithAnchor(
-  baseUrl: string,
+  baseUrl: string | null,
   anchor?: string | null
-): string {
+): string | null {
+  if (!baseUrl) return null;
   if (!anchor) return baseUrl;
   const cleanAnchor = anchor.startsWith('#') ? anchor : `#${anchor}`;
   return `${baseUrl}${cleanAnchor}`;
