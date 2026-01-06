@@ -54,6 +54,7 @@ const eslintConfig = defineConfig([
       "src/app/**/not-found.tsx",
       "src/app/**/template.tsx",
       "src/app/**/default.tsx",
+      "src/app/**/manifest.ts",
       "src/middleware.ts",
     ],
     rules: {
