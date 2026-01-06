@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Strategic question tracking for Kel project - Philippine snack market entry',
     start_url: '/',
     display: 'standalone',
-    background_color: '#ffffff',
-    theme_color: '#000000',
+    background_color: '#FEFAE0', // cream (UX spec)
+    theme_color: '#86A789', // sage green (UX spec)
     icons: [
       {
         src: '/icons/icon-192x192.png',
@@ -20,12 +20,9 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: '512x512',
         type: 'image/png',
       },
-      {
-        src: '/icons/icon-512x512.png',
-        sizes: '512x512',
-        type: 'image/png',
-        purpose: 'maskable',
-      },
+      // TODO: Add these icons before production deployment (Story 8.1 deferred items):
+      // - /icons/apple-touch-icon.png (180x180) for iOS
+      // - /icons/maskable_icon-512x512.png for adaptive icons
     ],
   };
 }
