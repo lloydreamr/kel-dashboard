@@ -37,13 +37,13 @@ export function CategorySection({ category, count, children }: CategorySectionPr
       data-testid={`category-section-${category}`}
       className={`rounded-lg border ${colors.border} ${colors.bg} overflow-hidden`}
     >
-      <header className={`flex items-center justify-between px-4 py-3 ${colors.text}`}>
+      <header className={`flex items-center justify-between px-4 py-3 ${colors.bg} ${colors.text}`}>
         <h2 className="font-semibold capitalize">{label}</h2>
         <span className="text-sm font-medium">
           {count} {count === 1 ? 'question' : 'questions'}
         </span>
       </header>
-      <div className="bg-background p-4">
+      <div className="bg-surface p-4">
         {children}
       </div>
     </section>

@@ -90,7 +90,7 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
                   type="button"
                   onClick={handleNewQuestion}
                   data-testid="new-question-button"
-                  className="min-h-[48px] rounded-md bg-primary px-4 py-3 font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="min-h-[48px] rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
                   New Question
                 </button>

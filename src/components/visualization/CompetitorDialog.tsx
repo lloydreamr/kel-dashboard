@@ -1,6 +1,6 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CompetitorForm } from './CompetitorForm';
 
 import type { CompetitorDataPoint } from '@/types';
@@ -20,6 +20,11 @@ export function CompetitorDialog({ open, onOpenChange, editingCompetitor }: Comp
       <DialogContent data-testid="competitor-dialog" className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            {mode === 'create'
+              ? 'Add a new competitor with price and quality scores.'
+              : 'Update competitor details and positioning scores.'}
+          </DialogDescription>
         </DialogHeader>
         <CompetitorForm
           mode={mode}

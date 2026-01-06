@@ -1,5 +1,6 @@
 'use client';
 
+import { BarChart3, Package, Truck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Badge } from '@/components/ui/badge';
@@ -23,10 +24,10 @@ interface MilestoneCardProps {
   milestone: Milestone;
 }
 
-const CATEGORY_ICONS: Record<string, string> = {
-  market: '📊',
-  product: '📦',
-  distribution: '🚚',
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  market: <BarChart3 className="h-5 w-5" />,
+  product: <Package className="h-5 w-5" />,
+  distribution: <Truck className="h-5 w-5" />,
 };
 
 const STATUS_DISPLAY: Record<

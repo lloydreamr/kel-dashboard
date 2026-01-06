@@ -179,8 +179,9 @@ describe('MilestoneCard', () => {
       </QueryClientProvider>
     );
 
-    // Assert
-    expect(screen.getByText(/📊/)).toBeInTheDocument();
+    // Assert - Lucide icons render as SVG elements
+    const card = screen.getByTestId('milestone-card-market');
+    expect(card.querySelector('svg')).toBeInTheDocument();
     expect(screen.getByText(/Market/)).toBeInTheDocument();
   });
 

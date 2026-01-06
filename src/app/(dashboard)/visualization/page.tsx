@@ -88,10 +88,10 @@ export default function VisualizationPage() {
 
   return (
     <div data-testid="visualization-page" className="container py-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">Competitor Positioning</h1>
         {isMaho && (
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <MarkKelPositionButton
               onClick={() => setKelDialogOpen(true)}
               hasExistingPosition={hasKelPosition}

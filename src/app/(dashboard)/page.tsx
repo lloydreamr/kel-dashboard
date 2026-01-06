@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { Target } from 'lucide-react';
 import { redirect } from 'next/navigation';
 
 import { QueueView } from '@/components/queue';
@@ -53,7 +54,7 @@ function MahoDashboardContent({ email }: { email: string }) {
     >
       <div className="flex flex-col items-center gap-8 px-6 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-          <span className="text-3xl">🥜</span>
+          <Target className="h-8 w-8 text-primary" />
         </div>
 
         <div className="flex flex-col gap-3">
