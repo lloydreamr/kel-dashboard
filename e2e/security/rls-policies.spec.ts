@@ -68,6 +68,10 @@ test.beforeAll(async ({ browser }) => {
     mahoProfileId = profiles.find((p) => p.role === 'maho')?.id ?? null;
     kelProfileId = profiles.find((p) => p.role === 'kel')?.id ?? null;
   }
+
+  // Clean up any leftover test data from previous runs
+  await serviceClient.from('competitor_data').delete().eq('name', 'RLS Test Competitor');
+  await serviceClient.from('milestone_notes').delete().ilike('content', '%RLS Test%');
 });
 
 test.afterAll(async () => {
@@ -112,9 +116,10 @@ test.describe('RLS Policy Enforcement', () => {
           .from('competitor_data')
           .select('id')
           .eq('name', 'RLS Test Competitor')
-          .single();
+          .order('created_at', { ascending: false })
+          .limit(1);
 
-        testCompetitorId = data?.id ?? null;
+        testCompetitorId = data?.[0]?.id ?? null;
         expect(testCompetitorId).not.toBeNull();
       }
     });
@@ -143,14 +148,20 @@ test.describe('RLS Policy Enforcement', () => {
       // Wait for chart to render
       await expect(kelPage.getByTestId('scatter-chart')).toBeVisible();
 
-      // Verify click layer is NOT visible for Kel (no edit overlays)
+      // Verify click layer exists but all buttons are disabled for Kel
+      // (ChartClickLayer renders buttons for accessibility but disables them for non-Maho users)
       const clickLayer = kelPage.getByTestId('chart-click-layer');
 
-      // Either click layer doesn't exist, or it has no buttons
       const isVisible = await clickLayer.isVisible().catch(() => false);
       if (isVisible) {
-        const buttonCount = await clickLayer.locator('button').count();
-        expect(buttonCount).toBe(0);
+        const buttons = clickLayer.locator('button');
+        const buttonCount = await buttons.count();
+
+        // If buttons exist, verify they are all disabled
+        // (buttons have pointer-events-none and opacity-0 when disabled)
+        for (let i = 0; i < buttonCount; i++) {
+          await expect(buttons.nth(i)).toBeDisabled();
+        }
       }
     });
 
@@ -200,8 +211,8 @@ test.describe('RLS Policy Enforcement', () => {
       const addNoteButton = milestoneCard.getByTestId('add-note-button');
       if (await addNoteButton.isVisible()) {
         await addNoteButton.click();
-        await mahoPage.getByTestId('note-input').fill('RLS Test Note by Maho');
-        await mahoPage.getByTestId('save-note-button').click();
+        await mahoPage.getByTestId('note-input-textarea').fill('RLS Test Note by Maho');
+        await mahoPage.getByTestId('note-save-button').click();
 
         await expect(mahoPage.getByText('RLS Test Note by Maho')).toBeVisible();
       }

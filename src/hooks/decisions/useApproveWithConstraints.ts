@@ -16,6 +16,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { profileQueryKey } from '@/hooks/auth';
+import { useOfflineGuard } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { decisionsRepo } from '@/lib/repositories/decisions';
 import { profilesRepo } from '@/lib/repositories/profiles';
@@ -98,6 +99,7 @@ export interface UseApproveWithConstraintsResult {
  */
 export function useApproveWithConstraints(): UseApproveWithConstraintsResult {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -105,6 +107,8 @@ export function useApproveWithConstraints(): UseApproveWithConstraintsResult {
       constraints,
       context,
     }: ApproveWithConstraintsInput): Promise<ApproveWithConstraintsResult> => {
+      guardOffline(); // Throws OfflineError if offline
+
       // Get profile from cache or fetch fresh to avoid closure issues
       // This ensures we always have the latest profile, not a stale closure value
       let profile = queryClient.getQueryData<Profile | null>(profileQueryKey);
@@ -171,7 +175,12 @@ export function useApproveWithConstraints(): UseApproveWithConstraintsResult {
 
     onSuccess: (_data, { questionId }) => {
       // Invalidate related queries to ensure fresh data
+      // Note: Must invalidate both questions.all AND questions.detail(id)
+      // because React Query treats ['questions'] and ['questions', id] as unrelated keys
       queryClient.invalidateQueries({ queryKey: queryKeys.questions.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.questions.detail(questionId),
+      });
       queryClient.invalidateQueries({
         queryKey: queryKeys.decisions.byQuestion(questionId),
       });

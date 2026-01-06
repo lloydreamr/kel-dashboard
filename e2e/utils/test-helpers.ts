@@ -78,36 +78,46 @@ export function getStorageStatePaths(baseDir: string) {
 
 /**
  * Get Maho's profile ID from the database.
+ * Uses .limit(1) instead of .single() for resilience against duplicate profiles.
  */
 export async function getMahoProfileId(client: SupabaseClient): Promise<string> {
   const { data, error } = await client
     .from('profiles')
     .select('id')
     .eq('role', 'maho')
-    .single();
+    .limit(1);
 
   if (error) {
     throw new Error(`Failed to get Maho profile: ${error.message}`);
   }
 
-  return data.id;
+  if (!data || data.length === 0) {
+    throw new Error('No Maho profile found in database. Ensure profiles are seeded.');
+  }
+
+  return data[0].id;
 }
 
 /**
  * Get Kel's profile ID from the database.
+ * Uses .limit(1) instead of .single() for resilience against duplicate profiles.
  */
 export async function getKelProfileId(client: SupabaseClient): Promise<string> {
   const { data, error } = await client
     .from('profiles')
     .select('id')
     .eq('role', 'kel')
-    .single();
+    .limit(1);
 
   if (error) {
     throw new Error(`Failed to get Kel profile: ${error.message}`);
   }
 
-  return data.id;
+  if (!data || data.length === 0) {
+    throw new Error('No Kel profile found in database. Ensure profiles are seeded.');
+  }
+
+  return data[0].id;
 }
 
 // ============================================================================

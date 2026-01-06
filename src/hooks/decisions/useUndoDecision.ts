@@ -8,6 +8,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { useOfflineGuard, isOfflineError } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { decisionsRepo } from '@/lib/repositories/decisions';
 import { questionsRepo } from '@/lib/repositories/questions';
@@ -23,6 +24,7 @@ import { questionsRepo } from '@/lib/repositories/questions';
  */
 export function useUndoDecision() {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
     mutationFn: async ({
@@ -32,6 +34,8 @@ export function useUndoDecision() {
       decisionId: string;
       questionId: string;
     }) => {
+      guardOffline(); // Throws OfflineError if offline
+
       // Delete the decision
       await decisionsRepo.delete(decisionId);
 
@@ -46,6 +50,8 @@ export function useUndoDecision() {
     },
 
     onError: (error) => {
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
       toast.error('Failed to undo decision', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });

@@ -478,8 +478,15 @@ test.describe('Quick Actions Menu', () => {
     const menuTriggers = mahoPage.getByTestId('question-card-menu-trigger');
     const countBefore = await menuTriggers.count();
 
-    // Click first menu trigger
-    await menuTriggers.first().click();
+    // Find the specific question card that contains OUR test title
+    // (other parallel tests may have created questions that appear in the list)
+    const questionCard = mahoPage.locator('[data-testid="question-card"]', {
+      has: mahoPage.getByText(TEST_TITLE),
+    });
+    await expect(questionCard).toBeVisible({ timeout: 5000 });
+
+    // Click the menu trigger within our specific question card
+    await questionCard.getByTestId('question-card-menu-trigger').click();
 
     // Click archive option
     await mahoPage.getByTestId('question-card-menu-archive').click();

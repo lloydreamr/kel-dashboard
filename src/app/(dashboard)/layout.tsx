@@ -11,6 +11,7 @@
 import { cookies } from 'next/headers';
 
 import { Sidebar, MobileNav } from '@/components/layout';
+import { OfflineBanner } from '@/components/offline';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -49,21 +50,26 @@ export default async function DashboardLayout({
   const userEmail = await getUserEmail();
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Desktop Sidebar - hidden on mobile */}
-      <Sidebar
-        userEmail={userEmail}
-        className="hidden md:flex w-64 flex-shrink-0"
-      />
+    <>
+      {/* Offline Banner - fixed at top, full width */}
+      <OfflineBanner className="fixed top-0 left-0 right-0 z-50" />
 
-      {/* Main Content Area */}
-      <div className="flex flex-col flex-1 min-w-0">
-        {/* Mobile Header - hidden on desktop */}
-        <MobileNav userEmail={userEmail} className="flex md:hidden" />
+      <div className="flex min-h-screen bg-background">
+        {/* Desktop Sidebar - hidden on mobile */}
+        <Sidebar
+          userEmail={userEmail}
+          className="hidden md:flex w-64 flex-shrink-0"
+        />
 
-        {/* Page Content */}
-        <main className="flex-1 p-4 md:p-6 overflow-auto">{children}</main>
+        {/* Main Content Area */}
+        <div className="flex flex-col flex-1 min-w-0">
+          {/* Mobile Header - hidden on desktop */}
+          <MobileNav userEmail={userEmail} className="flex md:hidden" />
+
+          {/* Page Content */}
+          <main className="flex-1 p-4 md:p-6 overflow-auto">{children}</main>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

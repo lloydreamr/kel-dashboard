@@ -10,6 +10,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { useCompetitorData } from '@/hooks/competitors';
+import { useOfflineGuard, isOfflineError } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { competitorsRepo } from '@/lib/repositories/competitors';
 
@@ -66,9 +67,11 @@ function getErrorMessage(error: unknown): string {
 export function useSetKelPosition() {
   const queryClient = useQueryClient();
   const { data: competitors } = useCompetitorData();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
     mutationFn: async (input: SetKelPositionInput) => {
+      guardOffline(); // Throws OfflineError if offline
       // Find existing Kel position
       const existingKel = competitors?.find((c) => c.is_kel_position);
 
@@ -149,6 +152,8 @@ export function useSetKelPosition() {
       if (context?.previousCompetitors) {
         queryClient.setQueryData(queryKeys.competitors.all, context.previousCompetitors);
       }
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
       toast.error("Failed to set Kel's position", {
         description: getErrorMessage(error),
       });

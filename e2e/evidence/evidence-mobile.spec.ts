@@ -19,8 +19,10 @@ const STORAGE_STATE = {
 // Use serial mode - tests build on each other
 test.describe.configure({ mode: 'serial' });
 
-// Test data with unique suffix
-const TEST_QUESTION_TITLE = `Mobile Evidence Test ${Date.now()}`;
+// Test data with unique suffix per browser project to avoid collisions
+// Using both timestamp AND random to handle workers starting at same millisecond
+const TEST_RUN_ID = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+const TEST_QUESTION_TITLE = `Mobile Evidence Test ${TEST_RUN_ID}`;
 
 // Note: This file relies on the 'iphone' project in playwright.config.ts
 // which sets up iPhone 14 Pro viewport. When run with --project=iphone,

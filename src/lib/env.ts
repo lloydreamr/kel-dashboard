@@ -71,6 +71,16 @@ export const env = {
   get NEXT_PUBLIC_OFFLINE_ENABLED(): string | undefined {
     return getOptionalEnvVar('NEXT_PUBLIC_OFFLINE_ENABLED');
   },
+
+  /**
+   * Enables offline read-only mode UI.
+   * Shows offline banner and blocks writes when offline.
+   * Set to "true" to enable. Default: undefined (disabled).
+   * This is separate from OFFLINE_MODE (full sync) - just shows UI feedback.
+   */
+  get NEXT_PUBLIC_OFFLINE_READ(): string | undefined {
+    return getOptionalEnvVar('NEXT_PUBLIC_OFFLINE_READ');
+  },
 } as const;
 
 /**

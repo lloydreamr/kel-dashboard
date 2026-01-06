@@ -7,6 +7,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { useOfflineGuard, isOfflineError } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { evidenceRepo } from '@/lib/repositories/evidence';
 
@@ -19,12 +20,19 @@ import type { Evidence } from '@/types/evidence';
  */
 export function useDeleteEvidence(questionId: string) {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
-    mutationFn: (id: string) => evidenceRepo.delete(id),
+    mutationFn: (id: string) => {
+      return evidenceRepo.delete(id);
+    },
 
     // Optimistic update: Remove from list immediately
     onMutate: async (id: string) => {
+      // Check offline status FIRST before any async operations
+      // This prevents mutation from getting stuck on cancelQueries when offline
+      guardOffline(); // Throws OfflineError if offline
+
       const queryKey = queryKeys.evidence.byQuestion(questionId);
       await queryClient.cancelQueries({ queryKey });
 
@@ -46,6 +54,8 @@ export function useDeleteEvidence(questionId: string) {
           context.previousEvidence
         );
       }
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
       toast.error('Failed to remove evidence', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });

@@ -15,6 +15,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { useOfflineGuard, isOfflineError } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { decisionsRepo } from '@/lib/repositories/decisions';
 
@@ -84,6 +85,7 @@ export interface UseUpdateConstraintsResult {
  */
 export function useUpdateConstraints(): UseUpdateConstraintsResult {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -91,6 +93,8 @@ export function useUpdateConstraints(): UseUpdateConstraintsResult {
       constraints,
       context,
     }: UpdateConstraintsInput): Promise<UpdateConstraintsResult> => {
+      guardOffline(); // Throws OfflineError if offline
+
       // Update decision with new constraints
       const decision = await decisionsRepo.update(decisionId, {
         constraints,
@@ -135,6 +139,9 @@ export function useUpdateConstraints(): UseUpdateConstraintsResult {
           context.previousDecision
         );
       }
+
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
 
       // Show error toast with retry
       toast.error("Couldn't update. Try again?", {

@@ -19,6 +19,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { useOfflineGuard, isOfflineError } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { decisionsRepo } from '@/lib/repositories/decisions';
 
@@ -78,11 +79,13 @@ export interface UseMarkIncorporatedResult {
  */
 export function useMarkIncorporated(): UseMarkIncorporatedResult {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   const mutation = useMutation({
     mutationFn: async ({
       decisionId,
     }: MarkIncorporatedInput): Promise<Decision> => {
+      guardOffline(); // Throws OfflineError if offline
       return await decisionsRepo.markIncorporated(decisionId);
     },
 
@@ -120,6 +123,9 @@ export function useMarkIncorporated(): UseMarkIncorporatedResult {
           context.previousDecision
         );
       }
+
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
 
       // Show error toast with retry
       toast.error("Couldn't mark as incorporated. Try again?", {

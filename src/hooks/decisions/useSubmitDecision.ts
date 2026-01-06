@@ -8,6 +8,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { useOfflineGuard, isOfflineError } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { decisionsRepo } from '@/lib/repositories/decisions';
 import { questionsRepo } from '@/lib/repositories/questions';
@@ -76,9 +77,12 @@ export function useSubmitDecision(
   options?: UseSubmitDecisionOptions
 ) {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
     mutationFn: async (input: SubmitDecisionInput) => {
+      guardOffline(); // Throws OfflineError if offline
+
       // Create the decision
       const decision = await decisionsRepo.create({
         question_id: input.question_id,
@@ -109,6 +113,8 @@ export function useSubmitDecision(
     },
 
     onError: (error) => {
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
       toast.error('Failed to submit decision', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });

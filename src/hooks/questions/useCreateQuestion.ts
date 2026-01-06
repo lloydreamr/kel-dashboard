@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
+import { useOfflineGuard, isOfflineError } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { questionsRepo } from '@/lib/repositories/questions';
 
@@ -15,16 +16,24 @@ import type { CreateQuestionInput, Question } from '@/types/question';
  * - Auto-rollback on error
  * - Success toast and navigation
  * - Cache invalidation on settle
+ * - Offline guard: Blocks operation when offline (Story 10.3)
  */
 export function useCreateQuestion() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
-    mutationFn: (input: CreateQuestionInput) => questionsRepo.create(input),
+    mutationFn: (input: CreateQuestionInput) => {
+      return questionsRepo.create(input);
+    },
 
     // Optimistic update: Add pending question to list
     onMutate: async (newQuestion) => {
+      // Check offline status FIRST before any async operations
+      // This prevents mutation from getting stuck on cancelQueries when offline
+      guardOffline(); // Throws OfflineError if offline
+
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.questions.all });
 
@@ -65,6 +74,8 @@ export function useCreateQuestion() {
           context.previousQuestions
         );
       }
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
       toast.error('Failed to create question', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });

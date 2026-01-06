@@ -57,12 +57,56 @@ describe('FEATURES', () => {
     });
   });
 
+  describe('OFFLINE_READ', () => {
+    it('defaults to false when env var is not set', async () => {
+      delete process.env.NEXT_PUBLIC_OFFLINE_READ;
+
+      const { FEATURES } = await import('./features');
+
+      expect(FEATURES.OFFLINE_READ).toBe(false);
+    });
+
+    it('returns true when env var is "true"', async () => {
+      process.env.NEXT_PUBLIC_OFFLINE_READ = 'true';
+
+      const { FEATURES } = await import('./features');
+
+      expect(FEATURES.OFFLINE_READ).toBe(true);
+    });
+
+    it('returns false when env var is "false"', async () => {
+      process.env.NEXT_PUBLIC_OFFLINE_READ = 'false';
+
+      const { FEATURES } = await import('./features');
+
+      expect(FEATURES.OFFLINE_READ).toBe(false);
+    });
+
+    it('returns false when env var is empty string', async () => {
+      process.env.NEXT_PUBLIC_OFFLINE_READ = '';
+
+      const { FEATURES } = await import('./features');
+
+      expect(FEATURES.OFFLINE_READ).toBe(false);
+    });
+
+    it('returns false when env var is any other value', async () => {
+      process.env.NEXT_PUBLIC_OFFLINE_READ = 'yes';
+
+      const { FEATURES } = await import('./features');
+
+      expect(FEATURES.OFFLINE_READ).toBe(false);
+    });
+  });
+
   describe('type safety', () => {
     it('FEATURES object has correct structure', async () => {
       const { FEATURES } = await import('./features');
 
       expect(typeof FEATURES.OFFLINE_MODE).toBe('boolean');
+      expect(typeof FEATURES.OFFLINE_READ).toBe('boolean');
       expect(Object.keys(FEATURES)).toContain('OFFLINE_MODE');
+      expect(Object.keys(FEATURES)).toContain('OFFLINE_READ');
     });
 
     it('Features type is exported', async () => {

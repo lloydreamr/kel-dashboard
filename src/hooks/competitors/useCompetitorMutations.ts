@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { useOfflineGuard, isOfflineError } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { competitorsRepo } from '@/lib/repositories/competitors';
 
@@ -36,9 +37,13 @@ function getErrorMessage(error: unknown): string {
 
 export function useCreateCompetitor() {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
-    mutationFn: (input: CreateCompetitorInput) => competitorsRepo.create(input),
+    mutationFn: (input: CreateCompetitorInput) => {
+      guardOffline(); // Throws OfflineError if offline
+      return competitorsRepo.create(input);
+    },
 
     // Optimistic update: Add pending competitor to list
     onMutate: async (newCompetitor) => {
@@ -74,6 +79,8 @@ export function useCreateCompetitor() {
       if (context?.previousCompetitors) {
         queryClient.setQueryData(queryKeys.competitors.all, context.previousCompetitors);
       }
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
       toast.error('Failed to add competitor', {
         description: getErrorMessage(error),
       });
@@ -91,10 +98,13 @@ export function useCreateCompetitor() {
 
 export function useUpdateCompetitor() {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: UpdateCompetitorInput }) =>
-      competitorsRepo.update(id, input),
+    mutationFn: ({ id, input }: { id: string; input: UpdateCompetitorInput }) => {
+      guardOffline(); // Throws OfflineError if offline
+      return competitorsRepo.update(id, input);
+    },
 
     onMutate: async ({ id, input }) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.competitors.all });
@@ -127,6 +137,8 @@ export function useUpdateCompetitor() {
       if (context?.previousCompetitors) {
         queryClient.setQueryData(queryKeys.competitors.all, context.previousCompetitors);
       }
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
       toast.error('Failed to update competitor', {
         description: getErrorMessage(error),
       });
@@ -144,9 +156,13 @@ export function useUpdateCompetitor() {
 
 export function useDeleteCompetitor() {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
-    mutationFn: (id: string) => competitorsRepo.delete(id),
+    mutationFn: (id: string) => {
+      guardOffline(); // Throws OfflineError if offline
+      return competitorsRepo.delete(id);
+    },
 
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.competitors.all });
@@ -169,6 +185,8 @@ export function useDeleteCompetitor() {
       if (context?.previousCompetitors) {
         queryClient.setQueryData(queryKeys.competitors.all, context.previousCompetitors);
       }
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
       toast.error('Failed to remove competitor', {
         description: getErrorMessage(error),
       });

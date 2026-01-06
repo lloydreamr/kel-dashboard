@@ -8,6 +8,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { useOfflineGuard, isOfflineError } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { evidenceRepo } from '@/lib/repositories/evidence';
 
@@ -30,13 +31,19 @@ import type { Evidence, CreateEvidenceInput } from '@/types/evidence';
  */
 export function useAddEvidence(questionId: string) {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
-    mutationFn: (input: Omit<CreateEvidenceInput, 'question_id'>) =>
-      evidenceRepo.create({ ...input, question_id: questionId }),
+    mutationFn: (input: Omit<CreateEvidenceInput, 'question_id'>) => {
+      return evidenceRepo.create({ ...input, question_id: questionId });
+    },
 
     // Optimistic update: Add pending evidence to list
     onMutate: async (newEvidence) => {
+      // Check offline status FIRST before any async operations
+      // This prevents mutation from getting stuck on cancelQueries when offline
+      guardOffline(); // Throws OfflineError if offline
+
       const queryKey = queryKeys.evidence.byQuestion(questionId);
 
       // Cancel outgoing refetches
@@ -73,6 +80,8 @@ export function useAddEvidence(questionId: string) {
       if (context?.previousEvidence) {
         queryClient.setQueryData(queryKey, context.previousEvidence);
       }
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
       toast.error('Failed to add evidence', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });

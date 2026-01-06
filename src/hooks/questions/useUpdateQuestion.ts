@@ -8,6 +8,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { useOfflineGuard, isOfflineError } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { questionsRepo } from '@/lib/repositories/questions';
 
@@ -29,13 +30,19 @@ interface UpdateQuestionVariables {
  */
 export function useUpdateQuestion() {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
-    mutationFn: ({ id, updates }: UpdateQuestionVariables) =>
-      questionsRepo.update(id, updates),
+    mutationFn: ({ id, updates }: UpdateQuestionVariables) => {
+      return questionsRepo.update(id, updates);
+    },
 
     // Optimistic update: Update cache immediately
     onMutate: async ({ id, updates }) => {
+      // Check offline status FIRST before any async operations
+      // This prevents mutation from getting stuck on cancelQueries when offline
+      guardOffline(); // Throws OfflineError if offline
+
       // Cancel outgoing refetches for this question
       await queryClient.cancelQueries({
         queryKey: queryKeys.questions.detail(id),
@@ -66,6 +73,8 @@ export function useUpdateQuestion() {
           context.previousQuestion
         );
       }
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
       toast.error('Failed to update question', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });

@@ -11,6 +11,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { useOfflineGuard, isOfflineError } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { questionsRepo } from '@/lib/repositories/questions';
 
@@ -27,9 +28,13 @@ import type { Question } from '@/types/question';
  */
 export function useMarkQuestionCurrent() {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
-    mutationFn: (id: string) => questionsRepo.touchUpdatedAt(id),
+    mutationFn: (id: string) => {
+      guardOffline(); // Throws OfflineError if offline
+      return questionsRepo.touchUpdatedAt(id);
+    },
 
     // Optimistic update: Update cache immediately
     onMutate: async (id: string) => {
@@ -62,6 +67,8 @@ export function useMarkQuestionCurrent() {
           context.previousQuestion
         );
       }
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
       toast.error('Failed to update timestamp', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });

@@ -24,8 +24,10 @@ const STORAGE_STATE = {
   kel: path.join(__dirname, '../.auth/kel.json'),
 };
 
-// Generate unique test question title to avoid collisions
-const TEST_QUESTION_TITLE = `E2E Test Question ${Date.now()}`;
+// Generate unique test question title to avoid collisions between browser projects
+// Using both timestamp AND random to handle workers starting at same millisecond
+const TEST_RUN_ID = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+const TEST_QUESTION_TITLE = `E2E Test Question ${TEST_RUN_ID}`;
 
 let mahoContext: BrowserContext;
 let kelContext: BrowserContext;

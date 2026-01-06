@@ -31,8 +31,10 @@ const STORAGE_STATE = {
   kel: path.join(__dirname, '../.auth/kel.json'),
 };
 
-// Generate unique test data
-const TEST_QUESTION_TITLE = `Evidence E2E Test Question ${Date.now()}`;
+// Generate unique test data per browser project to avoid cross-browser collisions
+// Using both timestamp AND random to handle workers starting at same millisecond
+const TEST_RUN_ID = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+const TEST_QUESTION_TITLE = `Evidence E2E Test Question ${TEST_RUN_ID}`;
 const TEST_EVIDENCE = {
   title: 'PSA Market Research Report',
   url: 'https://psa.gov.ph/statistics/test-report',
@@ -244,9 +246,21 @@ test.describe('Evidence Flow', () => {
   test('Kel cannot see edit/remove buttons on evidence', async () => {
     // First, Maho adds evidence again for Kel to view
     await mahoPage.getByTestId('add-evidence-button').click();
+    // Wait for form to be ready before interacting (mobile can be slower)
+    await expect(mahoPage.getByTestId('evidence-form')).toBeVisible();
     await mahoPage.getByTestId('evidence-title-input').fill('Kel View Test Evidence');
     await mahoPage.getByTestId('evidence-url-input').fill('https://example.com/test');
-    await mahoPage.getByTestId('evidence-submit').click();
+    // Use force: true because toasts from previous tests may overlay the button
+    await mahoPage.getByTestId('evidence-submit').click({ force: true });
+
+    // Wait for form to close (indicates mutation completed)
+    await expect(mahoPage.getByTestId('evidence-form')).not.toBeVisible({
+      timeout: 5000,
+    });
+    // Wait for list to render (cache invalidation may take time)
+    await expect(mahoPage.getByTestId('evidence-list')).toBeVisible({
+      timeout: 5000,
+    });
     await expect(mahoPage.getByTestId('evidence-item')).toBeVisible();
 
     // Kel navigates to the question

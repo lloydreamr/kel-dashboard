@@ -8,6 +8,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { useOfflineGuard, isOfflineError } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { questionsRepo } from '@/lib/repositories/questions';
 
@@ -30,9 +31,13 @@ import type { Question } from '@/types/question';
  */
 export function useDeleteQuestion() {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
-    mutationFn: (id: string) => questionsRepo.delete(id),
+    mutationFn: (id: string) => {
+      guardOffline(); // Throws OfflineError if offline
+      return questionsRepo.delete(id);
+    },
 
     // Optimistic update: Remove from questions list immediately
     onMutate: async (id: string) => {
@@ -65,6 +70,8 @@ export function useDeleteQuestion() {
           context.previousQuestions
         );
       }
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
       toast.error('Failed to delete question', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });

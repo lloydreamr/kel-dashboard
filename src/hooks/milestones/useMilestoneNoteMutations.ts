@@ -6,6 +6,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { useOfflineGuard } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { milestoneNotesRepo } from '@/lib/repositories/milestones';
 
@@ -26,10 +27,13 @@ import type {
  */
 export function useCreateMilestoneNote() {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
-    mutationFn: (input: CreateMilestoneNoteInput) =>
-      milestoneNotesRepo.createNote(input),
+    mutationFn: (input: CreateMilestoneNoteInput) => {
+      guardOffline(); // Throws OfflineError if offline
+      return milestoneNotesRepo.createNote(input);
+    },
     onSuccess: (_, variables) => {
       // Invalidate the specific milestone's notes
       queryClient.invalidateQueries({
@@ -55,6 +59,7 @@ export function useCreateMilestoneNote() {
  */
 export function useUpdateMilestoneNote() {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
     mutationFn: ({
@@ -64,7 +69,10 @@ export function useUpdateMilestoneNote() {
       noteId: string;
       milestoneId: string;
       input: UpdateMilestoneNoteInput;
-    }) => milestoneNotesRepo.updateNote(noteId, input),
+    }) => {
+      guardOffline(); // Throws OfflineError if offline
+      return milestoneNotesRepo.updateNote(noteId, input);
+    },
     onSuccess: (_, variables) => {
       // Invalidate the specific milestone's notes
       queryClient.invalidateQueries({
@@ -86,10 +94,13 @@ export function useUpdateMilestoneNote() {
  */
 export function useDeleteMilestoneNote() {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
-    mutationFn: ({ noteId }: { noteId: string; milestoneId: string }) =>
-      milestoneNotesRepo.deleteNote(noteId),
+    mutationFn: ({ noteId }: { noteId: string; milestoneId: string }) => {
+      guardOffline(); // Throws OfflineError if offline
+      return milestoneNotesRepo.deleteNote(noteId);
+    },
     onSuccess: (_, variables) => {
       // Invalidate the specific milestone's notes
       queryClient.invalidateQueries({

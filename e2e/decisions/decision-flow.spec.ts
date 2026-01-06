@@ -30,8 +30,10 @@ const STORAGE_STATE = {
   kel: path.join(__dirname, '../.auth/kel.json'),
 };
 
-// Generate unique test data to avoid collisions
-const TEST_SUFFIX = Date.now();
+// Generate unique test data to avoid collisions between browser projects
+// Using both timestamp AND random to handle workers starting at same millisecond
+const TEST_RUN_ID = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+const TEST_SUFFIX = TEST_RUN_ID;
 const TEST_QUESTIONS = {
   simple: `Decision Simple Approve Test ${TEST_SUFFIX}`,
   constrained: `Decision Constrained Test ${TEST_SUFFIX}`,
