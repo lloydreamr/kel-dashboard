@@ -57,7 +57,7 @@ export function useServiceWorkerUpdate(): void {
      */
     const handleWaiting = () => {
       toast.info('A new version is available', {
-        id: 'sw-update-available',
+        id: 'update-available',
         duration: Infinity, // Stay until dismissed or acted upon
         action: {
           label: 'Refresh',
@@ -76,7 +76,7 @@ export function useServiceWorkerUpdate(): void {
      */
     const handleControlling = () => {
       // Dismiss the update toast before reload
-      toast.dismiss('sw-update-available');
+      toast.dismiss('update-available');
       // Reload to use the new SW
       window.location.reload();
     };

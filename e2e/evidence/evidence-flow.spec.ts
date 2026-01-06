@@ -244,8 +244,18 @@ test.describe('Evidence Flow', () => {
   });
 
   test('Kel cannot see edit/remove buttons on evidence', async () => {
+    // Wait for any stale toasts from previous tests to clear
+    // Under parallel execution, toasts can stack up and block button clicks
+    // Sonner toasts auto-dismiss after their duration, so wait for them to clear
+    await expect(mahoPage.locator('[data-sonner-toast]')).toHaveCount(0, {
+      timeout: 10000,
+    }).catch(() => {
+      // If toasts don't clear naturally, we'll use force: true below
+    });
+
     // First, Maho adds evidence again for Kel to view
-    await mahoPage.getByTestId('add-evidence-button').click();
+    // Use force: true to bypass any remaining toast overlays
+    await mahoPage.getByTestId('add-evidence-button').click({ force: true });
     // Wait for form to be ready before interacting (mobile can be slower)
     await expect(mahoPage.getByTestId('evidence-form')).toBeVisible();
     await mahoPage.getByTestId('evidence-title-input').fill('Kel View Test Evidence');
@@ -253,15 +263,17 @@ test.describe('Evidence Flow', () => {
     // Use force: true because toasts from previous tests may overlay the button
     await mahoPage.getByTestId('evidence-submit').click({ force: true });
 
-    // Wait for form to close (indicates mutation completed)
+    // Wait for evidence item to appear (the definitive success indicator)
+    // This is more reliable than waiting for form to close under parallel load
+    await expect(mahoPage.getByTestId('evidence-item')).toBeVisible({
+      timeout: 10000,
+    });
+    // Now verify form is closed
     await expect(mahoPage.getByTestId('evidence-form')).not.toBeVisible({
-      timeout: 5000,
+      timeout: 3000,
     });
-    // Wait for list to render (cache invalidation may take time)
-    await expect(mahoPage.getByTestId('evidence-list')).toBeVisible({
-      timeout: 5000,
-    });
-    await expect(mahoPage.getByTestId('evidence-item')).toBeVisible();
+    // Verify list is visible
+    await expect(mahoPage.getByTestId('evidence-list')).toBeVisible();
 
     // Kel navigates to the question
     await kelPage.goto(`/questions/${createdQuestionId}`);
