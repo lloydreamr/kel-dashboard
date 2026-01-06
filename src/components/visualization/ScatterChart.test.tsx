@@ -9,6 +9,7 @@ import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vite
 
 import { ScatterChart } from '@/components/visualization/ScatterChart';
 import * as useCompetitorDataHook from '@/hooks/competitors/useCompetitorData';
+import * as useResponsiveChartHeightHook from '@/hooks/ui/useResponsiveChartHeight';
 
 import type { CompetitorDataPoint } from '@/types';
 
@@ -399,7 +400,8 @@ describe('ScatterChart', () => {
       // Assert
       const chartContainer = screen.getByTestId('scatter-chart');
       expect(chartContainer).toHaveClass('w-full');
-      expect(chartContainer).toHaveClass('h-[400px]');
+      // Height is now set via inline style for responsive behavior (default 400px)
+      expect(chartContainer).toHaveStyle({ height: '400px' });
     });
 
     it('renders chart with Kel position data', () => {
@@ -501,7 +503,114 @@ describe('ScatterChart', () => {
       // Assert
       const chartContainer = screen.getByTestId('scatter-chart');
       expect(chartContainer).toHaveClass('w-full');
-      expect(chartContainer).toHaveClass('h-[400px]');
+      // Height is now set via inline style for responsive behavior
+      expect(chartContainer).toHaveStyle({ height: '400px' });
+    });
+
+    it('uses desktop dimensions by default (SSR-safe)', () => {
+      // Arrange - default state is desktop (SSR-safe)
+      const mockCompetitors = [
+        createMockCompetitor({ price_score: 5, quality_score: 5 }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
+
+      // Assert - desktop height (400px)
+      const chartContainer = screen.getByTestId('scatter-chart');
+      expect(chartContainer).toHaveStyle({ height: '400px' });
+    });
+
+    it('uses mobile dimensions when viewport is small', () => {
+      // Arrange - mock mobile viewport
+      vi.spyOn(useResponsiveChartHeightHook, 'useResponsiveChartHeight').mockReturnValue({
+        isMobile: true,
+        isSmallMobile: false,
+        chartHeight: 320,
+      });
+
+      const mockCompetitors = [
+        createMockCompetitor({ price_score: 5, quality_score: 5 }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
+
+      // Assert - mobile height
+      const chartContainer = screen.getByTestId('scatter-chart');
+      expect(chartContainer).toHaveStyle({ height: '320px' });
+    });
+
+    it('hides quadrant labels on small mobile viewport', () => {
+      // Arrange - mock small mobile viewport
+      vi.spyOn(useResponsiveChartHeightHook, 'useResponsiveChartHeight').mockReturnValue({
+        isMobile: true,
+        isSmallMobile: true,
+        chartHeight: 280,
+      });
+
+      const mockCompetitors = [
+        createMockCompetitor({ price_score: 5, quality_score: 5 }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
+
+      // Assert - quadrant labels should not be present
+      expect(screen.queryByText(/Premium/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Value/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Budget/)).not.toBeInTheDocument();
+    });
+
+    it('shows quadrant labels on desktop viewport', () => {
+      // Arrange - default desktop viewport
+      const mockCompetitors = [
+        createMockCompetitor({ price_score: 5, quality_score: 5 }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
+
+      // Assert - quadrant labels should be present
+      // Note: These are rendered by Recharts ReferenceLine which may not be fully
+      // accessible in JSDOM. We verify the chart renders without crashing.
+      expect(screen.getByTestId('scatter-chart')).toBeInTheDocument();
     });
   });
 

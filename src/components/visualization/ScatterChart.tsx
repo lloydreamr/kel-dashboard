@@ -19,6 +19,7 @@ import { ChartClickLayer } from '@/components/visualization/ChartClickLayer';
 import { CompetitorEditPopover } from '@/components/visualization/CompetitorEditPopover';
 import { ScatterChartSkeleton } from '@/components/visualization/ScatterChartSkeleton';
 import { useCompetitorData } from '@/hooks/competitors';
+import { useResponsiveChartHeight } from '@/hooks/ui';
 import { isStale, getStalenessMessage } from '@/lib/utils/staleness';
 
 import type { OverlayPoint } from '@/components/visualization/ChartClickLayer';
@@ -44,16 +45,42 @@ interface ScatterChartProps {
 type Quadrant = 'premium' | 'value' | 'budget' | 'low-quality';
 
 // Chart configuration constants
-const CHART_MARGIN = { top: 20, right: 20, bottom: 60, left: 60 };
+const MOBILE_CHART_MARGIN = { top: 12, right: 12, bottom: 40, left: 40 };
+const DESKTOP_CHART_MARGIN = { top: 20, right: 20, bottom: 60, left: 60 };
 const CHART_DOMAIN = { min: 1, max: 10 };
+
+// Axis labels - abbreviated on mobile for space
+const AXIS_LABELS = {
+  x: { mobile: 'Price', desktop: 'Price (low → high)' },
+  y: { mobile: 'Quality', desktop: 'Quality (low → high)' },
+} as const;
 
 export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }: ScatterChartProps) {
   const { data: competitors, isLoading, error, refetch } = useCompetitorData();
+  const { isMobile, isSmallMobile, chartHeight } = useResponsiveChartHeight();
   const [selectedCompetitor, setSelectedCompetitor] = useState<CompetitorDataPoint | null>(null);
   const [popoverAnchor, setPopoverAnchor] = useState<{ x: number; y: number } | null>(null);
   const [hoveredQuadrant, setHoveredQuadrant] = useState<Quadrant | null>(null);
   const [containerSize, setContainerSize] = useState<{ width: number; height: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Memoize chart margin to prevent unnecessary recalculations
+  const chartMargin = useMemo(
+    () => (isMobile ? MOBILE_CHART_MARGIN : DESKTOP_CHART_MARGIN),
+    [isMobile]
+  );
+
+  // Memoize axis labels for responsive display
+  const axisLabels = useMemo(
+    () => ({
+      x: isMobile ? AXIS_LABELS.x.mobile : AXIS_LABELS.x.desktop,
+      y: isMobile ? AXIS_LABELS.y.mobile : AXIS_LABELS.y.desktop,
+    }),
+    [isMobile]
+  );
+
+  // Axis label offset - smaller on mobile
+  const axisLabelOffset = isMobile ? 12 : 20;
 
   // Measure container size for overlay positioning
   // Re-run when competitors change to ensure we measure after chart renders
@@ -92,15 +119,15 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
     if (!containerSize || !competitors || competitors.length === 0) return [];
 
     const { width, height } = containerSize;
-    const chartWidth = width - CHART_MARGIN.left - CHART_MARGIN.right;
-    const chartHeight = height - CHART_MARGIN.top - CHART_MARGIN.bottom;
+    const chartAreaWidth = width - chartMargin.left - chartMargin.right;
+    const chartAreaHeight = height - chartMargin.top - chartMargin.bottom;
     const domainRange = CHART_DOMAIN.max - CHART_DOMAIN.min;
 
     // Convert data value to pixel position
     const xToPixel = (value: number) =>
-      CHART_MARGIN.left + ((value - CHART_DOMAIN.min) / domainRange) * chartWidth;
+      chartMargin.left + ((value - CHART_DOMAIN.min) / domainRange) * chartAreaWidth;
     const yToPixel = (value: number) =>
-      CHART_MARGIN.top + ((CHART_DOMAIN.max - value) / domainRange) * chartHeight;
+      chartMargin.top + ((CHART_DOMAIN.max - value) / domainRange) * chartAreaHeight;
 
     return competitors.map((c) => ({
       id: c.id,
@@ -111,7 +138,7 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
       qualityScore: c.quality_score,
       isKel: c.is_kel_position ?? false,
     }));
-  }, [containerSize, competitors]);
+  }, [containerSize, competitors, chartMargin]);
 
   // Handle click from ChartClickLayer
   // Don't use useCallback to avoid stale closure issues - re-create each render
@@ -123,14 +150,14 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
     if (containerRect.width === 0 || containerRect.height === 0) return;
 
     // Calculate popover position directly from competitor data
-    const chartWidth = containerRect.width - CHART_MARGIN.left - CHART_MARGIN.right;
-    const chartHeight = containerRect.height - CHART_MARGIN.top - CHART_MARGIN.bottom;
+    const chartAreaWidth = containerRect.width - chartMargin.left - chartMargin.right;
+    const chartAreaHeight = containerRect.height - chartMargin.top - chartMargin.bottom;
     const domainRange = CHART_DOMAIN.max - CHART_DOMAIN.min;
 
     const xToPixel = (value: number) =>
-      CHART_MARGIN.left + ((value - CHART_DOMAIN.min) / domainRange) * chartWidth;
+      chartMargin.left + ((value - CHART_DOMAIN.min) / domainRange) * chartAreaWidth;
     const yToPixel = (value: number) =>
-      CHART_MARGIN.top + ((CHART_DOMAIN.max - value) / domainRange) * chartHeight;
+      chartMargin.top + ((CHART_DOMAIN.max - value) / domainRange) * chartAreaHeight;
 
     setPopoverAnchor({
       x: containerRect.left + xToPixel(competitor.price_score),
@@ -147,7 +174,8 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
     return (
       <div
         data-testid="scatter-chart-error"
-        className="w-full h-[400px] flex items-center justify-center"
+        className="w-full flex items-center justify-center"
+        style={{ height: chartHeight }}
       >
         <div className="text-center">
           <p className="text-destructive mb-2">Failed to load chart data</p>
@@ -170,7 +198,8 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
         data-testid="visualization-empty-state"
         role="status"
         aria-label="No competitor data available"
-        className="w-full h-[400px] flex items-center justify-center rounded-lg border border-dashed border-border bg-muted/20"
+        className="w-full flex items-center justify-center rounded-lg border border-dashed border-border bg-muted/20"
+        style={{ height: chartHeight }}
       >
         <div className="text-center p-8">
           <p className="text-muted-foreground mb-2">No competitor data yet</p>
@@ -220,10 +249,10 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
     .map(([quadrant]) => quadrant);
 
   return (
-    <div data-testid="scatter-chart" className="w-full h-[400px]">
+    <div data-testid="scatter-chart" className="w-full" style={{ height: chartHeight }}>
       <div ref={containerRef} className="relative w-full h-full">
         <ResponsiveContainer width="100%" height="100%">
-        <RechartsScatter margin={{ top: 20, right: 20, bottom: 60, left: 60 }}>
+        <RechartsScatter margin={chartMargin}>
           <CartesianGrid strokeDasharray="3 3" />
 
           {/* Quadrant divider lines at 5,5 per AC1 */}
@@ -315,9 +344,9 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
             name="Price"
             data-testid="chart-x-axis"
             label={{
-              value: 'Price (low → high)',
+              value: axisLabels.x,
               position: 'bottom',
-              offset: 20,
+              offset: axisLabelOffset,
             }}
           />
           <YAxis
@@ -327,10 +356,10 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
             name="Quality"
             data-testid="chart-y-axis"
             label={{
-              value: 'Quality (low → high)',
+              value: axisLabels.y,
               angle: -90,
               position: 'left',
-              offset: 20,
+              offset: axisLabelOffset,
             }}
           />
 
@@ -432,43 +461,47 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
             </Scatter>
           )}
 
-          {/* Quadrant Labels */}
-          <text
-            x="82%"
-            y="15%"
-            textAnchor="middle"
-            fill="currentColor"
-            className="text-xs opacity-40"
-          >
-            Premium
-          </text>
-          <text
-            x="18%"
-            y="15%"
-            textAnchor="middle"
-            fill="currentColor"
-            className="text-xs opacity-40"
-          >
-            Value
-          </text>
-          <text
-            x="18%"
-            y="85%"
-            textAnchor="middle"
-            fill="currentColor"
-            className="text-xs opacity-40"
-          >
-            Budget
-          </text>
-          <text
-            x="82%"
-            y="85%"
-            textAnchor="middle"
-            fill="currentColor"
-            className="text-xs opacity-40"
-          >
-            Low Quality
-          </text>
+          {/* Quadrant Labels - hidden on small mobile (< 375px) to prevent overlap */}
+          {!isSmallMobile && (
+            <>
+              <text
+                x="82%"
+                y="15%"
+                textAnchor="middle"
+                fill="currentColor"
+                className="text-xs opacity-40"
+              >
+                Premium
+              </text>
+              <text
+                x="18%"
+                y="15%"
+                textAnchor="middle"
+                fill="currentColor"
+                className="text-xs opacity-40"
+              >
+                Value
+              </text>
+              <text
+                x="18%"
+                y="85%"
+                textAnchor="middle"
+                fill="currentColor"
+                className="text-xs opacity-40"
+              >
+                Budget
+              </text>
+              <text
+                x="82%"
+                y="85%"
+                textAnchor="middle"
+                fill="currentColor"
+                className="text-xs opacity-40"
+              >
+                Low Quality
+              </text>
+            </>
+          )}
 
         </RechartsScatter>
       </ResponsiveContainer>

@@ -11,7 +11,7 @@ export function AddCompetitorButton({ onClick }: AddCompetitorButtonProps) {
     <Button
       onClick={onClick}
       data-testid="add-competitor-button"
-      className="min-h-[48px] min-w-[48px]"
+      className="min-h-[48px] min-w-[48px] w-full whitespace-nowrap sm:w-auto"
     >
       <Plus className="h-4 w-4 mr-2" />
       Add Competitor

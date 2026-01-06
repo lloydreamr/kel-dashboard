@@ -70,6 +70,7 @@ export function ChartClickLayer({
                      bg-transparent hover:bg-primary/10 rounded-full z-10
                      focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
                      pointer-events-auto disabled:pointer-events-none disabled:opacity-0
+                     active:scale-95 active:bg-primary/20 transition-transform duration-75
                      chart-click-overlay"
           style={{ left: point.x, top: point.y }}
           aria-label={`${point.name}: Price ${point.priceScore}, Quality ${point.qualityScore}${point.isKel ? ' (Kel target)' : ''}`}
