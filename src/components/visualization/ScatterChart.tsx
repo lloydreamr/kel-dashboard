@@ -16,10 +16,10 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { ChartClickLayer } from '@/components/visualization/ChartClickLayer';
-import { CompetitorEditPopover } from '@/components/visualization/CompetitorEditPopover';
+import { CompetitorDetailSheet } from '@/components/visualization/CompetitorDetailSheet';
 import { ScatterChartSkeleton } from '@/components/visualization/ScatterChartSkeleton';
 import { useCompetitorData } from '@/hooks/competitors';
-import { useResponsiveChartHeight } from '@/hooks/ui';
+import { useHaptic, useResponsiveChartHeight } from '@/hooks/ui';
 import { isStale, getStalenessMessage } from '@/lib/utils/staleness';
 
 import type { OverlayPoint } from '@/components/visualization/ChartClickLayer';
@@ -58,6 +58,7 @@ const AXIS_LABELS = {
 export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }: ScatterChartProps) {
   const { data: competitors, isLoading, error, refetch } = useCompetitorData();
   const { isMobile, isSmallMobile, chartHeight } = useResponsiveChartHeight();
+  const { trigger: triggerHaptic } = useHaptic();
   const [selectedCompetitor, setSelectedCompetitor] = useState<CompetitorDataPoint | null>(null);
   const [popoverAnchor, setPopoverAnchor] = useState<{ x: number; y: number } | null>(null);
   const [hoveredQuadrant, setHoveredQuadrant] = useState<Quadrant | null>(null);
@@ -144,6 +145,11 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
   // Don't use useCallback to avoid stale closure issues - re-create each render
   const handleOverlayClick = (competitor: CompetitorDataPoint) => {
     if (!containerRef.current) return;
+
+    // Trigger haptic feedback immediately on mobile (before any other logic)
+    if (isMobile) {
+      triggerHaptic('light');
+    }
 
     // Get fresh container dimensions directly from the DOM
     const containerRect = containerRef.current.getBoundingClientRect();
@@ -517,9 +523,9 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
       )}
       </div>
 
-      {/* Edit popover for clicked data points */}
+      {/* Edit popover (desktop) or bottom sheet (mobile) for clicked data points */}
       {selectedCompetitor && popoverAnchor && (
-        <CompetitorEditPopover
+        <CompetitorDetailSheet
           competitor={selectedCompetitor}
           open={true}
           onOpenChange={(open) => {
@@ -539,6 +545,7 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
             setSelectedCompetitor(null);
             setPopoverAnchor(null);
           }}
+          isMobile={isMobile}
         />
       )}
     </div>

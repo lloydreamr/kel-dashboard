@@ -19,3 +19,5 @@ export { KelPositionDialog } from './KelPositionDialog';
 export { COMPETITOR_CATEGORIES } from './competitorSchema';
 export { ChartClickLayer } from './ChartClickLayer';
 export type { OverlayPoint, ChartClickLayerProps } from './ChartClickLayer';
+export { SwipeableSheetContent } from './SwipeableSheetContent';
+export { CompetitorDetailSheet } from './CompetitorDetailSheet';

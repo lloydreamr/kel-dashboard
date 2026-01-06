@@ -2,7 +2,7 @@
  * Responsive Visualization E2E Tests
  *
  * Story 10-1: Mobile Visualization Responsive Layout
- * Task 9: E2E tests for mobile/tablet viewport behavior
+ * Story 10-2: Mobile Touch Interactions
  *
  * Tests verify:
  * - Mobile viewport (375px) responsive behavior
@@ -10,6 +10,10 @@
  * - Touch target accessibility (48px minimum)
  * - Axis label abbreviation on mobile
  * - Quadrant label visibility
+ * - Mobile bottom sheet modal (10-2)
+ * - Tap on data point opens sheet (10-2)
+ * - Sheet Edit/Delete buttons functional (10-2)
+ * - Overlay dismiss behavior (10-2)
  */
 
 import { test, expect } from '@playwright/test';
@@ -273,5 +277,249 @@ test.describe('Responsive Visualization - Desktop Viewport', () => {
     await expect(premiumLabel).toBeVisible();
     await expect(valueLabel).toBeVisible();
     await expect(budgetLabel).toBeVisible();
+  });
+});
+
+/**
+ * Story 10-2: Mobile Touch Interactions
+ * Tests for bottom sheet modal, tap interactions, and overlay dismiss
+ */
+test.describe('Mobile Touch Interactions (Story 10-2)', () => {
+  test.use({ storageState: STORAGE_STATE.maho });
+
+  test('tapping competitor opens bottom sheet on mobile', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'This test only runs on mobile viewport');
+
+    await page.goto('/visualization');
+    await page.waitForSelector('[data-testid="scatter-chart"]');
+
+    // Find a competitor overlay button (data point)
+    const overlayButtons = page.locator('[data-generic-testid="chart-click-overlay"]');
+    const overlayCount = await overlayButtons.count();
+
+    if (overlayCount === 0) {
+      // If no competitors exist, skip the test
+      test.skip(true, 'No competitors in database to tap');
+      return;
+    }
+
+    // Tap the first competitor data point (force: true handles overlapping buttons)
+    const firstOverlay = overlayButtons.first();
+    await firstOverlay.click({ force: true });
+
+    // Bottom sheet should appear (mobile uses sheet, not popover)
+    const bottomSheet = page.getByTestId('viz-competitor-modal-mobile');
+    await expect(bottomSheet).toBeVisible();
+  });
+
+  test('bottom sheet shows competitor details', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'This test only runs on mobile viewport');
+
+    await page.goto('/visualization');
+    await page.waitForSelector('[data-testid="scatter-chart"]');
+
+    const overlayButtons = page.locator('[data-generic-testid="chart-click-overlay"]');
+    const overlayCount = await overlayButtons.count();
+
+    if (overlayCount === 0) {
+      test.skip(true, 'No competitors in database');
+      return;
+    }
+
+    // Tap a competitor (force: true handles overlapping buttons)
+    await overlayButtons.first().click({ force: true });
+
+    // Verify sheet content shows scores
+    const priceScore = page.getByTestId('price-score');
+    const qualityScore = page.getByTestId('quality-score');
+
+    await expect(priceScore).toBeVisible();
+    await expect(qualityScore).toBeVisible();
+
+    // Scores should show format "X/10"
+    await expect(priceScore).toHaveText(/\d+\/10/);
+    await expect(qualityScore).toHaveText(/\d+\/10/);
+  });
+
+  test('bottom sheet has 48px touch target buttons', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'This test only runs on mobile viewport');
+
+    await page.goto('/visualization');
+    await page.waitForSelector('[data-testid="scatter-chart"]');
+
+    const overlayButtons = page.locator('[data-generic-testid="chart-click-overlay"]');
+    const overlayCount = await overlayButtons.count();
+
+    if (overlayCount === 0) {
+      test.skip(true, 'No competitors in database');
+      return;
+    }
+
+    // Tap a competitor to open sheet
+    await overlayButtons.first().click({ force: true });
+
+    const bottomSheet = page.getByTestId('viz-competitor-modal-mobile');
+    await expect(bottomSheet).toBeVisible();
+
+    // Verify Edit and Delete buttons meet 48px touch target
+    const editButton = page.getByTestId('competitor-edit-button');
+    const deleteButton = page.getByTestId('competitor-delete-button');
+
+    await expect(editButton).toBeVisible();
+    await expect(deleteButton).toBeVisible();
+
+    const editBox = await editButton.boundingBox();
+    const deleteBox = await deleteButton.boundingBox();
+
+    expect(editBox).not.toBeNull();
+    expect(deleteBox).not.toBeNull();
+
+    // Both buttons should have at least 48px height
+    expect(editBox!.height).toBeGreaterThanOrEqual(48);
+    expect(deleteBox!.height).toBeGreaterThanOrEqual(48);
+  });
+
+  test('bottom sheet swipe handle is visible', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'This test only runs on mobile viewport');
+
+    await page.goto('/visualization');
+    await page.waitForSelector('[data-testid="scatter-chart"]');
+
+    const overlayButtons = page.locator('[data-generic-testid="chart-click-overlay"]');
+    const overlayCount = await overlayButtons.count();
+
+    if (overlayCount === 0) {
+      test.skip(true, 'No competitors in database');
+      return;
+    }
+
+    // Tap to open sheet
+    await overlayButtons.first().click({ force: true });
+
+    // Swipe handle should be visible for gesture dismissal affordance
+    const swipeHandle = page.getByTestId('viz-modal-swipe-handle');
+    await expect(swipeHandle).toBeVisible();
+  });
+
+  test('tapping overlay dismisses bottom sheet', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'This test only runs on mobile viewport');
+
+    await page.goto('/visualization');
+    await page.waitForSelector('[data-testid="scatter-chart"]');
+
+    const overlayButtons = page.locator('[data-generic-testid="chart-click-overlay"]');
+    const overlayCount = await overlayButtons.count();
+
+    if (overlayCount === 0) {
+      test.skip(true, 'No competitors in database');
+      return;
+    }
+
+    // Tap to open sheet
+    await overlayButtons.first().click({ force: true });
+
+    const bottomSheet = page.getByTestId('viz-competitor-modal-mobile');
+    await expect(bottomSheet).toBeVisible();
+
+    // Tap the overlay to dismiss
+    const overlay = page.getByTestId('viz-modal-overlay');
+    await overlay.click({ force: true, position: { x: 10, y: 10 } });
+
+    // Sheet should close
+    await expect(bottomSheet).not.toBeVisible();
+  });
+
+  test('Edit button closes sheet and opens edit dialog', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'This test only runs on mobile viewport');
+
+    await page.goto('/visualization');
+    await page.waitForSelector('[data-testid="scatter-chart"]');
+
+    const overlayButtons = page.locator('[data-generic-testid="chart-click-overlay"]');
+    const overlayCount = await overlayButtons.count();
+
+    if (overlayCount === 0) {
+      test.skip(true, 'No competitors in database');
+      return;
+    }
+
+    // Tap to open sheet
+    await overlayButtons.first().click({ force: true });
+
+    const bottomSheet = page.getByTestId('viz-competitor-modal-mobile');
+    await expect(bottomSheet).toBeVisible();
+
+    // Tap Edit button
+    const editButton = page.getByTestId('competitor-edit-button');
+    await editButton.click();
+
+    // Bottom sheet should close
+    await expect(bottomSheet).not.toBeVisible();
+
+    // Edit dialog should open
+    const editDialog = page.getByTestId('competitor-dialog');
+    await expect(editDialog).toBeVisible();
+  });
+
+  test('Delete button closes sheet and opens confirmation', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'This test only runs on mobile viewport');
+
+    await page.goto('/visualization');
+    await page.waitForSelector('[data-testid="scatter-chart"]');
+
+    const overlayButtons = page.locator('[data-generic-testid="chart-click-overlay"]');
+    const overlayCount = await overlayButtons.count();
+
+    if (overlayCount === 0) {
+      test.skip(true, 'No competitors in database');
+      return;
+    }
+
+    // Tap to open sheet
+    await overlayButtons.first().click({ force: true });
+
+    const bottomSheet = page.getByTestId('viz-competitor-modal-mobile');
+    await expect(bottomSheet).toBeVisible();
+
+    // Tap Delete button
+    const deleteButton = page.getByTestId('competitor-delete-button');
+    await deleteButton.click();
+
+    // Bottom sheet should close
+    await expect(bottomSheet).not.toBeVisible();
+
+    // Delete confirmation dialog should open
+    const deleteDialog = page.getByTestId('delete-competitor-dialog');
+    await expect(deleteDialog).toBeVisible();
+  });
+});
+
+test.describe('Desktop Popover Behavior (Story 10-2 - Backwards Compatibility)', () => {
+  test.use({
+    storageState: STORAGE_STATE.maho,
+    viewport: VIEWPORTS.desktop,
+  });
+
+  test('clicking competitor opens popover on desktop (not sheet)', async ({ page }) => {
+    await page.goto('/visualization');
+    await page.waitForSelector('[data-testid="scatter-chart"]');
+
+    const overlayButtons = page.locator('[data-generic-testid="chart-click-overlay"]');
+    const overlayCount = await overlayButtons.count();
+
+    if (overlayCount === 0) {
+      test.skip(true, 'No competitors in database');
+      return;
+    }
+
+    // Click a competitor
+    await overlayButtons.first().click({ force: true });
+
+    // Should show popover, NOT bottom sheet
+    const popover = page.getByTestId('competitor-edit-popover');
+    const bottomSheet = page.getByTestId('viz-competitor-modal-mobile');
+
+    await expect(popover).toBeVisible();
+    await expect(bottomSheet).not.toBeVisible();
   });
 });
