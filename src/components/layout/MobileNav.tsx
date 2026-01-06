@@ -14,6 +14,7 @@ import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigationStore } from '@/stores/navigation';
 
+import { DashboardSyncIndicator } from './DashboardSyncIndicator';
 import { MobileNavDrawer } from './MobileNavDrawer';
 
 interface MobileNavProps {
@@ -35,15 +36,18 @@ export function MobileNav({ userEmail, className }: MobileNavProps) {
       >
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold text-foreground">Kel Dashboard</h1>
-          <button
-            type="button"
-            data-testid="nav-hamburger"
-            onClick={toggle}
-            className="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-md hover:bg-accent/50 transition-colors"
-            aria-label="Open navigation menu"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            <DashboardSyncIndicator />
+            <button
+              type="button"
+              data-testid="nav-hamburger"
+              onClick={toggle}
+              className="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-md hover:bg-accent/50 transition-colors"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+          </div>
         </div>
       </header>
 

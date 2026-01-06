@@ -24,6 +24,13 @@ vi.mock('./MobileNavDrawer', () => ({
   ),
 }));
 
+// Mock DashboardSyncIndicator to avoid QueryClient dependency
+vi.mock('./DashboardSyncIndicator', () => ({
+  DashboardSyncIndicator: () => (
+    <div data-testid="mock-sync-indicator">Sync</div>
+  ),
+}));
+
 describe('MobileNav', () => {
   const defaultProps = {
     userEmail: 'test@example.com',

@@ -14,6 +14,7 @@ import { usePathname } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
 
+import { DashboardSyncIndicator } from './DashboardSyncIndicator';
 import { LogoutButton } from './LogoutButton';
 import { navLinks } from './nav-links';
 import { UserAvatar } from './UserAvatar';
@@ -89,6 +90,9 @@ export function Sidebar({ userEmail, className }: SidebarProps) {
           <span className="text-sm text-muted-foreground truncate flex-1">
             {userEmail}
           </span>
+        </div>
+        <div className="flex items-center justify-between px-3">
+          <DashboardSyncIndicator />
         </div>
         <LogoutButton />
       </div>

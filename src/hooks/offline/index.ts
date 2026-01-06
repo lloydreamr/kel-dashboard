@@ -21,3 +21,11 @@ export {
 export type { UseOfflineGuardResult } from './useOfflineGuard';
 
 export { useServiceWorkerUpdate } from './useServiceWorkerUpdate';
+
+export { useSyncStatus } from './useSyncStatus';
+export type { SyncState, SyncStatusResult } from './useSyncStatus';
+
+export { useManualRefresh } from './useManualRefresh';
+export type { UseManualRefreshResult } from './useManualRefresh';
+
+export { useSyncOnQuerySuccess } from './useSyncOnQuerySuccess';

@@ -9,6 +9,8 @@ export { MobileNav } from './MobileNav';
 export { MobileNavDrawer } from './MobileNavDrawer';
 export { LogoutButton } from './LogoutButton';
 export { UserAvatar } from './UserAvatar';
+export { DashboardSyncIndicator } from './DashboardSyncIndicator';
 export { navLinks } from './nav-links';
 
 export type { NavLink } from './nav-links';
+export type { DashboardSyncIndicatorProps } from './DashboardSyncIndicator';

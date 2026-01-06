@@ -4,15 +4,17 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Toaster } from 'sonner';
 
-import { useServiceWorkerUpdate } from '@/hooks/offline';
+import { useServiceWorkerUpdate, useSyncOnQuerySuccess } from '@/hooks/offline';
 
 /**
  * Wrapper component that initializes app-wide effects.
- * Currently handles service worker update detection.
+ * Handles service worker updates and sync status tracking.
  */
 function AppEffects() {
   // Listen for service worker updates and show refresh prompt
   useServiceWorkerUpdate();
+  // Update sync timestamp when queries succeed
+  useSyncOnQuerySuccess();
   return null;
 }
 

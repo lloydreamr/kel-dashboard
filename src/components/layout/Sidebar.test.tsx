@@ -19,6 +19,13 @@ vi.mock('./LogoutButton', () => ({
   LogoutButton: () => <button data-testid="nav-logout">Sign out</button>,
 }));
 
+// Mock DashboardSyncIndicator to avoid QueryClient dependency
+vi.mock('./DashboardSyncIndicator', () => ({
+  DashboardSyncIndicator: () => (
+    <div data-testid="mock-sync-indicator">Sync</div>
+  ),
+}));
+
 // Mock useQueueStore
 vi.mock('@/stores/queue', () => ({
   useQueueStore: () => vi.fn(),
