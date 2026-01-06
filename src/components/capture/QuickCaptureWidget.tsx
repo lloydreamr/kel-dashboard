@@ -53,13 +53,15 @@ export function QuickCaptureWidget({
   });
 
   // Sync hook for offline captures (runs in background)
-  const { pendingCount, isSyncing } = useCaptureSync({
+  const { pendingCount, isSyncing, refreshCount } = useCaptureSync({
     userId,
     autoSync: true,
   });
 
-  const handleCapture = (data: QuickCaptureData) => {
-    submitCapture(data);
+  const handleCapture = async (data: QuickCaptureData) => {
+    await submitCapture(data);
+    // Refresh pending count in case this was an offline queue
+    await refreshCount();
   };
 
   const handleOpenSheet = () => {
@@ -87,7 +89,7 @@ export function QuickCaptureWidget({
       {pendingCount > 0 && (
         <div
           className="fixed bottom-20 right-6 z-50 rounded-full bg-warning px-2 py-1 text-xs font-medium text-warning-foreground shadow-md"
-          data-testid="pending-sync-badge"
+          data-testid="quick-capture-pending"
         >
           {isSyncing ? 'Syncing...' : `${pendingCount} pending`}
         </div>

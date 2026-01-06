@@ -50,7 +50,7 @@ function generateFilePath(userId: string, fileName: string): string {
  */
 function validateFile(file: File): void {
   const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
-  const maxSize = 5 * 1024 * 1024; // 5MB
+  const maxSize = 10 * 1024 * 1024; // 10MB per story spec
 
   if (!validTypes.includes(file.type)) {
     const error = new Error(
@@ -62,7 +62,7 @@ function validateFile(file: File): void {
 
   if (file.size > maxSize) {
     const error = new Error(
-      `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum: 5MB`
+      `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum: 10MB`
     ) as QuickCaptureStorageError;
     error.code = 'INVALID_FILE';
     throw error;

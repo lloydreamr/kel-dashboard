@@ -21,6 +21,7 @@ describe('captureQueue', () => {
     fileName: 'photo.jpg',
     mimeType: 'image/jpeg',
     note: 'Market shelf observation',
+    category: 'market',
     userId: 'user123',
     questionId: 'q1',
   };

@@ -9,7 +9,11 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useCaptureSync } from './useCaptureSync';
-import { captureQueue, CAPTURE_QUEUE_DB_NAME } from '@/lib/storage';
+// Import actual captureQueue for real IndexedDB testing
+import {
+  captureQueue,
+  CAPTURE_QUEUE_DB_NAME,
+} from '@/lib/storage/captureQueue';
 
 // Mock dependencies
 vi.mock('@/hooks/offline', () => ({
@@ -17,12 +21,20 @@ vi.mock('@/hooks/offline', () => ({
 }));
 
 const mockUpload = vi.fn();
-vi.mock('@/lib/storage/quickCaptureStorage', () => ({
-  uploadQuickCapture: (...args: unknown[]) => mockUpload(...args),
-  base64ToFile: vi.fn((base64: string, name: string, type: string) => {
-    return new File(['test'], name, { type });
-  }),
-}));
+const mockBase64ToFile = vi.fn((base64: string, name: string, type: string) => {
+  return new File(['test'], name, { type });
+});
+
+// Mock @/lib/storage barrel - preserve real captureQueue, mock storage functions
+vi.mock('@/lib/storage', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/storage')>();
+  return {
+    ...actual,
+    uploadQuickCapture: (...args: unknown[]) => mockUpload(...args),
+    base64ToFile: (...args: unknown[]) =>
+      mockBase64ToFile(...(args as [string, string, string])),
+  };
+});
 
 const mockCreatePhotoEvidence = vi.fn();
 vi.mock('@/lib/repositories/evidence', () => ({
@@ -54,6 +66,7 @@ describe('useCaptureSync', () => {
     fileName: 'photo.jpg',
     mimeType: 'image/jpeg',
     note: 'Test note',
+    category: 'market' as const,
     userId: 'user123',
     questionId: 'q1',
   };

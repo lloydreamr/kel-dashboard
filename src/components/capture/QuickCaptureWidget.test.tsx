@@ -106,7 +106,7 @@ describe('QuickCaptureWidget', () => {
     fireEvent.change(cameraInput, { target: { files: [file] } });
 
     // Submit
-    fireEvent.click(screen.getByTestId('capture-submit-button'));
+    fireEvent.click(screen.getByTestId('quick-capture-save'));
 
     // Sheet should close after success
     await waitFor(() => {
@@ -126,6 +126,7 @@ describe('QuickCaptureWidget', () => {
       fileName: 'test.jpg',
       mimeType: 'image/jpeg',
       note: 'Test',
+      category: 'market',
       userId: 'user123',
       questionId: null,
     });
@@ -134,11 +135,11 @@ describe('QuickCaptureWidget', () => {
 
     // Wait for the pending badge to appear (may show "Syncing..." due to autoSync)
     await waitFor(() => {
-      expect(screen.getByTestId('pending-sync-badge')).toBeInTheDocument();
+      expect(screen.getByTestId('quick-capture-pending')).toBeInTheDocument();
     });
 
     // Badge should show either pending count or syncing state
-    const badge = screen.getByTestId('pending-sync-badge');
+    const badge = screen.getByTestId('quick-capture-pending');
     expect(badge.textContent).toMatch(/1 pending|Syncing/);
   });
 
@@ -151,7 +152,7 @@ describe('QuickCaptureWidget', () => {
     });
 
     // Badge should not be present
-    expect(screen.queryByTestId('pending-sync-badge')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('quick-capture-pending')).not.toBeInTheDocument();
   });
 
   it('passes questionId to capture hook when provided', async () => {
@@ -171,7 +172,7 @@ describe('QuickCaptureWidget', () => {
     const file = new File(['photo'], 'test.jpg', { type: 'image/jpeg' });
     const cameraInput = screen.getByTestId('camera-input');
     fireEvent.change(cameraInput, { target: { files: [file] } });
-    fireEvent.click(screen.getByTestId('capture-submit-button'));
+    fireEvent.click(screen.getByTestId('quick-capture-save'));
 
     await waitFor(() => {
       expect(mockCreatePhotoEvidence).toHaveBeenCalled();

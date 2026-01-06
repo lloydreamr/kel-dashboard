@@ -43,6 +43,8 @@ export interface QueuedCapture {
   mimeType: string;
   /** Optional note from user */
   note: string;
+  /** Evidence category (market, product, distribution) */
+  category: string;
   /** User ID for storage path scoping */
   userId: string;
   /** Question ID to attach evidence to (optional) */

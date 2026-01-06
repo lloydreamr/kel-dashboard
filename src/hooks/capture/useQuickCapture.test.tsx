@@ -13,8 +13,17 @@ vi.mock('@/hooks/offline', () => ({
 }));
 
 const mockUpload = vi.fn();
+const mockFileToBase64 = vi.fn();
 vi.mock('@/lib/storage', () => ({
   uploadQuickCapture: (...args: unknown[]) => mockUpload(...args),
+  fileToBase64: (...args: unknown[]) => mockFileToBase64(...args),
+}));
+
+const mockCaptureQueueAdd = vi.fn();
+vi.mock('@/lib/storage/captureQueue', () => ({
+  captureQueue: {
+    add: (...args: unknown[]) => mockCaptureQueueAdd(...args),
+  },
 }));
 
 const mockCreatePhotoEvidence = vi.fn();
@@ -46,6 +55,7 @@ describe('useQuickCapture', () => {
     photo: new File(['test'], 'photo.jpg', { type: 'image/jpeg' }),
     note: 'Market shelf observation',
     previewUrl: 'blob:http://localhost/preview',
+    category: 'market',
   };
 
   beforeEach(() => {
@@ -62,6 +72,12 @@ describe('useQuickCapture', () => {
       path: 'user123/1234_abc.jpg',
       url: 'https://storage.example.com/signed-url',
     });
+
+    // Mock fileToBase64 for offline queuing
+    mockFileToBase64.mockResolvedValue('data:image/jpeg;base64,test');
+
+    // Mock captureQueue.add for offline queuing
+    mockCaptureQueueAdd.mockResolvedValue('queue-id-1');
 
     mockCreatePhotoEvidence.mockResolvedValue({
       id: 'evidence-1',
@@ -214,24 +230,36 @@ describe('useQuickCapture', () => {
     expect(toast.error).toHaveBeenCalled();
   });
 
-  it('prevents submission when offline', async () => {
+  it('queues capture when offline', async () => {
     vi.mocked(useOnlineStatus).mockReturnValue({ isOnline: false });
 
+    const onSuccess = vi.fn();
     const { result } = renderHook(
-      () => useQuickCapture({ userId: 'user123' }),
+      () => useQuickCapture({ userId: 'user123', questionId: 'q1', onSuccess }),
       { wrapper }
     );
 
-    act(() => {
+    await act(async () => {
       result.current.submitCapture(mockCaptureData);
     });
 
-    // Should not call upload when offline
+    // Should not call upload when offline - instead queues
     expect(mockUpload).not.toHaveBeenCalled();
-    expect(toast.error).toHaveBeenCalledWith(
-      'Cannot capture while offline',
+    expect(mockFileToBase64).toHaveBeenCalledWith(mockCaptureData.photo);
+    expect(mockCaptureQueueAdd).toHaveBeenCalledWith({
+      photoBase64: 'data:image/jpeg;base64,test',
+      fileName: 'photo.jpg',
+      mimeType: 'image/jpeg',
+      note: 'Market shelf observation',
+      category: 'market',
+      userId: 'user123',
+      questionId: 'q1',
+    });
+    expect(toast.success).toHaveBeenCalledWith(
+      'Photo queued',
       expect.any(Object)
     );
+    expect(onSuccess).toHaveBeenCalled();
   });
 
   it('works without questionId', async () => {

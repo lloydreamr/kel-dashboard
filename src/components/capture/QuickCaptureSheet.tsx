@@ -5,6 +5,13 @@ import { useCallback, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -12,6 +19,11 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import {
+  type QuestionCategory,
+  QUESTION_CATEGORIES,
+  CATEGORY_LABELS,
+} from '@/types/question';
 
 export interface QuickCaptureData {
   /** The captured photo file */
@@ -20,6 +32,8 @@ export interface QuickCaptureData {
   note: string;
   /** Photo preview URL (for display before upload) */
   previewUrl: string;
+  /** Category for the evidence (Market, Product, Distribution) */
+  category: QuestionCategory;
 }
 
 interface QuickCaptureSheetProps {
@@ -48,6 +62,7 @@ export function QuickCaptureSheet({
   const [photo, setPhoto] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [note, setNote] = useState('');
+  const [category, setCategory] = useState<QuestionCategory>('market');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -81,9 +96,10 @@ export function QuickCaptureSheet({
         photo,
         note: note.trim(),
         previewUrl,
+        category,
       });
     }
-  }, [photo, previewUrl, note, onCapture]);
+  }, [photo, previewUrl, note, category, onCapture]);
 
   const handleClose = useCallback(() => {
     // Clean up preview URL when closing
@@ -93,6 +109,7 @@ export function QuickCaptureSheet({
     setPhoto(null);
     setPreviewUrl(null);
     setNote('');
+    setCategory('market');
     onOpenChange(false);
   }, [previewUrl, onOpenChange]);
 
@@ -108,7 +125,7 @@ export function QuickCaptureSheet({
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent
         side="bottom"
-        className="h-auto max-h-[85vh] rounded-t-2xl"
+        className="h-auto max-h-[85vh] overflow-y-auto rounded-t-2xl"
         data-testid="quick-capture-sheet"
       >
         <SheetHeader className="pb-4">
@@ -193,6 +210,34 @@ export function QuickCaptureSheet({
             </div>
           )}
 
+          {/* Category select */}
+          <div className="space-y-2">
+            <label
+              htmlFor="capture-category"
+              className="block text-sm font-medium text-foreground"
+            >
+              Category
+            </label>
+            <Select
+              value={category}
+              onValueChange={(value) => setCategory(value as QuestionCategory)}
+            >
+              <SelectTrigger
+                id="capture-category"
+                data-testid="quick-capture-category-select"
+              >
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {QUESTION_CATEGORIES.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {CATEGORY_LABELS[cat]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Note field */}
           <div className="space-y-2">
             <label
@@ -212,7 +257,7 @@ export function QuickCaptureSheet({
                 'text-foreground placeholder:text-muted-foreground',
                 'focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20'
               )}
-              data-testid="capture-note-input"
+              data-testid="quick-capture-note-input"
             />
           </div>
 
@@ -232,7 +277,7 @@ export function QuickCaptureSheet({
               onClick={handleSubmit}
               disabled={!photo || isSubmitting}
               className="flex-1"
-              data-testid="capture-submit-button"
+              data-testid="quick-capture-save"
             >
               {isSubmitting ? 'Saving...' : 'Save Capture'}
             </Button>

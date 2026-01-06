@@ -13,7 +13,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { useOnlineStatus, isOfflineError } from '@/hooks/offline';
-import { uploadQuickCapture } from '@/lib/storage';
+import { uploadQuickCapture, fileToBase64 } from '@/lib/storage';
+import { captureQueue } from '@/lib/storage/captureQueue';
 import { queryKeys } from '@/lib/queryKeys';
 import { evidenceRepo } from '@/lib/repositories/evidence';
 
@@ -117,13 +118,34 @@ export function useQuickCapture({
     },
   });
 
-  const submitCapture = (data: QuickCaptureData) => {
+  const submitCapture = async (data: QuickCaptureData) => {
     if (!isOnline) {
-      // TODO: Queue for offline sync (Task 7)
-      // For now, show offline toast
-      toast.error('Cannot capture while offline', {
-        description: 'Photo capture requires internet connection',
-      });
+      // Queue for offline sync - convert file to base64 and store in IndexedDB
+      try {
+        const photoBase64 = await fileToBase64(data.photo);
+        await captureQueue.add({
+          photoBase64,
+          fileName: data.photo.name,
+          mimeType: data.photo.type,
+          note: data.note || '',
+          category: data.category,
+          userId,
+          questionId: questionId ?? null,
+        });
+
+        toast.success('Photo queued', {
+          description: 'Will sync when back online',
+        });
+
+        // Call onSuccess with a placeholder - the real evidence will be created on sync
+        // Using null cast to satisfy the callback type since we don't have a real evidence record yet
+        onSuccess?.(null as unknown as Evidence);
+      } catch (error) {
+        toast.error('Failed to queue capture', {
+          description: error instanceof Error ? error.message : 'Unknown error',
+        });
+        onError?.(error instanceof Error ? error : new Error('Queue failed'));
+      }
       return;
     }
 

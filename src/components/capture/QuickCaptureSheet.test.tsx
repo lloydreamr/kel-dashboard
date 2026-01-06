@@ -48,7 +48,7 @@ describe('QuickCaptureSheet', () => {
       />
     );
 
-    expect(screen.getByTestId('capture-submit-button')).toBeDisabled();
+    expect(screen.getByTestId('quick-capture-save')).toBeDisabled();
   });
 
   it('shows submitting state', () => {
@@ -61,7 +61,7 @@ describe('QuickCaptureSheet', () => {
       />
     );
 
-    expect(screen.getByTestId('capture-submit-button')).toHaveTextContent(
+    expect(screen.getByTestId('quick-capture-save')).toHaveTextContent(
       'Saving...'
     );
   });
@@ -127,7 +127,7 @@ describe('QuickCaptureSheet', () => {
     // Camera and gallery buttons should be hidden
     expect(screen.queryByTestId('capture-placeholder')).not.toBeInTheDocument();
     // Submit should be enabled
-    expect(screen.getByTestId('capture-submit-button')).not.toBeDisabled();
+    expect(screen.getByTestId('quick-capture-save')).not.toBeDisabled();
   });
 
   it('removes photo when remove button clicked', async () => {
@@ -168,7 +168,7 @@ describe('QuickCaptureSheet', () => {
       />
     );
 
-    const noteInput = screen.getByTestId('capture-note-input');
+    const noteInput = screen.getByTestId('quick-capture-note-input');
     await user.type(noteInput, 'This is a test note');
 
     expect(noteInput).toHaveValue('This is a test note');
@@ -194,11 +194,11 @@ describe('QuickCaptureSheet', () => {
     });
 
     // Enter a note
-    const noteInput = screen.getByTestId('capture-note-input');
+    const noteInput = screen.getByTestId('quick-capture-note-input');
     await user.type(noteInput, 'Market shelf photo');
 
     // Submit
-    await user.click(screen.getByTestId('capture-submit-button'));
+    await user.click(screen.getByTestId('quick-capture-save'));
 
     expect(mockOnCapture).toHaveBeenCalledWith(
       expect.objectContaining({
