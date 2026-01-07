@@ -6,6 +6,7 @@
 
 export { useQueueStore } from './queue';
 export { useNavigationStore } from './navigation';
+export { usePitchModeStore } from './pitchMode';
 
 export type {
   QueueStore,
@@ -18,3 +19,8 @@ export type {
   NavigationState,
   NavigationActions,
 } from './navigation';
+export type {
+  PitchModeStore,
+  PitchModeState,
+  PitchModeActions,
+} from './pitchMode';

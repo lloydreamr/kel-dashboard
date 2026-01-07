@@ -10,6 +10,7 @@ export { MobileNavDrawer } from './MobileNavDrawer';
 export { LogoutButton } from './LogoutButton';
 export { UserAvatar } from './UserAvatar';
 export { DashboardSyncIndicator } from './DashboardSyncIndicator';
+export { DashboardContent } from './DashboardContent';
 export { navLinks } from './nav-links';
 
 export type { NavLink } from './nav-links';

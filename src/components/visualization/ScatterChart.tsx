@@ -40,6 +40,8 @@ interface ScatterChartProps {
   onDeleteClick: (competitor: CompetitorDataPoint) => void;
   /** Callback to open add competitor dialog (used in empty state for Maho) */
   onAddClick?: () => void;
+  /** When true, chart enters pitch mode (read-only, no click interactions) */
+  isPitchMode?: boolean;
 }
 
 type Quadrant = 'premium' | 'value' | 'budget' | 'low-quality';
@@ -55,7 +57,7 @@ const AXIS_LABELS = {
   y: { mobile: 'Quality', desktop: 'Quality (low → high)' },
 } as const;
 
-export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }: ScatterChartProps) {
+export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, isPitchMode = false }: ScatterChartProps) {
   const { data: competitors, isLoading, error, refetch } = useCompetitorData();
   const { isMobile, isSmallMobile, chartHeight } = useResponsiveChartHeight();
   const { trigger: triggerHaptic } = useHaptic();
@@ -255,10 +257,28 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
     .map(([quadrant]) => quadrant);
 
   return (
-    <div data-testid="scatter-chart" className="w-full" style={{ height: chartHeight }}>
+    <div
+      data-testid={isPitchMode ? 'pitch-mode-chart' : 'scatter-chart'}
+      className="w-full"
+      style={{ height: chartHeight }}
+    >
       <div ref={containerRef} className="relative w-full h-full">
         <ResponsiveContainer width="100%" height="100%">
         <RechartsScatter margin={chartMargin}>
+          {/* SVG filter for Kel position glow in pitch mode */}
+          {isPitchMode && (
+            <defs>
+              <filter id="kel-glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow
+                  dx="0"
+                  dy="0"
+                  stdDeviation="3"
+                  floodColor="hsl(var(--primary))"
+                  floodOpacity="0.6"
+                />
+              </filter>
+            </defs>
+          )}
           <CartesianGrid strokeDasharray="3 3" />
 
           {/* Quadrant divider lines at 5,5 per AC1 */}
@@ -462,7 +482,11 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
               style={{ cursor: isMaho ? 'pointer' : 'default' }}
             >
               {kelPosition.map((entry) => (
-                <Cell key={entry.id} data-testid="chart-kel-position" />
+                <Cell
+                  key={entry.id}
+                  data-testid={isPitchMode ? 'kel-position-highlight' : 'chart-kel-position'}
+                  filter={isPitchMode ? 'url(#kel-glow)' : undefined}
+                />
               ))}
             </Scatter>
           )}
@@ -512,8 +536,8 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick }:
         </RechartsScatter>
       </ResponsiveContainer>
 
-      {/* HTML click overlays for reliable E2E testing */}
-      {competitors && (
+      {/* HTML click overlays for reliable E2E testing - disabled in pitch mode */}
+      {competitors && !isPitchMode && (
         <ChartClickLayer
           points={overlayPoints}
           competitors={competitors}

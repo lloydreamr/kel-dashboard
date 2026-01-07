@@ -21,3 +21,5 @@ export { ChartClickLayer } from './ChartClickLayer';
 export type { OverlayPoint, ChartClickLayerProps } from './ChartClickLayer';
 export { SwipeableSheetContent } from './SwipeableSheetContent';
 export { CompetitorDetailSheet } from './CompetitorDetailSheet';
+export { PitchModeHeader } from './PitchModeHeader';
+export { EnterPitchModeButton } from './EnterPitchModeButton';

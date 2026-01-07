@@ -796,6 +796,354 @@ describe('ScatterChart', () => {
     });
   });
 
+  describe('Pitch Mode', () => {
+    it('accepts isPitchMode prop', () => {
+      // Arrange
+      const mockCompetitors = [
+        createMockCompetitor({
+          name: 'Competitor A',
+          price_score: 5,
+          quality_score: 5,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act - should render without error when isPitchMode is passed
+      renderWithQueryClient(
+        <ScatterChart
+          isMaho={true}
+          isPitchMode={true}
+          onEditClick={vi.fn()}
+          onDeleteClick={vi.fn()}
+        />
+      );
+
+      // Assert - chart renders (uses pitch-mode-chart testid when isPitchMode is true)
+      expect(screen.getByTestId('pitch-mode-chart')).toBeInTheDocument();
+    });
+
+    it('adds pitch-mode-chart testid when isPitchMode is true', () => {
+      // Arrange
+      const mockCompetitors = [
+        createMockCompetitor({
+          name: 'Competitor A',
+          price_score: 5,
+          quality_score: 5,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(
+        <ScatterChart
+          isMaho={true}
+          isPitchMode={true}
+          onEditClick={vi.fn()}
+          onDeleteClick={vi.fn()}
+        />
+      );
+
+      // Assert
+      expect(screen.getByTestId('pitch-mode-chart')).toBeInTheDocument();
+    });
+
+    it('does not add pitch-mode-chart testid when isPitchMode is false', () => {
+      // Arrange
+      const mockCompetitors = [
+        createMockCompetitor({
+          name: 'Competitor A',
+          price_score: 5,
+          quality_score: 5,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(
+        <ScatterChart
+          isMaho={true}
+          isPitchMode={false}
+          onEditClick={vi.fn()}
+          onDeleteClick={vi.fn()}
+        />
+      );
+
+      // Assert
+      expect(screen.queryByTestId('pitch-mode-chart')).not.toBeInTheDocument();
+    });
+
+    it('does not render ChartClickLayer in pitch mode', () => {
+      // Arrange
+      const mockCompetitors = [
+        createMockCompetitor({
+          name: 'Competitor A',
+          price_score: 5,
+          quality_score: 5,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(
+        <ScatterChart
+          isMaho={true}
+          isPitchMode={true}
+          onEditClick={vi.fn()}
+          onDeleteClick={vi.fn()}
+        />
+      );
+
+      // Assert - click layer should not be present in pitch mode
+      expect(screen.queryByTestId('chart-click-layer')).not.toBeInTheDocument();
+    });
+
+    it('renders ChartClickLayer when not in pitch mode', () => {
+      // Arrange
+      const mockCompetitors = [
+        createMockCompetitor({
+          name: 'Competitor A',
+          price_score: 5,
+          quality_score: 5,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(
+        <ScatterChart
+          isMaho={true}
+          isPitchMode={false}
+          onEditClick={vi.fn()}
+          onDeleteClick={vi.fn()}
+        />
+      );
+
+      // Assert - click layer should be present when not in pitch mode
+      expect(screen.getByTestId('chart-click-layer')).toBeInTheDocument();
+    });
+
+    it('adds kel-position-highlight testid to Kel marker in pitch mode', () => {
+      // Arrange
+      const mockCompetitors = [
+        createMockCompetitor({
+          name: 'Kel Target',
+          price_score: 5,
+          quality_score: 8,
+          is_kel_position: true,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(
+        <ScatterChart
+          isMaho={false}
+          isPitchMode={true}
+          onEditClick={vi.fn()}
+          onDeleteClick={vi.fn()}
+        />
+      );
+
+      // Assert
+      expect(screen.getByTestId('kel-position-highlight')).toBeInTheDocument();
+    });
+
+    it('uses chart-kel-position testid when not in pitch mode', () => {
+      // Arrange
+      const mockCompetitors = [
+        createMockCompetitor({
+          name: 'Kel Target',
+          price_score: 5,
+          quality_score: 8,
+          is_kel_position: true,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(
+        <ScatterChart
+          isMaho={false}
+          isPitchMode={false}
+          onEditClick={vi.fn()}
+          onDeleteClick={vi.fn()}
+        />
+      );
+
+      // Assert
+      expect(screen.getByTestId('chart-kel-position')).toBeInTheDocument();
+      expect(screen.queryByTestId('kel-position-highlight')).not.toBeInTheDocument();
+    });
+
+    it('shows tooltips on hover in pitch mode (read-only)', () => {
+      // Arrange
+      const mockCompetitors = [
+        createMockCompetitor({
+          name: 'Competitor A',
+          price_score: 5,
+          quality_score: 5,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act - chart should render without crashing with pitch mode
+      renderWithQueryClient(
+        <ScatterChart
+          isMaho={true}
+          isPitchMode={true}
+          onEditClick={vi.fn()}
+          onDeleteClick={vi.fn()}
+        />
+      );
+
+      // Assert - chart renders in pitch mode (Tooltip is present but not visible until hover)
+      expect(screen.getByTestId('pitch-mode-chart')).toBeInTheDocument();
+    });
+
+    it('applies glow filter to Kel position in pitch mode', () => {
+      // Arrange
+      const mockCompetitors = [
+        createMockCompetitor({
+          name: 'Kel Target',
+          price_score: 5,
+          quality_score: 8,
+          is_kel_position: true,
+        }),
+        createMockCompetitor({
+          name: 'Competitor A',
+          price_score: 3,
+          quality_score: 6,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      const { container } = renderWithQueryClient(
+        <ScatterChart
+          isMaho={false}
+          isPitchMode={true}
+          onEditClick={vi.fn()}
+          onDeleteClick={vi.fn()}
+        />
+      );
+
+      // Assert - SVG filter for glow should be defined
+      const filter = container.querySelector('filter#kel-glow');
+      expect(filter).toBeInTheDocument();
+
+      // Assert - filter should be applied to Kel position element
+      const kelHighlight = screen.getByTestId('kel-position-highlight');
+      expect(kelHighlight).toHaveAttribute('filter', 'url(#kel-glow)');
+    });
+
+    it('does not include glow filter when not in pitch mode', () => {
+      // Arrange
+      const mockCompetitors = [
+        createMockCompetitor({
+          name: 'Kel Target',
+          price_score: 5,
+          quality_score: 8,
+          is_kel_position: true,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      const { container } = renderWithQueryClient(
+        <ScatterChart
+          isMaho={true}
+          isPitchMode={false}
+          onEditClick={vi.fn()}
+          onDeleteClick={vi.fn()}
+        />
+      );
+
+      // Assert - No glow filter when not in pitch mode
+      const filter = container.querySelector('filter#kel-glow');
+      expect(filter).not.toBeInTheDocument();
+    });
+  });
+
   describe('Stale Data Indicators', () => {
     // Mock current date for consistent staleness tests
     const mockNow = new Date('2025-12-29T12:00:00Z');

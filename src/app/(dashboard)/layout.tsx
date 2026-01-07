@@ -13,7 +13,7 @@
 import { cookies } from 'next/headers';
 
 import { QuickCaptureWidget } from '@/components/capture';
-import { Sidebar, MobileNav } from '@/components/layout';
+import { Sidebar, MobileNav, DashboardContent } from '@/components/layout';
 import { OfflineBanner } from '@/components/offline';
 import { createClient } from '@/lib/supabase/server';
 
@@ -69,22 +69,20 @@ export default async function DashboardLayout({
       {/* Offline Banner - fixed at top, full width */}
       <OfflineBanner className="fixed top-0 left-0 right-0 z-50" />
 
-      <div className="flex min-h-screen bg-background">
-        {/* Desktop Sidebar - hidden on mobile */}
-        <Sidebar
-          userEmail={userInfo.email}
-          className="hidden md:flex w-64 flex-shrink-0"
-        />
-
-        {/* Main Content Area */}
-        <div className="flex flex-col flex-1 min-w-0">
-          {/* Mobile Header - hidden on desktop */}
+      {/* DashboardContent is a Client Component that handles pitch mode visibility */}
+      <DashboardContent
+        sidebar={
+          <Sidebar
+            userEmail={userInfo.email}
+            className="hidden md:flex w-64 flex-shrink-0"
+          />
+        }
+        mobileNav={
           <MobileNav userEmail={userInfo.email} className="flex md:hidden" />
-
-          {/* Page Content */}
-          <main className="flex-1 p-4 md:p-6 overflow-auto">{children}</main>
-        </div>
-      </div>
+        }
+      >
+        {children}
+      </DashboardContent>
 
       {/* Quick Capture FAB - shown on all dashboard pages */}
       {userInfo.id && <QuickCaptureWidget userId={userInfo.id} />}
