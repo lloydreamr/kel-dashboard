@@ -16,6 +16,7 @@
     "test:e2e:questions": "playwright test questions",
     "test:e2e:evidence": "playwright test evidence",
     "test:e2e:navigation": "playwright test navigation",
+    "test:e2e:field-research": "playwright test e2e/field-research",
     "db:types": "npx supabase gen types typescript --project-id ${SUPABASE_PROJECT_ID:-your-project-id} > src/types/database.ts",
     "db:seed": "npx tsx scripts/seed.ts"
   },
