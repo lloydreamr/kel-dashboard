@@ -13,12 +13,17 @@
  * <QuickCaptureWidget userId={user.id} />
  */
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useQuickCapture, useCaptureSync } from '@/hooks/capture';
+import { useQuestions } from '@/hooks/questions';
 
 import { QuickCaptureFAB } from './QuickCaptureFAB';
-import { QuickCaptureSheet, type QuickCaptureData } from './QuickCaptureSheet';
+import {
+  QuickCaptureSheet,
+  type QuickCaptureData,
+  type QuestionOption,
+} from './QuickCaptureSheet';
 
 interface QuickCaptureWidgetProps {
   /** User ID for storage path scoping */
@@ -42,11 +47,30 @@ export function QuickCaptureWidget({
   questionId,
 }: QuickCaptureWidgetProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  // Track the selected question ID from the sheet (may differ from prop)
+  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(
+    questionId ?? null
+  );
 
-  // Quick capture hook for uploading
+  // Fetch questions for the selector
+  const { data: questions = [] } = useQuestions();
+
+  // Convert to QuestionOption format for the sheet
+  const questionOptions: QuestionOption[] = useMemo(
+    () =>
+      questions.map((q) => ({
+        id: q.id,
+        title: q.title,
+        category: q.category,
+      })),
+    [questions]
+  );
+
+  // Quick capture hook for uploading - uses activeQuestionId which can be
+  // overridden by the sheet's question selector
   const { submitCapture, isSubmitting } = useQuickCapture({
     userId,
-    questionId,
+    questionId: activeQuestionId ?? undefined,
     onSuccess: () => {
       setSheetOpen(false);
     },
@@ -59,6 +83,8 @@ export function QuickCaptureWidget({
   });
 
   const handleCapture = async (data: QuickCaptureData) => {
+    // Use the questionId from the capture data (selected in sheet)
+    setActiveQuestionId(data.questionId);
     await submitCapture(data);
     // Refresh pending count in case this was an offline queue
     await refreshCount();
@@ -83,6 +109,8 @@ export function QuickCaptureWidget({
         onOpenChange={setSheetOpen}
         onCapture={handleCapture}
         isSubmitting={isSubmitting}
+        questions={questionOptions}
+        defaultQuestionId={questionId ?? null}
       />
 
       {/* Pending sync badge (positioned above FAB) */}

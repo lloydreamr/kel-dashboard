@@ -29,6 +29,10 @@
  * }
  */
 
-export { QuickCaptureSheet, type QuickCaptureData } from './QuickCaptureSheet';
+export {
+  QuickCaptureSheet,
+  type QuickCaptureData,
+  type QuestionOption,
+} from './QuickCaptureSheet';
 export { QuickCaptureFAB } from './QuickCaptureFAB';
 export { QuickCaptureWidget } from './QuickCaptureWidget';

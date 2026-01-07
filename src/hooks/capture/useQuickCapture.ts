@@ -74,13 +74,16 @@ export function useQuickCapture({
 
   const mutation = useMutation({
     mutationFn: async (data: QuickCaptureData) => {
+      // Use questionId from data (user's selection in sheet) over prop default
+      const effectiveQuestionId = data.questionId ?? questionId ?? null;
+
       // Step 1: Upload photo to storage
       const { path } = await uploadQuickCapture(data.photo, userId);
 
       // Step 2: Create evidence record with storage path
       // Note: We store the path, not the signed URL, since URLs expire
       const evidence = await evidenceRepo.createPhotoEvidence({
-        question_id: questionId ?? null,
+        question_id: effectiveQuestionId,
         title: data.note || 'Quick capture photo',
         image_url: path, // Store the storage path for later signed URL generation
         source_type: 'photo',
@@ -88,14 +91,14 @@ export function useQuickCapture({
         created_by: userId,
       });
 
-      return evidence;
+      return { evidence, questionId: effectiveQuestionId };
     },
 
-    onSuccess: (evidence) => {
+    onSuccess: ({ evidence, questionId: effectiveQuestionId }) => {
       // Invalidate relevant queries
-      if (questionId) {
+      if (effectiveQuestionId) {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.evidence.byQuestion(questionId),
+          queryKey: queryKeys.evidence.byQuestion(effectiveQuestionId),
         });
       }
 
@@ -120,6 +123,9 @@ export function useQuickCapture({
 
   const submitCapture = async (data: QuickCaptureData) => {
     if (!isOnline) {
+      // Use questionId from data (user's selection in sheet) over prop default
+      const effectiveQuestionId = data.questionId ?? questionId ?? null;
+
       // Queue for offline sync - convert file to base64 and store in IndexedDB
       try {
         const photoBase64 = await fileToBase64(data.photo);
@@ -130,7 +136,7 @@ export function useQuickCapture({
           note: data.note || '',
           category: data.category,
           userId,
-          questionId: questionId ?? null,
+          questionId: effectiveQuestionId,
         });
 
         toast.success('Photo queued', {

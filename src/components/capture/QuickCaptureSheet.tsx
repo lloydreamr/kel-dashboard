@@ -34,6 +34,15 @@ export interface QuickCaptureData {
   previewUrl: string;
   /** Category for the evidence (Market, Product, Distribution) */
   category: QuestionCategory;
+  /** Question ID to attach this capture to (optional) */
+  questionId: string | null;
+}
+
+/** Minimal question info needed for the selector */
+export interface QuestionOption {
+  id: string;
+  title: string;
+  category: QuestionCategory;
 }
 
 interface QuickCaptureSheetProps {
@@ -45,6 +54,10 @@ interface QuickCaptureSheetProps {
   onCapture: (data: QuickCaptureData) => void;
   /** Whether submission is in progress */
   isSubmitting?: boolean;
+  /** Available questions to attach capture to */
+  questions?: QuestionOption[];
+  /** Pre-selected question ID (from current context) */
+  defaultQuestionId?: string | null;
 }
 
 /**
@@ -58,11 +71,17 @@ export function QuickCaptureSheet({
   onOpenChange,
   onCapture,
   isSubmitting = false,
+  questions = [],
+  defaultQuestionId = null,
 }: QuickCaptureSheetProps) {
   const [photo, setPhoto] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [category, setCategory] = useState<QuestionCategory>('market');
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(
+    defaultQuestionId
+  );
+  const [isImageLoading, setIsImageLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,6 +89,7 @@ export function QuickCaptureSheet({
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (file) {
+        setIsImageLoading(true);
         setPhoto(file);
         // Create preview URL
         const url = URL.createObjectURL(file);
@@ -79,12 +99,17 @@ export function QuickCaptureSheet({
     []
   );
 
+  const handleImageLoad = useCallback(() => {
+    setIsImageLoading(false);
+  }, []);
+
   const handleRemovePhoto = useCallback(() => {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
     setPhoto(null);
     setPreviewUrl(null);
+    setIsImageLoading(false);
     // Reset file inputs
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (cameraInputRef.current) cameraInputRef.current.value = '';
@@ -97,9 +122,10 @@ export function QuickCaptureSheet({
         note: note.trim(),
         previewUrl,
         category,
+        questionId: selectedQuestionId,
       });
     }
-  }, [photo, previewUrl, note, category, onCapture]);
+  }, [photo, previewUrl, note, category, selectedQuestionId, onCapture]);
 
   const handleClose = useCallback(() => {
     // Clean up preview URL when closing
@@ -108,10 +134,12 @@ export function QuickCaptureSheet({
     }
     setPhoto(null);
     setPreviewUrl(null);
+    setIsImageLoading(false);
     setNote('');
     setCategory('market');
+    setSelectedQuestionId(defaultQuestionId);
     onOpenChange(false);
-  }, [previewUrl, onOpenChange]);
+  }, [previewUrl, defaultQuestionId, onOpenChange]);
 
   const openCamera = useCallback(() => {
     cameraInputRef.current?.click();
@@ -137,6 +165,14 @@ export function QuickCaptureSheet({
 
         <div className="space-y-4">
           {/* Hidden file inputs */}
+          {/*
+            Note on capture="environment":
+            - This attribute HINTS to the browser to open the back camera
+            - However, it's not always respected (especially on iOS Chrome/Firefox)
+            - The browser may show a choice dialog or default to gallery
+            - This is standard behavior - the attribute is advisory, not mandatory
+            - For guaranteed camera access, you'd need getUserMedia + video stream
+          */}
           <input
             ref={cameraInputRef}
             type="file"
@@ -186,15 +222,28 @@ export function QuickCaptureSheet({
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground">
-                Tap to capture or select a photo
+                Take a new photo or choose from gallery
               </p>
             </div>
           ) : (
             <div className="relative" data-testid="photo-preview">
+              {/* Loading spinner overlay */}
+              {isImageLoading && (
+                <div
+                  className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-muted/80"
+                  data-testid="photo-loading"
+                >
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                </div>
+              )}
               <img
                 src={previewUrl!}
                 alt="Captured preview"
-                className="max-h-64 w-full rounded-lg object-contain"
+                className={cn(
+                  'max-h-64 w-full rounded-lg object-contain',
+                  isImageLoading && 'opacity-50'
+                )}
+                onLoad={handleImageLoad}
               />
               <Button
                 type="button"
@@ -210,20 +259,68 @@ export function QuickCaptureSheet({
             </div>
           )}
 
+          {/* Question selector (optional) */}
+          {questions.length > 0 && (
+            <div className="space-y-2">
+              <span
+                id="capture-question-label"
+                className="block text-sm font-medium text-foreground"
+              >
+                Attach to Question{' '}
+                <span className="text-muted-foreground">(optional)</span>
+              </span>
+              <Select
+                value={selectedQuestionId ?? '__none__'}
+                onValueChange={(value) =>
+                  setSelectedQuestionId(value === '__none__' ? null : value)
+                }
+              >
+                <SelectTrigger
+                  aria-labelledby="capture-question-label"
+                  data-testid="quick-capture-question-select"
+                >
+                  <SelectValue placeholder="Select a question" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">
+                    <span className="text-muted-foreground">
+                      None (unattached)
+                    </span>
+                  </SelectItem>
+                  {questions.map((q) => (
+                    <SelectItem key={q.id} value={q.id}>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            'inline-block h-2 w-2 rounded-full',
+                            q.category === 'market' && 'bg-blue-500',
+                            q.category === 'product' && 'bg-green-500',
+                            q.category === 'distribution' && 'bg-orange-500'
+                          )}
+                        />
+                        <span className="truncate">{q.title}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Category select */}
           <div className="space-y-2">
-            <label
-              htmlFor="capture-category"
+            <span
+              id="capture-category-label"
               className="block text-sm font-medium text-foreground"
             >
               Category
-            </label>
+            </span>
             <Select
               value={category}
               onValueChange={(value) => setCategory(value as QuestionCategory)}
             >
               <SelectTrigger
-                id="capture-category"
+                aria-labelledby="capture-category-label"
                 data-testid="quick-capture-category-select"
               >
                 <SelectValue placeholder="Select category" />

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -243,5 +243,124 @@ describe('QuickCaptureSheet', () => {
     );
 
     expect(screen.getByLabelText(/note/i)).toBeInTheDocument();
+  });
+
+  it('shows loading spinner while image loads', async () => {
+    const user = userEvent.setup();
+    render(
+      <QuickCaptureSheet
+        open
+        onOpenChange={mockOnOpenChange}
+        onCapture={mockOnCapture}
+      />
+    );
+
+    // Select a file
+    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+    const galleryInput = screen.getByTestId('gallery-input');
+    await user.upload(galleryInput, file);
+
+    // Should show loading state initially
+    await waitFor(() => {
+      expect(screen.getByTestId('photo-loading')).toBeInTheDocument();
+    });
+  });
+
+  it('hides loading spinner after image loads', async () => {
+    const user = userEvent.setup();
+    render(
+      <QuickCaptureSheet
+        open
+        onOpenChange={mockOnOpenChange}
+        onCapture={mockOnCapture}
+      />
+    );
+
+    // Select a file
+    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+    const galleryInput = screen.getByTestId('gallery-input');
+    await user.upload(galleryInput, file);
+
+    // Wait for preview to show
+    await waitFor(() => {
+      expect(screen.getByTestId('photo-preview')).toBeInTheDocument();
+    });
+
+    // Simulate image load
+    const img = screen.getByAltText('Captured preview');
+    act(() => {
+      img.dispatchEvent(new Event('load'));
+    });
+
+    // Loading spinner should be gone
+    await waitFor(() => {
+      expect(screen.queryByTestId('photo-loading')).not.toBeInTheDocument();
+    });
+  });
+
+  it('renders question selector when questions provided', () => {
+    const mockQuestions = [
+      { id: 'q1', title: 'Market question', category: 'market' as const },
+      { id: 'q2', title: 'Product question', category: 'product' as const },
+    ];
+
+    render(
+      <QuickCaptureSheet
+        open
+        onOpenChange={mockOnOpenChange}
+        onCapture={mockOnCapture}
+        questions={mockQuestions}
+      />
+    );
+
+    expect(screen.getByTestId('quick-capture-question-select')).toBeInTheDocument();
+    expect(screen.getByText(/attach to question/i)).toBeInTheDocument();
+  });
+
+  it('does not render question selector when no questions', () => {
+    render(
+      <QuickCaptureSheet
+        open
+        onOpenChange={mockOnOpenChange}
+        onCapture={mockOnCapture}
+        questions={[]}
+      />
+    );
+
+    expect(screen.queryByTestId('quick-capture-question-select')).not.toBeInTheDocument();
+  });
+
+  it('includes selected questionId in capture data', async () => {
+    const user = userEvent.setup();
+    const mockQuestions = [
+      { id: 'q1', title: 'Market question', category: 'market' as const },
+    ];
+
+    render(
+      <QuickCaptureSheet
+        open
+        onOpenChange={mockOnOpenChange}
+        onCapture={mockOnCapture}
+        questions={mockQuestions}
+        defaultQuestionId="q1"
+      />
+    );
+
+    // Select a file
+    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+    await user.upload(screen.getByTestId('gallery-input'), file);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('photo-preview')).toBeInTheDocument();
+    });
+
+    // Submit
+    await user.click(screen.getByTestId('quick-capture-save'));
+
+    expect(mockOnCapture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        questionId: 'q1',
+      })
+    );
   });
 });

@@ -60,8 +60,12 @@ export async function GET(request: Request) {
   const testUser = TEST_USERS[role];
 
   // Create redirect response to dashboard - we'll add cookies to this
-  const url = new URL('/', request.url);
-  const response = NextResponse.redirect(url);
+  // Use the Host header to get the actual hostname the client used (e.g., localhost:3000)
+  // This avoids issues where request.url contains 0.0.0.0 when Next.js binds to all interfaces
+  const host = request.headers.get('host') || 'localhost:3000';
+  const protocol = host.includes('localhost') ? 'http' : 'https';
+  const redirectUrl = `${protocol}://${host}/`;
+  const response = NextResponse.redirect(redirectUrl);
 
   // Collect cookies to set
   const cookiesToSet: { name: string; value: string; options: object }[] = [];

@@ -56,6 +56,7 @@ describe('useQuickCapture', () => {
     note: 'Market shelf observation',
     previewUrl: 'blob:http://localhost/preview',
     category: 'market',
+    questionId: null, // User can select a question in the sheet
   };
 
   beforeEach(() => {
