@@ -273,7 +273,7 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
                   dx="0"
                   dy="0"
                   stdDeviation="3"
-                  floodColor="hsl(var(--primary))"
+                  floodColor="var(--primary)"
                   floodOpacity="0.6"
                 />
               </filter>
@@ -284,14 +284,14 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
           {/* Quadrant divider lines at 5,5 per AC1 */}
           <ReferenceLine
             x={5}
-            stroke="hsl(var(--muted-foreground))"
+            stroke="var(--muted-foreground)"
             strokeDasharray="3 3"
             opacity={0.5}
             data-testid="chart-quadrant-line-vertical"
           />
           <ReferenceLine
             y={5}
-            stroke="hsl(var(--muted-foreground))"
+            stroke="var(--muted-foreground)"
             strokeDasharray="3 3"
             opacity={0.5}
             data-testid="chart-quadrant-line-horizontal"
@@ -304,7 +304,7 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
               x2={10}
               y1={5}
               y2={10}
-              fill="hsl(var(--muted))"
+              fill="var(--muted)"
               fillOpacity={hoveredQuadrant === 'premium' ? 0.2 : 0.05}
               stroke="none"
               data-testid="gap-indicator"
@@ -320,7 +320,7 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
               x2={5}
               y1={5}
               y2={10}
-              fill="hsl(var(--muted))"
+              fill="var(--muted)"
               fillOpacity={hoveredQuadrant === 'value' ? 0.2 : 0.05}
               stroke="none"
               data-testid="gap-indicator"
@@ -336,7 +336,7 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
               x2={5}
               y1={1}
               y2={5}
-              fill="hsl(var(--muted))"
+              fill="var(--muted)"
               fillOpacity={hoveredQuadrant === 'budget' ? 0.2 : 0.05}
               stroke="none"
               data-testid="gap-indicator"
@@ -352,7 +352,7 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
               x2={10}
               y1={1}
               y2={5}
-              fill="hsl(var(--muted))"
+              fill="var(--muted)"
               fillOpacity={hoveredQuadrant === 'low-quality' ? 0.2 : 0.05}
               stroke="none"
               data-testid="gap-indicator"
@@ -430,7 +430,7 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
           <Scatter
             name="Competitors"
             data={competitorData}
-            fill="hsl(var(--muted-foreground))"
+            fill="var(--chart-competitor)"
             onClick={(data, _index, event) => {
               if (!isMaho) return;
 
@@ -452,8 +452,8 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
                   key={entry.id}
                   data-testid={pointIsStale ? 'stale-chart-point' : 'chart-data-point'}
                   fill={pointIsStale
-                    ? 'hsl(var(--muted-foreground) / 0.5)'
-                    : 'hsl(var(--muted-foreground))'
+                    ? 'color-mix(in srgb, var(--chart-competitor) 50%, transparent)'
+                    : 'var(--chart-competitor)'
                   }
                 />
               );
@@ -465,7 +465,7 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
             <Scatter
               name="Kel Target"
               data={kelPosition}
-              fill="hsl(var(--primary))"
+              fill="var(--primary)"
               shape="star"
               onClick={(data, _index, event) => {
                 if (!isMaho) return;

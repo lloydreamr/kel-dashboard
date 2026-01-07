@@ -1144,6 +1144,146 @@ describe('ScatterChart', () => {
     });
   });
 
+  describe('Dark mode competitor visibility (BUG-002)', () => {
+    it('renders competitor dots with chart-competitor CSS variable', () => {
+      // Arrange
+      const mockCompetitors = [
+        createMockCompetitor({
+          id: 'test-id-1',
+          name: 'Test Competitor',
+          price_score: 5,
+          quality_score: 5,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
+
+      // Assert
+      const dataPoint = screen.getByTestId('chart-data-point');
+      expect(dataPoint).toHaveAttribute('fill', 'var(--chart-competitor)');
+    });
+
+    it('renders stale dots with color-mix for reduced opacity', () => {
+      // Arrange - data updated 100 days ago (stale)
+      const staleDate = new Date();
+      staleDate.setDate(staleDate.getDate() - 100);
+
+      const mockCompetitors = [
+        createMockCompetitor({
+          id: 'stale-id',
+          name: 'Stale Competitor',
+          price_score: 5,
+          quality_score: 5,
+          updated_at: staleDate.toISOString(),
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
+
+      // Assert
+      const stalePoint = screen.getByTestId('stale-chart-point');
+      expect(stalePoint).toHaveAttribute(
+        'fill',
+        'color-mix(in srgb, var(--chart-competitor) 50%, transparent)'
+      );
+    });
+
+    it('keeps Kel position marker with primary color (not affected by fix)', () => {
+      // Arrange
+      const mockCompetitors = [
+        createMockCompetitor({
+          id: 'kel-id',
+          name: 'Kel Target',
+          price_score: 4,
+          quality_score: 8,
+          is_kel_position: true,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
+
+      // Assert - Kel position still uses primary color (var(--primary) not hsl wrapper)
+      const kelMarker = screen.getByTestId('chart-kel-position');
+      // The Scatter component uses fill="var(--primary)" which Cell inherits
+      // This was fixed from incorrect hsl(var(--primary)) pattern
+      expect(kelMarker).toHaveAttribute('fill', 'var(--primary)');
+    });
+
+    it('uses valid color-mix() syntax for stale opacity (browser compatibility)', () => {
+      // This test documents the color-mix() CSS function usage
+      // Browser support: Chrome 111+, Firefox 113+, Safari 16.4+ (all 2023+)
+      // See: https://caniuse.com/mdn-css_types_color_color-mix
+
+      // Arrange - create stale data point
+      const staleDate = new Date();
+      staleDate.setDate(staleDate.getDate() - 100);
+
+      const mockCompetitors = [
+        createMockCompetitor({
+          id: 'stale-compat-test',
+          name: 'Stale Compat Test',
+          price_score: 5,
+          quality_score: 5,
+          updated_at: staleDate.toISOString(),
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
+
+      // Assert - verify color-mix() syntax is valid
+      const stalePoint = screen.getByTestId('stale-chart-point');
+      const fill = stalePoint.getAttribute('fill');
+
+      // Validate color-mix syntax structure:
+      // color-mix(in <color-space>, <color> <percentage>, <color>)
+      expect(fill).toMatch(/^color-mix\(in srgb,/); // Must start with color-mix(in srgb,
+      expect(fill).toContain('var(--chart-competitor)'); // Uses CSS variable
+      expect(fill).toContain('50%'); // Has percentage
+      expect(fill).toContain('transparent'); // Mixes with transparent
+      expect(fill).toMatch(/\)$/); // Must end with closing paren
+    });
+  });
+
   describe('Stale Data Indicators', () => {
     // Mock current date for consistent staleness tests
     const mockNow = new Date('2025-12-29T12:00:00Z');
