@@ -5,8 +5,8 @@
  * Story 11.2: PDF One-Pager Export (Task 2)
  */
 
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, act, waitFor, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { usePdfExport } from './usePdfExport';
 
@@ -27,6 +27,13 @@ const mockRevokeObjectURL = vi.fn();
 global.URL.createObjectURL = mockCreateObjectURL;
 global.URL.revokeObjectURL = mockRevokeObjectURL;
 
+// Mock requestAnimationFrame for paint timing wait (BUG-001 fix)
+// The hook uses double RAF to ensure browser completes paint cycle before capture
+global.requestAnimationFrame = vi.fn((callback) => {
+  callback(performance.now());
+  return 1;
+});
+
 describe('usePdfExport', () => {
   let mockElement: HTMLDivElement;
 
@@ -43,6 +50,12 @@ describe('usePdfExport', () => {
     mockElement = document.createElement('div');
     const textNode = document.createTextNode('Test content');
     mockElement.appendChild(textNode);
+  });
+
+  // Clean up React rendering state after each test
+  // This prevents test pollution when tests throw expected errors
+  afterEach(() => {
+    cleanup();
   });
 
   describe('initial state', () => {
@@ -94,7 +107,7 @@ describe('usePdfExport', () => {
         await result.current.exportToPdf(mockElement, 'kel-positioning.pdf');
       });
 
-      // Assert
+      // Assert - BUG-001: Added explicit capture dimensions for off-screen element fix
       expect(mockSet).toHaveBeenCalledWith(
         expect.objectContaining({
           margin: 15,
@@ -103,7 +116,7 @@ describe('usePdfExport', () => {
           html2canvas: expect.objectContaining({
             scale: 2,
             useCORS: true,
-            logging: false,
+            backgroundColor: '#ffffff',
           }),
           jsPDF: expect.objectContaining({
             unit: 'mm',
@@ -183,12 +196,19 @@ describe('usePdfExport', () => {
       mockOutputPdf.mockRejectedValueOnce(testError);
       const { result } = renderHook(() => usePdfExport());
 
-      // Act & Assert
-      await expect(
-        act(async () => {
+      // Act - catch the error inside act to prevent React state corruption
+      let thrownError: Error | undefined;
+      await act(async () => {
+        try {
           await result.current.exportToPdf(mockElement, 'test.pdf');
-        })
-      ).rejects.toThrow('PDF generation failed');
+        } catch (err) {
+          thrownError = err as Error;
+        }
+      });
+
+      // Assert
+      expect(thrownError).toBeDefined();
+      expect(thrownError?.message).toBe('PDF generation failed');
     });
 
     it('sets isGenerating to false after error', async () => {
@@ -315,6 +335,111 @@ describe('usePdfExport', () => {
       expect(result.current).toHaveProperty('error');
       expect(typeof result.current.exportToPdf).toBe('function');
       expect(typeof result.current.isGenerating).toBe('boolean');
+    });
+  });
+
+  // BUG-001: SVG paint timing tests
+  describe('SVG paint timing (BUG-001 fix)', () => {
+    it('waits for SVG to have dimensions before capture', async () => {
+      // Arrange - Create element with valid Recharts SVG
+      const mockElementWithSvg = document.createElement('div');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.classList.add('recharts-surface');
+      mockElementWithSvg.appendChild(svg);
+
+      // Mock getBoundingClientRect to return valid dimensions
+      vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
+        width: 400,
+        height: 300,
+        x: 0,
+        y: 0,
+        top: 0,
+        right: 400,
+        bottom: 300,
+        left: 0,
+        toJSON: () => ({}),
+      });
+
+      const { result } = renderHook(() => usePdfExport());
+
+      // Act
+      await act(async () => {
+        await result.current.exportToPdf(mockElementWithSvg, 'test-with-svg.pdf');
+      });
+
+      // Assert - export should succeed and call from() with the element
+      expect(mockFrom).toHaveBeenCalledWith(mockElementWithSvg);
+    });
+
+    it('throws error when SVG has zero width', async () => {
+      // Arrange - Create element with zero-dimension Recharts SVG
+      const mockElementWithEmptySvg = document.createElement('div');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.classList.add('recharts-surface');
+      mockElementWithEmptySvg.appendChild(svg);
+
+      // Mock getBoundingClientRect to return zero dimensions
+      vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        toJSON: () => ({}),
+      });
+
+      const { result } = renderHook(() => usePdfExport());
+
+      // Act - catch the error inside act to prevent React state corruption
+      let thrownError: Error | undefined;
+      await act(async () => {
+        try {
+          await result.current.exportToPdf(mockElementWithEmptySvg, 'test-empty-svg.pdf');
+        } catch (err) {
+          thrownError = err as Error;
+        }
+      });
+
+      // Assert
+      expect(thrownError).toBeDefined();
+      expect(thrownError?.message).toBe('Chart SVG not ready for export');
+    });
+
+    it('succeeds when element has no Recharts SVG (non-chart export)', async () => {
+      // Arrange - Create element without Recharts SVG (e.g., text-only export)
+      const mockElementNoSvg = document.createElement('div');
+      const textNode = document.createTextNode('Non-chart content');
+      mockElementNoSvg.appendChild(textNode);
+
+      const { result } = renderHook(() => usePdfExport());
+
+      // Act
+      await act(async () => {
+        await result.current.exportToPdf(mockElementNoSvg, 'test-no-svg.pdf');
+      });
+
+      // Assert - export should succeed (no SVG means no dimension check)
+      expect(mockFrom).toHaveBeenCalledWith(mockElementNoSvg);
+    });
+
+    it('calls requestAnimationFrame twice for double paint cycle', async () => {
+      // Arrange - Use the existing global RAF mock, just clear previous calls
+      const rafMock = global.requestAnimationFrame as ReturnType<typeof vi.fn>;
+      rafMock.mockClear();
+
+      const { result } = renderHook(() => usePdfExport());
+      const mockElementForRaf = document.createElement('div');
+
+      // Act
+      await act(async () => {
+        await result.current.exportToPdf(mockElementForRaf, 'test.pdf');
+      });
+
+      // Assert - should be called at least twice for double RAF wait
+      expect(rafMock).toHaveBeenCalledTimes(2);
     });
   });
 });
