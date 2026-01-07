@@ -98,4 +98,96 @@ describe('usePitchModeStore', () => {
       unsubscribe();
     });
   });
+
+  // Story 11.2: PDF Export state management
+  describe('PDF export state (Story 11.2)', () => {
+    beforeEach(() => {
+      usePitchModeStore.setState({
+        isPitchMode: false,
+        isGeneratingPdf: false,
+        onDownloadPdf: null,
+      });
+    });
+
+    describe('isGeneratingPdf', () => {
+      it('starts as false', () => {
+        // Arrange & Act
+        const state = usePitchModeStore.getState();
+
+        // Assert
+        expect(state.isGeneratingPdf).toBe(false);
+      });
+
+      it('can be set to true via setIsGeneratingPdf', () => {
+        // Arrange
+        const { setIsGeneratingPdf } = usePitchModeStore.getState();
+
+        // Act
+        setIsGeneratingPdf(true);
+
+        // Assert
+        expect(usePitchModeStore.getState().isGeneratingPdf).toBe(true);
+      });
+
+      it('can be set to false via setIsGeneratingPdf', () => {
+        // Arrange
+        usePitchModeStore.setState({ isGeneratingPdf: true });
+        const { setIsGeneratingPdf } = usePitchModeStore.getState();
+
+        // Act
+        setIsGeneratingPdf(false);
+
+        // Assert
+        expect(usePitchModeStore.getState().isGeneratingPdf).toBe(false);
+      });
+    });
+
+    describe('onDownloadPdf callback', () => {
+      it('starts as null', () => {
+        // Arrange & Act
+        const state = usePitchModeStore.getState();
+
+        // Assert
+        expect(state.onDownloadPdf).toBeNull();
+      });
+
+      it('registerPdfDownload sets the callback', () => {
+        // Arrange
+        const mockCallback = vi.fn();
+        const { registerPdfDownload } = usePitchModeStore.getState();
+
+        // Act
+        registerPdfDownload(mockCallback);
+
+        // Assert
+        expect(usePitchModeStore.getState().onDownloadPdf).toBe(mockCallback);
+      });
+
+      it('unregisterPdfDownload clears the callback', () => {
+        // Arrange
+        usePitchModeStore.setState({ onDownloadPdf: vi.fn() });
+        const { unregisterPdfDownload } = usePitchModeStore.getState();
+
+        // Act
+        unregisterPdfDownload();
+
+        // Assert
+        expect(usePitchModeStore.getState().onDownloadPdf).toBeNull();
+      });
+
+      it('registered callback can be invoked', () => {
+        // Arrange
+        const mockCallback = vi.fn();
+        const { registerPdfDownload } = usePitchModeStore.getState();
+        registerPdfDownload(mockCallback);
+
+        // Act
+        const { onDownloadPdf } = usePitchModeStore.getState();
+        onDownloadPdf?.();
+
+        // Assert
+        expect(mockCallback).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
 });

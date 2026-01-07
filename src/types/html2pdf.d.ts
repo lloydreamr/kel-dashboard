@@ -22,6 +22,8 @@ declare module 'html2pdf.js' {
       foreignObjectRendering?: boolean;
       allowTaint?: boolean;
       backgroundColor?: string | null;
+      /** Callback to modify cloned document before capture */
+      onclone?: (clonedDoc: Document) => void;
     };
     /** jsPDF configuration */
     jsPDF?: {
@@ -52,6 +54,8 @@ declare module 'html2pdf.js' {
     toPdf(): Html2PdfWorker;
     /** Get PDF output */
     output(type?: string): Promise<unknown>;
+    /** Get PDF output as specific format (blob, datauristring, etc.) */
+    outputPdf(type?: 'blob' | 'datauristring' | 'arraybuffer'): Promise<Blob>;
     /** Save/download PDF */
     save(filename?: string): Promise<void>;
     /** Output as image */

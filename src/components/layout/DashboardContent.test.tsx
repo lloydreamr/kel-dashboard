@@ -25,11 +25,28 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-// Mock PitchModeHeader
+// Mock PitchModeHeader (Story 11.2: Added PDF props)
 vi.mock('@/components/visualization', () => ({
-  PitchModeHeader: ({ onExit }: { onExit: () => void }) => (
+  PitchModeHeader: ({
+    onExit,
+    onDownloadPdf,
+    isGeneratingPdf,
+  }: {
+    onExit: () => void;
+    onDownloadPdf?: () => void;
+    isGeneratingPdf?: boolean;
+  }) => (
     <div data-testid="pitch-mode-header" onClick={onExit}>
       Mock Pitch Mode Header
+      {onDownloadPdf && (
+        <button
+          data-testid="mock-download-pdf"
+          onClick={onDownloadPdf}
+          disabled={isGeneratingPdf}
+        >
+          Download PDF
+        </button>
+      )}
     </div>
   ),
 }));

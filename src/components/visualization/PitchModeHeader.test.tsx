@@ -118,4 +118,75 @@ describe('PitchModeHeader', () => {
       expect(screen.getByRole('banner')).toBeInTheDocument();
     });
   });
+
+  describe('PDF download button (Story 11.2)', () => {
+    it('does not render download button when onDownloadPdf is not provided', () => {
+      // Arrange & Act
+      render(<PitchModeHeader onExit={vi.fn()} />);
+
+      // Assert
+      expect(screen.queryByTestId('pdf-download-button')).not.toBeInTheDocument();
+    });
+
+    it('renders download button when onDownloadPdf is provided', () => {
+      // Arrange & Act
+      render(
+        <PitchModeHeader
+          onExit={vi.fn()}
+          onDownloadPdf={vi.fn()}
+        />
+      );
+
+      // Assert
+      expect(screen.getByTestId('pdf-download-button')).toBeInTheDocument();
+    });
+
+    it('calls onDownloadPdf when download button is clicked', async () => {
+      // Arrange
+      const user = userEvent.setup();
+      const mockDownload = vi.fn();
+      render(
+        <PitchModeHeader
+          onExit={vi.fn()}
+          onDownloadPdf={mockDownload}
+        />
+      );
+
+      // Act
+      await user.click(screen.getByTestId('pdf-download-button'));
+
+      // Assert
+      expect(mockDownload).toHaveBeenCalledTimes(1);
+    });
+
+    it('disables download button when isGeneratingPdf is true', () => {
+      // Arrange & Act
+      render(
+        <PitchModeHeader
+          onExit={vi.fn()}
+          onDownloadPdf={vi.fn()}
+          isGeneratingPdf={true}
+        />
+      );
+
+      // Assert
+      const button = screen.getByTestId('pdf-download-button');
+      expect(button).toBeDisabled();
+    });
+
+    it('enables download button when isGeneratingPdf is false', () => {
+      // Arrange & Act
+      render(
+        <PitchModeHeader
+          onExit={vi.fn()}
+          onDownloadPdf={vi.fn()}
+          isGeneratingPdf={false}
+        />
+      );
+
+      // Assert
+      const button = screen.getByTestId('pdf-download-button');
+      expect(button).not.toBeDisabled();
+    });
+  });
 });
