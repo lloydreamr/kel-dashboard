@@ -10,6 +10,7 @@
  * conditionally render based on pitch mode state.
  *
  * Story 11.1: Pitch Mode View
+ * Story 11.2: Added PDF export integration via Zustand callbacks
  *
  * @example
  * ```tsx
@@ -47,12 +48,17 @@ export function DashboardContent({
 }: DashboardContentProps) {
   const router = useRouter();
   const isPitchMode = usePitchModeStore((s) => s.isPitchMode);
+  const isGeneratingPdf = usePitchModeStore((s) => s.isGeneratingPdf);
+  const onDownloadPdf = usePitchModeStore((s) => s.onDownloadPdf);
 
   // Exit handler navigates to visualization page without pitch mode.
   // The URL change triggers usePitchMode hook in page to sync store.
   const handleExit = () => {
     router.push('/visualization', { scroll: false });
   };
+
+  // PDF download handler - calls the callback registered by VisualizationPageClient
+  const handleDownloadPdf = onDownloadPdf ?? undefined;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -64,7 +70,11 @@ export function DashboardContent({
         {/* Mobile: Show PitchModeHeader OR MobileNav */}
         <div className="md:hidden">
           {isPitchMode ? (
-            <PitchModeHeader onExit={handleExit} />
+            <PitchModeHeader
+              onExit={handleExit}
+              onDownloadPdf={handleDownloadPdf}
+              isGeneratingPdf={isGeneratingPdf}
+            />
           ) : (
             mobileNav
           )}
@@ -73,7 +83,11 @@ export function DashboardContent({
         {/* Desktop: Show PitchModeHeader when in pitch mode */}
         {isPitchMode && (
           <div className="hidden md:block">
-            <PitchModeHeader onExit={handleExit} />
+            <PitchModeHeader
+              onExit={handleExit}
+              onDownloadPdf={handleDownloadPdf}
+              isGeneratingPdf={isGeneratingPdf}
+            />
           </div>
         )}
 

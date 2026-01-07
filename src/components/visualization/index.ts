@@ -23,3 +23,5 @@ export { SwipeableSheetContent } from './SwipeableSheetContent';
 export { CompetitorDetailSheet } from './CompetitorDetailSheet';
 export { PitchModeHeader } from './PitchModeHeader';
 export { EnterPitchModeButton } from './EnterPitchModeButton';
+export { PdfExportContent } from './PdfExportContent';
+export { DownloadPdfButton } from './DownloadPdfButton';

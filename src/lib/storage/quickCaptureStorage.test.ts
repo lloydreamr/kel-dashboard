@@ -72,9 +72,9 @@ describe('quickCaptureStorage', () => {
       });
     });
 
-    it('rejects file over 5MB', async () => {
-      // Create a file larger than 5MB
-      const largeData = new Uint8Array(6 * 1024 * 1024);
+    it('rejects file over 10MB', async () => {
+      // Create a file larger than 10MB (per story spec)
+      const largeData = new Uint8Array(11 * 1024 * 1024);
       const file = new File([largeData], 'large.jpg', { type: 'image/jpeg' });
 
       await expect(uploadQuickCapture(file, 'user-123')).rejects.toMatchObject({

@@ -2,13 +2,18 @@
  * PitchModeHeader Component
  *
  * Clean, professional header for pitch mode.
- * Displays Kel branding and exit button.
+ * Displays Kel branding, PDF download button, and exit button.
  *
  * Story 11.1: Pitch Mode View
+ * Story 11.2: Added PDF download button
  *
  * @example
  * ```tsx
- * <PitchModeHeader onExit={() => router.push('/visualization')} />
+ * <PitchModeHeader
+ *   onExit={() => router.push('/visualization')}
+ *   onDownloadPdf={handleDownload}
+ *   isGeneratingPdf={false}
+ * />
  * ```
  */
 
@@ -16,12 +21,22 @@
 
 import { Button } from '@/components/ui/button';
 
+import { DownloadPdfButton } from './DownloadPdfButton';
+
 interface PitchModeHeaderProps {
   /** Callback when exit button is clicked */
   onExit: () => void;
+  /** Callback when download PDF button is clicked (optional) */
+  onDownloadPdf?: () => void;
+  /** Whether PDF is currently being generated (optional) */
+  isGeneratingPdf?: boolean;
 }
 
-export function PitchModeHeader({ onExit }: PitchModeHeaderProps) {
+export function PitchModeHeader({
+  onExit,
+  onDownloadPdf,
+  isGeneratingPdf = false,
+}: PitchModeHeaderProps) {
   return (
     <header
       data-testid="pitch-mode-header"
@@ -36,15 +51,23 @@ export function PitchModeHeader({ onExit }: PitchModeHeaderProps) {
           </span>
         </div>
 
-        {/* Exit button - 48px touch target */}
-        <Button
-          variant="outline"
-          onClick={onExit}
-          data-testid="exit-pitch-mode-button"
-          className="min-h-12 px-4"
-        >
-          Exit Pitch Mode
-        </Button>
+        {/* Button group - Download PDF + Exit */}
+        <div className="flex items-center gap-2">
+          {onDownloadPdf && (
+            <DownloadPdfButton
+              onClick={onDownloadPdf}
+              isGenerating={isGeneratingPdf}
+            />
+          )}
+          <Button
+            variant="outline"
+            onClick={onExit}
+            data-testid="exit-pitch-mode-button"
+            className="min-h-12 px-4"
+          >
+            Exit Pitch Mode
+          </Button>
+        </div>
       </div>
     </header>
   );

@@ -5,3 +5,4 @@
  */
 
 export { usePitchMode } from './usePitchMode';
+export { usePdfExport } from './usePdfExport';

@@ -173,13 +173,12 @@ describe('useCaptureSync', () => {
   });
 
   it('shows isSyncing during sync', async () => {
-    let resolveUpload: (value: { path: string }) => void;
-    mockUpload.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveUpload = resolve;
-        })
-    );
+    // Use a deferred promise pattern for reliable test control
+    let resolveUpload: ((value: { path: string }) => void) | null = null;
+    const uploadPromise = new Promise<{ path: string }>((resolve) => {
+      resolveUpload = resolve;
+    });
+    mockUpload.mockReturnValue(uploadPromise);
 
     await captureQueue.add(mockQueuedCapture);
 
@@ -202,7 +201,7 @@ describe('useCaptureSync', () => {
       expect(result.current.isSyncing).toBe(true);
     });
 
-    // Resolve upload
+    // Resolve upload - resolveUpload is definitely assigned before mockReturnValue is called
     await act(async () => {
       resolveUpload!({ path: 'test.jpg' });
       await syncPromise;

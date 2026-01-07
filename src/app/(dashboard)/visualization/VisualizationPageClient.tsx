@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   ScatterChart,
@@ -12,10 +13,13 @@ import {
   ChartLegend,
   ScatterChartSkeleton,
   EnterPitchModeButton,
+  PdfExportContent,
 } from '@/components/visualization';
 import { useProfile } from '@/hooks/auth';
 import { useDeleteCompetitor, useCompetitorData } from '@/hooks/competitors';
 import { usePitchMode } from '@/hooks/visualization/usePitchMode';
+import { usePdfExport } from '@/hooks/visualization/usePdfExport';
+import { usePitchModeStore } from '@/stores/pitchMode';
 
 import type { CompetitorDataPoint } from '@/types';
 
@@ -40,6 +44,13 @@ export function VisualizationPageClient() {
   // Note: exitPitchMode is handled by DashboardContent (layout wrapper)
   const { isPitchMode, enterPitchMode } = usePitchMode();
 
+  // PDF export setup (Story 11.2)
+  const pdfContentRef = useRef<HTMLDivElement>(null);
+  const { exportToPdf, isGenerating } = usePdfExport();
+  const registerPdfDownload = usePitchModeStore((s) => s.registerPdfDownload);
+  const unregisterPdfDownload = usePitchModeStore((s) => s.unregisterPdfDownload);
+  const setIsGeneratingPdf = usePitchModeStore((s) => s.setIsGeneratingPdf);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCompetitor, setEditingCompetitor] = useState<CompetitorDataPoint | null>(null);
   const [deletingCompetitor, setDeletingCompetitor] = useState<CompetitorDataPoint | null>(null);
@@ -51,6 +62,33 @@ export function VisualizationPageClient() {
   // Find existing Kel position for conditional button text
   const existingKelPosition = competitors?.find((c) => c.is_kel_position);
   const hasKelPosition = !!existingKelPosition;
+
+  // PDF download handler (Story 11.2)
+  // Uses useCallback to maintain stable reference for Zustand registration
+  const handleDownloadPdf = useCallback(async () => {
+    if (!pdfContentRef.current) return;
+    const filename = `kel-positioning-${new Date().toISOString().split('T')[0]}.pdf`;
+    setIsGeneratingPdf(true);
+    try {
+      await exportToPdf(pdfContentRef.current, filename);
+      toast.success('PDF downloaded successfully');
+    } catch {
+      toast.error('Failed to generate PDF');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  }, [exportToPdf, setIsGeneratingPdf]);
+
+  // Register PDF download callback with Zustand store when in pitch mode
+  // This bridges the gap between this page (has data) and DashboardContent (renders header)
+  useEffect(() => {
+    if (isPitchMode) {
+      registerPdfDownload(handleDownloadPdf);
+      return () => {
+        unregisterPdfDownload();
+      };
+    }
+  }, [isPitchMode, handleDownloadPdf, registerPdfDownload, unregisterPdfDownload]);
 
   const handleAddClick = () => {
     setEditingCompetitor(null);
@@ -107,18 +145,34 @@ export function VisualizationPageClient() {
   // to avoid duplication. This page only renders the chart content.
   if (isPitchMode) {
     return (
-      <div data-testid="visualization-page" className="container py-6">
-        <div className="bg-card rounded-lg border p-4">
-          <ScatterChart
-            isMaho={isMaho}
-            isPitchMode={true}
-            onEditClick={handleEditClick}
-            onDeleteClick={handleDeleteClick}
-            onAddClick={handleAddClick}
-          />
-          <ChartLegend hasKelPosition={hasKelPosition} isLoading={competitorsLoading} />
+      <>
+        <div data-testid="visualization-page" className="container py-6">
+          <div className="bg-card rounded-lg border p-4">
+            <ScatterChart
+              isMaho={isMaho}
+              isPitchMode={true}
+              onEditClick={handleEditClick}
+              onDeleteClick={handleDeleteClick}
+              onAddClick={handleAddClick}
+            />
+            <ChartLegend hasKelPosition={hasKelPosition} isLoading={competitorsLoading} />
+          </div>
         </div>
-      </div>
+
+        {/* Hidden PDF content for export (Story 11.2)
+            MUST use position:fixed off-screen, NOT display:none
+            html2canvas requires visible DOM to capture */}
+        <div
+          ref={pdfContentRef}
+          className="fixed left-[-9999px] top-0"
+          aria-hidden="true"
+        >
+          <PdfExportContent
+            competitors={competitors ?? []}
+            kelPosition={existingKelPosition ?? null}
+          />
+        </div>
+      </>
     );
   }
 
