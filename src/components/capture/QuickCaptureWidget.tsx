@@ -95,7 +95,7 @@ export function QuickCaptureWidget({
   };
 
   return (
-    <>
+    <div data-testid="quick-capture-widget">
       {/* FAB with pending indicator */}
       <QuickCaptureFAB
         onClick={handleOpenSheet}
@@ -122,6 +122,6 @@ export function QuickCaptureWidget({
           {isSyncing ? 'Syncing...' : `${pendingCount} pending`}
         </div>
       )}
-    </>
+    </div>
   );
 }

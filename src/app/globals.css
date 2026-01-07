@@ -221,3 +221,61 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* ============================================
+   Print Styles (Story 11.3)
+   ============================================ */
+@media print {
+  /* A4 page setup with margins (Task 1.1) */
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  /* Reset to print-friendly defaults (Task 1.8, 1.9) */
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000000;
+    background: #ffffff;
+  }
+
+  /* Hide all navigation and UI chrome (Task 1.2-1.7) */
+  [data-testid="nav-sidebar"],
+  [data-testid="nav-drawer"],
+  [data-testid="pitch-mode-header"],
+  [data-testid="quick-capture-widget"],
+  [data-testid="offline-banner"],
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Chart container optimization for A4 (Task 3.1, 3.2, 3.3) */
+  [data-testid="print-preview-content"] {
+    max-width: 680px;
+    margin: 0 auto;
+    break-inside: avoid;
+  }
+
+  /* Page break control (Task 4.1, 4.2, 4.3) */
+  h1, h2, h3 {
+    break-after: avoid;
+  }
+
+  .bg-card {
+    break-inside: avoid;
+  }
+
+  /* Keep legend with chart (Task 4.4) */
+  [data-testid="chart-legend"] {
+    break-inside: avoid;
+    break-before: avoid;
+  }
+
+  /* Ensure images and charts don't overflow and stay together */
+  img, svg {
+    max-width: 100% !important;
+    break-inside: avoid;
+  }
+}

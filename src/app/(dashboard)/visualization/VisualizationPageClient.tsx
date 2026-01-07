@@ -147,7 +147,7 @@ export function VisualizationPageClient() {
     return (
       <>
         <div data-testid="visualization-page" className="container py-6">
-          <div className="bg-card rounded-lg border p-4">
+          <div data-testid="print-preview-content" className="bg-card rounded-lg border p-4">
             <ScatterChart
               isMaho={isMaho}
               isPitchMode={true}
