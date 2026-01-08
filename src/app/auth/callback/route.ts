@@ -6,15 +6,20 @@ import type { EmailOtpType } from '@supabase/supabase-js';
 import type { NextRequest } from 'next/server';
 
 /**
- * Auth callback route handler for magic link verification.
+ * Auth callback route handler for magic link and password reset verification.
  *
- * Supabase magic links redirect here with:
+ * Supabase auth links redirect here with:
  * - token_hash: The OTP token hash
- * - type: The OTP type (e.g., 'magiclink')
+ * - type: The OTP type (e.g., 'magiclink', 'recovery')
  * - next: Optional redirect path after auth
  *
- * On success: Redirects to the home page (or `next` param).
- * On failure: Redirects to /login with error=expired.
+ * For magic links (type=magiclink):
+ * - On success: Redirects to the home page (or `next` param)
+ * - On failure: Redirects to /login with error=expired
+ *
+ * For password reset (type=recovery):
+ * - On success: Redirects to /reset-password to set new password
+ * - On failure: Redirects to /forgot-password with error=expired
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -30,11 +35,18 @@ export async function GET(request: NextRequest) {
     });
 
     if (!error) {
-      // Successful auth - redirect to dashboard
+      // For password reset (recovery), redirect to reset-password page
+      if (type === 'recovery') {
+        return NextResponse.redirect(`${origin}/reset-password`);
+      }
+      // For magic link and other types, redirect to dashboard
       return NextResponse.redirect(`${origin}${next}`);
     }
   }
 
-  // Auth failed - redirect to login with error
+  // Auth failed - redirect based on type
+  if (type === 'recovery') {
+    return NextResponse.redirect(`${origin}/forgot-password?error=expired`);
+  }
   return NextResponse.redirect(`${origin}/login?error=expired`);
 }

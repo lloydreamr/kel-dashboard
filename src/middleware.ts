@@ -10,9 +10,12 @@ import type { NextRequest } from 'next/server';
  */
 const PUBLIC_ROUTES = [
   '/login',
+  '/forgot-password',
+  '/reset-password',
   '/auth/callback',
   '/auth/confirm',
   '/api/test/mock-login',
+  '/manifest.webmanifest', // PWA manifest must be publicly accessible
 ];
 
 /**
