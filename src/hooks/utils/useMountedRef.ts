@@ -1,8 +1,10 @@
-import { useRef, useEffect, type RefObject } from 'react';
+import { useRef, useEffect, type MutableRefObject } from 'react';
 
 /** Return type for useMountedRef hook */
 export interface UseMountedRefReturn {
-  mountedRef: RefObject<boolean>;
+  /** Direct ref access - guaranteed non-null (always boolean, never null) */
+  mountedRef: MutableRefObject<boolean>;
+  /** Function to check mount state - preferred for readability */
   isMounted: () => boolean;
 }
 

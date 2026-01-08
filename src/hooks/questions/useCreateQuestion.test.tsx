@@ -180,6 +180,9 @@ describe('useCreateQuestion', () => {
 
   // BUG-009: Mount-state aware navigation tests
   describe('mount-state aware navigation (BUG-009)', () => {
+    // Time for React Query's async onMutate (cancelQueries) to settle before mutationFn starts
+    const MUTATION_SETTLE_MS = 10;
+
     it('does not navigate when component unmounts before success', async () => {
       // Arrange - Create a delayed mutation that we can control
       let resolveCreate: (value: unknown) => void;
@@ -202,7 +205,7 @@ describe('useCreateQuestion', () => {
       });
 
       // Wait for onMutate (which has async operations) to complete and mutationFn to start
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, MUTATION_SETTLE_MS));
 
       // Unmount before mutation completes (simulates user navigating away)
       unmount();
@@ -211,7 +214,7 @@ describe('useCreateQuestion', () => {
       resolveCreate!({ id: 'q-123', title: 'Test' });
 
       // Wait a tick for callbacks to fire
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, MUTATION_SETTLE_MS));
 
       // Assert - Navigation should NOT have happened (component unmounted)
       expect(mockPush).not.toHaveBeenCalled();
@@ -239,7 +242,7 @@ describe('useCreateQuestion', () => {
       });
 
       // Wait for onMutate (which has async operations) to complete and mutationFn to start
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, MUTATION_SETTLE_MS));
 
       unmount();
       resolveCreate!({ id: 'q-123', title: 'Test' });
@@ -247,7 +250,7 @@ describe('useCreateQuestion', () => {
       const { toast } = await import('sonner');
 
       // Wait for callbacks
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, MUTATION_SETTLE_MS));
 
       // Assert - Toast should still show (feedback is important even if navigated away)
       expect(toast.success).toHaveBeenCalledWith('Question created');
