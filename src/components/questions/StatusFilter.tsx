@@ -35,7 +35,9 @@ export function StatusFilter({ value, counts, onChange }: StatusFilterProps) {
             data-testid={`status-filter-${key}`}
             className="min-h-[48px] flex-1"
           >
-            {STATUS_FILTER_CONFIG[key].label} ({counts[key]})
+            <span className="hidden sm:inline">{STATUS_FILTER_CONFIG[key].label}</span>
+            <span className="sm:hidden">{STATUS_FILTER_CONFIG[key].shortLabel}</span>
+            <span className="ml-1">({counts[key]})</span>
           </TabsTrigger>
         ))}
       </TabsList>

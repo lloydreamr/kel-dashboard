@@ -24,10 +24,19 @@ describe('StatusFilter', () => {
     render(<StatusFilter {...defaultProps} />);
 
     expect(screen.getByTestId('status-filter')).toBeInTheDocument();
-    expect(screen.getByTestId('status-filter-all')).toHaveTextContent('All (10)');
-    expect(screen.getByTestId('status-filter-draft')).toHaveTextContent('Draft (3)');
-    expect(screen.getByTestId('status-filter-sent')).toHaveTextContent('Sent to Kel (4)');
-    expect(screen.getByTestId('status-filter-decided')).toHaveTextContent('Decided (3)');
+    // Note: Both desktop (label) and mobile (shortLabel) spans render in jsdom
+    // Desktop labels: All, Draft, Sent to Kel, Decided
+    // Mobile labels: All, Dft, Sent, Dec
+    expect(screen.getByTestId('status-filter-all')).toHaveTextContent('All');
+    expect(screen.getByTestId('status-filter-all')).toHaveTextContent('(10)');
+    expect(screen.getByTestId('status-filter-draft')).toHaveTextContent('Draft');
+    expect(screen.getByTestId('status-filter-draft')).toHaveTextContent('Dft');
+    expect(screen.getByTestId('status-filter-draft')).toHaveTextContent('(3)');
+    expect(screen.getByTestId('status-filter-sent')).toHaveTextContent('Sent to Kel');
+    expect(screen.getByTestId('status-filter-sent')).toHaveTextContent('(4)');
+    expect(screen.getByTestId('status-filter-decided')).toHaveTextContent('Decided');
+    expect(screen.getByTestId('status-filter-decided')).toHaveTextContent('Dec');
+    expect(screen.getByTestId('status-filter-decided')).toHaveTextContent('(3)');
   });
 
   it('highlights the active filter tab', () => {
@@ -66,12 +75,27 @@ describe('StatusFilter', () => {
   it('updates counts dynamically', () => {
     const { rerender } = render(<StatusFilter {...defaultProps} />);
 
-    expect(screen.getByTestId('status-filter-all')).toHaveTextContent('All (10)');
+    expect(screen.getByTestId('status-filter-all')).toHaveTextContent('(10)');
 
     const updatedCounts = { ...defaultCounts, all: 15, draft: 5 };
     rerender(<StatusFilter {...defaultProps} counts={updatedCounts} />);
 
-    expect(screen.getByTestId('status-filter-all')).toHaveTextContent('All (15)');
-    expect(screen.getByTestId('status-filter-draft')).toHaveTextContent('Draft (5)');
+    expect(screen.getByTestId('status-filter-all')).toHaveTextContent('(15)');
+    expect(screen.getByTestId('status-filter-draft')).toHaveTextContent('(5)');
+  });
+
+  it('renders responsive labels with desktop and mobile variants', () => {
+    render(<StatusFilter {...defaultProps} />);
+
+    // Verify desktop labels (hidden on mobile via sm:hidden class)
+    const sentTab = screen.getByTestId('status-filter-sent');
+    expect(sentTab).toHaveTextContent('Sent to Kel'); // Full desktop label
+    expect(sentTab).toHaveTextContent('Sent'); // Abbreviated mobile label
+
+    // Verify the responsive CSS classes are applied
+    const desktopSpan = sentTab.querySelector('.hidden.sm\\:inline');
+    const mobileSpan = sentTab.querySelector('.sm\\:hidden');
+    expect(desktopSpan).toBeInTheDocument();
+    expect(mobileSpan).toBeInTheDocument();
   });
 });

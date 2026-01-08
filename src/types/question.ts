@@ -102,8 +102,10 @@ export type StatusFilterKey = 'all' | 'draft' | 'sent' | 'decided';
  * Configuration for a single status filter option.
  */
 export interface StatusFilterConfig {
-  /** Display text in UI */
+  /** Display text in UI (desktop) */
   label: string;
+  /** Abbreviated label for mobile viewports */
+  shortLabel: string;
   /** Array of QuestionStatus values to match, or null for "all" */
   statuses: QuestionStatus[] | null;
 }
@@ -114,10 +116,10 @@ export interface StatusFilterConfig {
  * - statuses: Array of QuestionStatus values to match, or null for "all"
  */
 export const STATUS_FILTER_CONFIG: Record<StatusFilterKey, StatusFilterConfig> = {
-  all: { label: 'All', statuses: null },
-  draft: { label: 'Draft', statuses: ['draft'] },
-  sent: { label: 'Sent to Kel', statuses: ['ready_for_kel'] },
-  decided: { label: 'Decided', statuses: ['approved', 'exploring_alternatives'] },
+  all: { label: 'All', shortLabel: 'All', statuses: null },
+  draft: { label: 'Draft', shortLabel: 'Dft', statuses: ['draft'] },
+  sent: { label: 'Sent to Kel', shortLabel: 'Sent', statuses: ['ready_for_kel'] },
+  decided: { label: 'Decided', shortLabel: 'Dec', statuses: ['approved', 'exploring_alternatives'] },
 };
 
 /**
