@@ -1,7 +1,9 @@
 import { cookies } from 'next/headers';
+import Link from 'next/link';
 import { Target } from 'lucide-react';
 import { redirect } from 'next/navigation';
 
+import { DashboardQuickStats } from '@/components/dashboard';
 import { QueueView } from '@/components/queue';
 import { createClient } from '@/lib/supabase/server';
 
@@ -43,47 +45,67 @@ async function getTestUser(): Promise<{ email: string } | null> {
 }
 
 /**
- * Dashboard content for Maho (existing behavior).
- * Shows welcome message with navigation to questions.
+ * Dashboard content for Maho.
+ * Shows quick stats and navigation to questions.
  */
 function MahoDashboardContent({ email }: { email: string }) {
   return (
     <main
       data-testid="dashboard-page"
-      className="flex min-h-screen flex-col items-center justify-center bg-background"
+      className="min-h-screen bg-background px-4 py-6"
     >
-      <div className="flex flex-col items-center gap-8 px-6 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-          <Target className="h-8 w-8 text-primary" />
+      <div className="mx-auto max-w-2xl">
+        {/* Header */}
+        <div className="mb-8 flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+            <Target className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">
+              Welcome back!
+            </h1>
+            <p className="text-sm text-muted-foreground">{email}</p>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <h1 className="text-2xl font-semibold text-foreground">
-            Welcome to Kel Dashboard
-          </h1>
-          <p className="mt-2 text-muted-foreground">Logged in as {email}</p>
+        {/* Quick Stats */}
+        <DashboardQuickStats />
+
+        {/* Quick Actions */}
+        <div className="mt-8 space-y-3">
+          <h2 className="text-sm font-medium text-muted-foreground">
+            Quick Actions
+          </h2>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              href="/questions"
+              data-testid="view-questions-link"
+              className="flex-1 rounded-lg border border-border bg-surface px-4 py-3 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              View Questions
+            </Link>
+            <Link
+              href="/questions/new"
+              data-testid="add-question-link"
+              className="flex-1 rounded-lg bg-primary px-4 py-3 text-center text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              + Add Question
+            </Link>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-          <p>
-            <span className="font-medium text-foreground">Status:</span>{' '}
-            Authentication complete
-          </p>
-          <p>
-            <span className="font-medium text-foreground">Next:</span> Strategic
-            Questions Core
-          </p>
+        {/* Sign out (subtle) */}
+        <div className="mt-12 text-center">
+          <form action={logout}>
+            <button
+              type="submit"
+              data-testid="logout-button"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Sign out
+            </button>
+          </form>
         </div>
-
-        <form action={logout}>
-          <button
-            type="submit"
-            data-testid="logout-button"
-            className="min-h-[48px] rounded-md px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          >
-            Sign out
-          </button>
-        </form>
       </div>
     </main>
   );
