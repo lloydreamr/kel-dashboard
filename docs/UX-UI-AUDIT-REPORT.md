@@ -16,7 +16,7 @@ The Kel Dashboard has **solid core functionality** with well-designed user flows
 - **User Flows Tested:** Question creation, recommendation, send-to-Kel, decision UI
 - **Critical Issues Found:** 3 (3 resolved)
 - **High Priority Issues:** 2 (2 resolved)
-- **Medium Priority Issues:** 3
+- **Medium Priority Issues:** 3 (1 resolved)
 
 ### Verdict
 **All P0 and P1 issues resolved.** P2 issues (status filters, loading states, category defaults) are polish items for future improvement.
@@ -309,7 +309,7 @@ When creating a new question, "Product" is pre-selected as the default category.
 
 ---
 
-### P2-2: No Question Status Filter on List
+### P2-2: No Question Status Filter on List ✅ RESOLVED
 
 **Problem Statement:**
 The questions list shows all questions but has no filtering by status (Draft, Sent to Kel, Approved, etc.).
@@ -331,13 +331,23 @@ The questions list shows all questions but has no filtering by status (Draft, Se
 > **So that** I can focus on questions at a specific stage
 
 **Acceptance Criteria:**
-- [ ] Filter dropdown or tabs for status filtering
-- [ ] Filter options: All, Draft, Sent to Kel, Decided
-- [ ] Filter persists during session
-- [ ] Count shown per filter option
-- [ ] Works in combination with category filter (if added)
+- [x] Filter dropdown or tabs for status filtering
+- [x] Filter options: All, Draft, Sent to Kel, Decided
+- [x] Filter persists during session
+- [x] Count shown per filter option
+- [x] Works in combination with category filter (if added)
 
 **Effort Estimate:** Medium (1-2 days)
+
+**Resolution (2026-01-08):**
+Feature was already implemented with comprehensive status filtering:
+- `StatusFilter.tsx` - Tabs-based UI with shadcn Tabs component
+- Filter options: All, Draft, Sent to Kel, Decided with counts
+- URL persistence via `?status=draft` query params
+- Responsive labels (full + abbreviated for mobile)
+- `useFilteredQuestions` hook supports status + category + search combination
+- 7 unit tests in `StatusFilter.test.tsx`
+- Integration in `QuestionsPageClient.tsx` with URL-based state management
 
 ---
 
@@ -477,7 +487,7 @@ Document these as examples of good patterns to maintain:
 |-------|----------|----------|
 | ~~Add edit capability for question title/description~~ | P0 | ✅ Done |
 | ~~Add quick actions menu on questions list~~ | P1 | ✅ Done |
-| Add status filtering on questions list | P2 | 1-2 days |
+| ~~Add status filtering on questions list~~ | P2 | ✅ Done |
 | ~~Add search functionality for questions~~ | P3 | ✅ Done |
 
 ### Epic 3: Role-Aware UX Polish
@@ -532,6 +542,7 @@ kel-dashboard/.playwright-mcp/
 | 1.4 | 2026-01-08 | Claude | P0-1 Navigation System resolved (was already implemented) - All P0 issues now resolved |
 | 1.5 | 2026-01-08 | Claude | P1-1 Quick Actions Menu resolved (was already implemented) |
 | 1.6 | 2026-01-08 | Claude | P1-2 Disabled Button Contrast resolved (fixed button.tsx disabled styles) - All P0 and P1 issues now resolved |
+| 1.7 | 2026-01-08 | Claude | P2-2 Status Filtering resolved (was already implemented) |
 
 ---
 
