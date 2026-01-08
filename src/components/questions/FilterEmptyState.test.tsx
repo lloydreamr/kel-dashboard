@@ -71,4 +71,62 @@ describe('FilterEmptyState', () => {
     rerender(<FilterEmptyState filter="decided" totalCount={0} />);
     expect(screen.getByText(/no decided questions/i)).toBeInTheDocument();
   });
+
+  // Search query tests (UX Audit)
+  describe('with search query', () => {
+    it('shows search-specific message when searchQuery is provided', () => {
+      render(
+        <FilterEmptyState filter="all" totalCount={5} searchQuery="pricing" />
+      );
+
+      expect(screen.getByText(/no questions matching "pricing"/i)).toBeInTheDocument();
+    });
+
+    it('combines filter and search in message', () => {
+      render(
+        <FilterEmptyState filter="draft" totalCount={5} searchQuery="pricing" />
+      );
+
+      expect(screen.getByText(/no draft questions matching "pricing"/i)).toBeInTheDocument();
+    });
+
+    it('shows "Clear search and filters" button text when search is active', () => {
+      const onShowAll = vi.fn();
+      render(
+        <FilterEmptyState
+          filter="all"
+          totalCount={5}
+          searchQuery="test"
+          onShowAll={onShowAll}
+        />
+      );
+
+      expect(screen.getByText(/clear search and filters/i)).toBeInTheDocument();
+    });
+
+    it('ignores empty searchQuery (shows normal message)', () => {
+      render(
+        <FilterEmptyState filter="draft" totalCount={5} searchQuery="" />
+      );
+
+      expect(screen.getByText(/no draft questions\./i)).toBeInTheDocument();
+    });
+
+    it('ignores whitespace-only searchQuery', () => {
+      render(
+        <FilterEmptyState filter="draft" totalCount={5} searchQuery="   " />
+      );
+
+      expect(screen.getByText(/no draft questions\./i)).toBeInTheDocument();
+    });
+
+    it('updates aria-label for search query', () => {
+      render(
+        <FilterEmptyState filter="all" totalCount={5} searchQuery="test" />
+      );
+
+      const element = screen.getByTestId('filter-empty-state');
+      expect(element).toHaveAttribute('aria-label', 'No questions matching test');
+    });
+  });
 });

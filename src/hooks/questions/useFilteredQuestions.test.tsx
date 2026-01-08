@@ -321,4 +321,153 @@ describe('useFilteredQuestions', () => {
       });
     });
   });
+
+  // UX Audit: Search filtering tests
+  describe('search filtering', () => {
+    const questionsWithDescriptions: Question[] = [
+      {
+        id: '1',
+        title: 'Price point analysis',
+        description: 'Determine optimal pricing for snacks',
+        status: 'draft',
+        category: 'market',
+        created_by: 'user1',
+        created_at: '2024-01-01',
+        updated_at: '2024-01-01',
+        recommendation: null,
+        recommendation_rationale: null,
+        viewed_by_kel_at: null,
+      },
+      {
+        id: '2',
+        title: 'Distributor partnerships',
+        description: 'Find the best distribution channels',
+        status: 'ready_for_kel',
+        category: 'distribution',
+        created_by: 'user1',
+        created_at: '2024-01-02',
+        updated_at: '2024-01-02',
+        recommendation: null,
+        recommendation_rationale: null,
+        viewed_by_kel_at: null,
+      },
+      {
+        id: '3',
+        title: 'Product packaging',
+        description: 'Design attractive snack packaging',
+        status: 'approved',
+        category: 'product',
+        created_by: 'user1',
+        created_at: '2024-01-03',
+        updated_at: '2024-01-03',
+        recommendation: null,
+        recommendation_rationale: null,
+        viewed_by_kel_at: '2024-01-03',
+      },
+    ];
+
+    it('returns all questions when search is empty', async () => {
+      mockedUseQuestions.mockReturnValue({
+        data: questionsWithDescriptions,
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useQuestions>);
+
+      const { result } = renderHook(() => useFilteredQuestions('all', 'all', ''));
+
+      await waitFor(() => {
+        expect(result.current.questions).toHaveLength(3);
+      });
+    });
+
+    it('filters by title match (case-insensitive)', async () => {
+      mockedUseQuestions.mockReturnValue({
+        data: questionsWithDescriptions,
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useQuestions>);
+
+      const { result } = renderHook(() => useFilteredQuestions('all', 'all', 'price'));
+
+      await waitFor(() => {
+        expect(result.current.questions).toHaveLength(1);
+        expect(result.current.questions[0].id).toBe('1');
+      });
+    });
+
+    it('filters by description match', async () => {
+      mockedUseQuestions.mockReturnValue({
+        data: questionsWithDescriptions,
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useQuestions>);
+
+      const { result } = renderHook(() => useFilteredQuestions('all', 'all', 'channels'));
+
+      await waitFor(() => {
+        expect(result.current.questions).toHaveLength(1);
+        expect(result.current.questions[0].id).toBe('2');
+      });
+    });
+
+    it('combines search with status filter', async () => {
+      mockedUseQuestions.mockReturnValue({
+        data: questionsWithDescriptions,
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useQuestions>);
+
+      // Search for "snack" in draft only
+      const { result } = renderHook(() => useFilteredQuestions('draft', 'all', 'snack'));
+
+      await waitFor(() => {
+        expect(result.current.questions).toHaveLength(1);
+        expect(result.current.questions[0].id).toBe('1'); // draft with "snacks" in description
+      });
+    });
+
+    it('combines search with category filter', async () => {
+      mockedUseQuestions.mockReturnValue({
+        data: questionsWithDescriptions,
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useQuestions>);
+
+      // Search for "snack" in product category only
+      const { result } = renderHook(() => useFilteredQuestions('all', 'product', 'snack'));
+
+      await waitFor(() => {
+        expect(result.current.questions).toHaveLength(1);
+        expect(result.current.questions[0].id).toBe('3'); // product with "snack" in description
+      });
+    });
+
+    it('returns empty when no matches', async () => {
+      mockedUseQuestions.mockReturnValue({
+        data: questionsWithDescriptions,
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useQuestions>);
+
+      const { result } = renderHook(() => useFilteredQuestions('all', 'all', 'xyz123'));
+
+      await waitFor(() => {
+        expect(result.current.questions).toHaveLength(0);
+      });
+    });
+
+    it('ignores whitespace-only search', async () => {
+      mockedUseQuestions.mockReturnValue({
+        data: questionsWithDescriptions,
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useQuestions>);
+
+      const { result } = renderHook(() => useFilteredQuestions('all', 'all', '   '));
+
+      await waitFor(() => {
+        expect(result.current.questions).toHaveLength(3); // All questions
+      });
+    });
+  });
 });

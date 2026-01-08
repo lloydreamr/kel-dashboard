@@ -1,10 +1,12 @@
 /**
  * useFilteredQuestions Hook
  *
- * Filters questions by status and/or category, calculates counts for each filter option.
+ * Filters questions by status, category, and search query.
+ * Calculates counts for each filter option.
  * Uses useQuestions internally and performs client-side filtering.
  *
  * Story 13.3: Added category filtering support
+ * UX Audit: Added search query filtering
  */
 
 import { useMemo } from 'react';
@@ -36,21 +38,42 @@ interface FilteredQuestionsResult {
 }
 
 /**
- * Hook for filtering questions by status and category with memoized results.
+ * Check if a question matches a search query.
+ * Searches in title and description (case-insensitive).
+ */
+function matchesSearchQuery(
+  question: QuestionWithEvidenceCount,
+  query: string
+): boolean {
+  if (!query.trim()) return true;
+
+  const searchLower = query.toLowerCase().trim();
+  const titleMatch = question.title.toLowerCase().includes(searchLower);
+  const descriptionMatch = question.description
+    ?.toLowerCase()
+    .includes(searchLower);
+
+  return titleMatch || !!descriptionMatch;
+}
+
+/**
+ * Hook for filtering questions by status, category, and search query with memoized results.
  *
  * @param filter - The status filter key to apply
  * @param category - Optional category filter key (defaults to 'all')
+ * @param searchQuery - Optional search query to filter by title/description
  * @returns Filtered questions and counts for all filter options
  *
  * @example
- * const { questions, counts, categoryCounts, isLoading } = useFilteredQuestions('draft', 'market');
- * // questions = only draft questions in market category
- * // counts = { all: 10, draft: 3, sent: 4, decided: 3 } (status counts)
- * // categoryCounts = { all: 10, market: 4, product: 3, distribution: 3 } (category counts)
+ * const { questions, counts, categoryCounts, isLoading } = useFilteredQuestions('draft', 'market', 'price');
+ * // questions = only draft questions in market category matching 'price'
+ * // counts = { all: 10, draft: 3, sent: 4, decided: 3 } (status counts, pre-search)
+ * // categoryCounts = { all: 10, market: 4, product: 3, distribution: 3 } (category counts, pre-search)
  */
 export function useFilteredQuestions(
   filter: StatusFilterKey,
-  category: CategoryFilterKey = 'all'
+  category: CategoryFilterKey = 'all',
+  searchQuery: string = ''
 ): FilteredQuestionsResult {
   const { data: allQuestions, isLoading, error } = useQuestions();
 
@@ -99,8 +122,15 @@ export function useFilteredQuestions(
       filteredQuestions = filteredQuestions.filter((q) => q.category === category);
     }
 
+    // Apply search filter
+    if (searchQuery.trim()) {
+      filteredQuestions = filteredQuestions.filter((q) =>
+        matchesSearchQuery(q, searchQuery)
+      );
+    }
+
     return { questions: filteredQuestions, counts, categoryCounts };
-  }, [allQuestions, filter, category]);
+  }, [allQuestions, filter, category, searchQuery]);
 
   return { questions, counts, categoryCounts, isLoading, error: error as Error | null };
 }

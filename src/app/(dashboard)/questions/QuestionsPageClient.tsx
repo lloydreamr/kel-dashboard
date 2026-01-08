@@ -9,6 +9,7 @@ import { CategoryTabs } from '@/components/questions/CategoryTabs';
 import { FilterEmptyState } from '@/components/questions/FilterEmptyState';
 import { QuestionForm } from '@/components/questions/QuestionForm';
 import { QuestionsList } from '@/components/questions/QuestionsList';
+import { SearchInput } from '@/components/questions/SearchInput';
 import { StatusFilter } from '@/components/questions/StatusFilter';
 import { Button } from '@/components/ui/button';
 import { useFilteredQuestions } from '@/hooks/questions/useFilteredQuestions';
@@ -32,6 +33,7 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Parse and validate status filter from URL
   const rawFilter = searchParams.get('status');
@@ -50,7 +52,8 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
   // Get filtered questions and counts
   const { questions, counts, categoryCounts, isLoading, error } = useFilteredQuestions(
     statusFilter,
-    categoryFilter
+    categoryFilter,
+    searchQuery
   );
 
   // Update URL without page reload (status)
@@ -98,11 +101,20 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
   const handleShowAll = useCallback(() => {
     handleFilterChange('all');
     handleCategoryChange('all');
+    setSearchQuery('');
   }, [handleFilterChange, handleCategoryChange]);
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
 
   // Memoize renderEmptyState to prevent recreation on every render
   const renderEmptyState = useMemo(() => {
-    if (statusFilter === 'all' && categoryFilter === 'all') {
+    // Show empty state if any filter is active (status, category, or search)
+    const hasActiveFilters =
+      statusFilter !== 'all' || categoryFilter !== 'all' || searchQuery.trim() !== '';
+
+    if (!hasActiveFilters) {
       return undefined;
     }
     const EmptyStateRenderer = () => (
@@ -110,10 +122,11 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
         filter={statusFilter}
         totalCount={counts.all}
         onShowAll={handleShowAll}
+        searchQuery={searchQuery}
       />
     );
     return EmptyStateRenderer;
-  }, [statusFilter, categoryFilter, counts.all, handleShowAll]);
+  }, [statusFilter, categoryFilter, searchQuery, counts.all, handleShowAll]);
 
   return (
     <main
@@ -159,6 +172,17 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
               Create New Question
             </h2>
             <QuestionForm userId={userId} onCancel={handleFormCancel} />
+          </div>
+        )}
+
+        {/* Search Input - show only for active questions view */}
+        {!showForm && !showArchived && (
+          <div className="mb-4">
+            <SearchInput
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Search questions..."
+            />
           </div>
         )}
 

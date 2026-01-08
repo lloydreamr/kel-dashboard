@@ -33,6 +33,7 @@ export {
   type RecommendationFormData,
 } from './recommendationSchema';
 export { RestoreButton } from './RestoreButton';
+export { SearchInput } from './SearchInput';
 export { SendToKelButton } from './SendToKelButton';
 export { SendToKelChecklist } from './SendToKelChecklist';
 export { StatusBadge } from './StatusBadge';
