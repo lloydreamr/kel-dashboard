@@ -1,15 +1,19 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { SearchableQuestionCombobox, type QuestionOption } from './SearchableQuestionCombobox';
 
-// Mock the useRecentQuestions hook
+// Mock the useRecentQuestions hook with configurable return values
+const mockAddRecent = vi.fn();
+const mockClearRecent = vi.fn();
+let mockRecentIds: string[] = [];
+
 vi.mock('./useRecentQuestions', () => ({
   useRecentQuestions: () => ({
-    recentIds: [],
-    addRecent: vi.fn(),
-    clearRecent: vi.fn(),
+    recentIds: mockRecentIds,
+    addRecent: mockAddRecent,
+    clearRecent: mockClearRecent,
   }),
 }));
 
@@ -43,8 +47,6 @@ vi.mock('@tanstack/react-virtual', () => ({
   },
 }));
 
-const STORAGE_KEY = 'kel-recent-questions';
-
 // Generate mock questions
 function generateMockQuestions(count: number): QuestionOption[] {
   const categories: Array<'market' | 'product' | 'distribution'> = [
@@ -69,6 +71,7 @@ describe('SearchableQuestionCombobox', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    mockRecentIds = []; // Reset recent IDs for each test
   });
 
   afterEach(() => {
@@ -105,6 +108,22 @@ describe('SearchableQuestionCombobox', () => {
 
       // With null value, it shows "None (unattached)" not the placeholder
       expect(screen.getByText('None (unattached)')).toBeInTheDocument();
+    });
+
+    it('renders with empty questions array showing only None option', async () => {
+      const user = userEvent.setup();
+      render(<SearchableQuestionCombobox {...defaultProps} questions={[]} />);
+
+      await user.click(screen.getByTestId('question-combobox-trigger'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('question-combobox-none')).toBeInTheDocument();
+      });
+
+      // Should have no category headers
+      expect(screen.queryByTestId('question-combobox-header-market')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('question-combobox-header-product')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('question-combobox-header-distribution')).not.toBeInTheDocument();
     });
   });
 
@@ -258,6 +277,34 @@ describe('SearchableQuestionCombobox', () => {
         expect(screen.queryByTestId('question-combobox-list')).not.toBeInTheDocument();
       });
     });
+
+    it('calls addRecent when a question is selected', async () => {
+      const user = userEvent.setup();
+      render(<SearchableQuestionCombobox {...defaultProps} />);
+
+      await user.click(screen.getByTestId('question-combobox-trigger'));
+      await waitFor(() => {
+        expect(screen.getByTestId('question-combobox-option-q-0')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId('question-combobox-option-q-0'));
+
+      expect(mockAddRecent).toHaveBeenCalledWith('q-0');
+    });
+
+    it('does not call addRecent when None is selected', async () => {
+      const user = userEvent.setup();
+      render(<SearchableQuestionCombobox {...defaultProps} value="q-0" />);
+
+      await user.click(screen.getByTestId('question-combobox-trigger'));
+      await waitFor(() => {
+        expect(screen.getByTestId('question-combobox-none')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId('question-combobox-none'));
+
+      expect(mockAddRecent).not.toHaveBeenCalled();
+    });
   });
 
   describe('keyboard navigation', () => {
@@ -313,6 +360,61 @@ describe('SearchableQuestionCombobox', () => {
           screen.getByTestId('question-combobox-header-distribution')
         ).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('recent questions', () => {
+    it('displays Recent section when recentIds exist', async () => {
+      const user = userEvent.setup();
+      const questions: QuestionOption[] = [
+        { id: 'q-1', title: 'First question', category: 'market' },
+        { id: 'q-2', title: 'Second question', category: 'product' },
+        { id: 'q-3', title: 'Third question', category: 'distribution' },
+      ];
+      // Set up recent IDs before rendering
+      mockRecentIds = ['q-2', 'q-1'];
+
+      render(<SearchableQuestionCombobox {...defaultProps} questions={questions} />);
+
+      await user.click(screen.getByTestId('question-combobox-trigger'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('question-combobox-header-recent')).toBeInTheDocument();
+        expect(screen.getByText('Recent')).toBeInTheDocument();
+      });
+    });
+
+    it('does not display Recent section when no recentIds', async () => {
+      const user = userEvent.setup();
+      mockRecentIds = [];
+
+      render(<SearchableQuestionCombobox {...defaultProps} />);
+
+      await user.click(screen.getByTestId('question-combobox-trigger'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('question-combobox-list')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId('question-combobox-header-recent')).not.toBeInTheDocument();
+    });
+
+    it('does not display Recent section when searching', async () => {
+      const user = userEvent.setup();
+      mockRecentIds = ['q-0', 'q-1'];
+
+      render(<SearchableQuestionCombobox {...defaultProps} />);
+
+      await user.click(screen.getByTestId('question-combobox-trigger'));
+      await user.type(screen.getByTestId('question-combobox-search'), 'question');
+
+      await waitFor(
+        () => {
+          // Verify search is active and Recent header is hidden
+          expect(screen.queryByTestId('question-combobox-header-recent')).not.toBeInTheDocument();
+        },
+        { timeout: 500 }
+      );
     });
   });
 

@@ -19,7 +19,7 @@
 
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Check, ChevronsUpDown, Search, X } from 'lucide-react';
-import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
+import { useState, useRef, useMemo, useCallback, useEffect, useId } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -63,6 +63,10 @@ const OVERSCAN = 5;
 /** Maximum items to display in Recent section */
 const MAX_RECENT_DISPLAY = 5;
 
+/** Generate unique IDs for ARIA attributes */
+let idCounter = 0;
+const generateId = (prefix: string) => `${prefix}-${++idCounter}`;
+
 /** Category order for display */
 const CATEGORY_ORDER: QuestionCategory[] = ['market', 'product', 'distribution'];
 
@@ -89,6 +93,20 @@ export function SearchableQuestionCombobox({
 
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Generate unique IDs for ARIA attributes
+  const uniqueId = useId();
+  const listboxId = `${testIdPrefix}-listbox-${uniqueId}`;
+
+  // Compute the ID of the currently highlighted option for aria-activedescendant
+  const getOptionId = useCallback(
+    (item: VirtualItem, index: number): string => {
+      if (item.type === 'none') return `${testIdPrefix}-none-${uniqueId}`;
+      if (item.type === 'question') return `${testIdPrefix}-option-${item.question.id}-${uniqueId}`;
+      return `${testIdPrefix}-header-${index}-${uniqueId}`;
+    },
+    [testIdPrefix, uniqueId]
+  );
 
   // Find selected question for display
   const selectedQuestion = useMemo(
@@ -172,6 +190,12 @@ export function SearchableQuestionCombobox({
         .map(({ index }) => index),
     [virtualItems]
   );
+
+  // Compute highlighted option ID for aria-activedescendant
+  const highlightedOptionId = useMemo(() => {
+    const item = virtualItems[highlightedIndex];
+    return item ? getOptionId(item, highlightedIndex) : undefined;
+  }, [virtualItems, highlightedIndex, getOptionId]);
 
   // Handle selection
   const handleSelect = useCallback(
@@ -271,6 +295,7 @@ export function SearchableQuestionCombobox({
           role="combobox"
           aria-expanded={open}
           aria-haspopup="listbox"
+          aria-controls={open ? listboxId : undefined}
           className="w-full justify-between font-normal"
           data-testid={`${testIdPrefix}-trigger`}
         >
@@ -308,6 +333,11 @@ export function SearchableQuestionCombobox({
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search questions..."
             className="flex h-10 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-controls={listboxId}
+            aria-activedescendant={highlightedOptionId}
+            aria-expanded={true}
             data-testid={`${testIdPrefix}-search`}
           />
           {search && (
@@ -325,8 +355,10 @@ export function SearchableQuestionCombobox({
         {/* Virtualized list */}
         <div
           ref={listRef}
+          id={listboxId}
           className="max-h-[300px] overflow-auto"
           role="listbox"
+          aria-label="Questions"
           data-testid={`${testIdPrefix}-list`}
         >
           {hasNoResults ? (
@@ -370,9 +402,11 @@ export function SearchableQuestionCombobox({
 
                 if (item.type === 'none') {
                   const isSelected = value === null;
+                  const optionId = getOptionId(item, virtualRow.index);
                   return (
                     <div
                       key="none"
+                      id={optionId}
                       role="option"
                       aria-selected={isSelected}
                       data-testid={`${testIdPrefix}-none`}
@@ -404,9 +438,11 @@ export function SearchableQuestionCombobox({
 
                 // Question item
                 const isSelected = value === item.question.id;
+                const optionId = getOptionId(item, virtualRow.index);
                 return (
                   <div
                     key={item.question.id}
+                    id={optionId}
                     role="option"
                     aria-selected={isSelected}
                     data-testid={`${testIdPrefix}-option-${item.question.id}`}
