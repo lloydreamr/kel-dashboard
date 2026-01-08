@@ -1,8 +1,10 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -37,6 +39,8 @@ interface ResetPasswordFormProps {
  */
 export function ResetPasswordForm({ errorFromUrl }: ResetPasswordFormProps) {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { updatePassword, isLoading, isSuccess, isError, error } = useUpdatePassword();
 
   const {
@@ -99,16 +103,31 @@ export function ResetPasswordForm({ errorFromUrl }: ResetPasswordFormProps) {
           >
             New Password
           </label>
-          <input
-            {...register('password')}
-            id="password"
-            type="password"
-            autoFocus
-            autoComplete="new-password"
-            placeholder="Enter new password"
-            data-testid="reset-password-input"
-            className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
-          />
+          <div className="relative">
+            <input
+              {...register('password')}
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              autoFocus
+              autoComplete="new-password"
+              placeholder="Enter new password"
+              data-testid="reset-password-input"
+              className="w-full rounded-md border border-border bg-surface px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              data-testid="password-visibility-toggle"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
           {errors.password && (
             <p className="text-sm text-destructive">{errors.password.message}</p>
           )}
@@ -121,15 +140,30 @@ export function ResetPasswordForm({ errorFromUrl }: ResetPasswordFormProps) {
           >
             Confirm Password
           </label>
-          <input
-            {...register('confirmPassword')}
-            id="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            placeholder="Confirm new password"
-            data-testid="reset-password-confirm-input"
-            className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
-          />
+          <div className="relative">
+            <input
+              {...register('confirmPassword')}
+              id="confirmPassword"
+              type={showConfirmPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              placeholder="Confirm new password"
+              data-testid="reset-password-confirm-input"
+              className="w-full rounded-md border border-border bg-surface px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              data-testid="confirm-password-visibility-toggle"
+              aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+            >
+              {showConfirmPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
           {errors.confirmPassword && (
             <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
           )}

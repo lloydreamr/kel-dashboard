@@ -383,4 +383,52 @@ describe('LoginForm', () => {
       });
     });
   });
+
+  describe('password visibility toggle', () => {
+    it('renders password visibility toggle button', () => {
+      render(<LoginForm />);
+
+      expect(screen.getByTestId('password-visibility-toggle')).toBeInTheDocument();
+    });
+
+    it('has password input type as password by default', () => {
+      render(<LoginForm />);
+
+      const passwordInput = screen.getByTestId('login-password-input');
+      expect(passwordInput).toHaveAttribute('type', 'password');
+    });
+
+    it('toggles password visibility when button is clicked', async () => {
+      const user = userEvent.setup();
+      render(<LoginForm />);
+
+      const passwordInput = screen.getByTestId('login-password-input');
+      const toggleButton = screen.getByTestId('password-visibility-toggle');
+
+      // Initially password should be hidden
+      expect(passwordInput).toHaveAttribute('type', 'password');
+
+      // Click to show password
+      await user.click(toggleButton);
+      expect(passwordInput).toHaveAttribute('type', 'text');
+
+      // Click again to hide password
+      await user.click(toggleButton);
+      expect(passwordInput).toHaveAttribute('type', 'password');
+    });
+
+    it('has correct aria-label for accessibility', async () => {
+      const user = userEvent.setup();
+      render(<LoginForm />);
+
+      const toggleButton = screen.getByTestId('password-visibility-toggle');
+
+      // Initially should say "Show password"
+      expect(toggleButton).toHaveAttribute('aria-label', 'Show password');
+
+      // After click should say "Hide password"
+      await user.click(toggleButton);
+      expect(toggleButton).toHaveAttribute('aria-label', 'Hide password');
+    });
+  });
 });

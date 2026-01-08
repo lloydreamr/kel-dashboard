@@ -321,6 +321,48 @@ describe('MilestoneCard', () => {
     expect(screen.queryByTestId('milestone-complete-badge')).not.toBeInTheDocument();
   });
 
+  it('shows "In Progress" when questions exist even if DB status is not_started', () => {
+    // Arrange - milestone status is not_started but questions exist
+    vi.mocked(useMilestoneProgress).mockReturnValue({
+      data: { total: 5, approved: 0, percentage: 0 },
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    const milestone = createMockMilestone({ status: 'not_started' });
+
+    // Act
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MilestoneCard milestone={milestone} />
+      </QueryClientProvider>
+    );
+
+    // Assert - should show "In Progress" because questions exist
+    expect(screen.getByTestId('milestone-status-badge')).toHaveTextContent('In Progress');
+  });
+
+  it('shows "Not Started" only when truly empty (0 questions)', () => {
+    // Arrange - no questions at all
+    vi.mocked(useMilestoneProgress).mockReturnValue({
+      data: { total: 0, approved: 0, percentage: 0 },
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    const milestone = createMockMilestone({ status: 'not_started' });
+
+    // Act
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MilestoneCard milestone={milestone} />
+      </QueryClientProvider>
+    );
+
+    // Assert - should show "Not Started" because no questions exist
+    expect(screen.getByTestId('milestone-status-badge')).toHaveTextContent('Not Started');
+  });
+
   // Story 7.4 - Freshness Badge tests
   describe('Freshness Indicators', () => {
     it('shows freshness OK indicator when no stale questions (AC: #2)', () => {

@@ -54,6 +54,17 @@ export function MilestoneCard({ milestone }: MilestoneCardProps) {
     return <MilestoneCardSkeleton />;
   }
 
+  // Compute effective status based on progress data
+  // If milestone is complete, use that status
+  // If questions exist (total > 0), show "In Progress" even if DB says "not_started"
+  // Only show "Not Started" when truly empty (0 questions)
+  const effectiveStatus =
+    milestone.status === 'complete'
+      ? 'complete'
+      : (progress?.total ?? 0) > 0
+        ? 'in_progress'
+        : 'not_started';
+
   return (
     <Card data-testid={`milestone-card-${milestone.category}`}>
       <CardHeader>
@@ -63,14 +74,14 @@ export function MilestoneCard({ milestone }: MilestoneCardProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {milestone.status === 'complete' ? (
+        {effectiveStatus === 'complete' ? (
           <CompletionBadge completedAt={milestone.completed_at} />
         ) : (
           <Badge
             data-testid="milestone-status-badge"
-            variant={STATUS_DISPLAY[milestone.status].variant}
+            variant={STATUS_DISPLAY[effectiveStatus].variant}
           >
-            {STATUS_DISPLAY[milestone.status].label}
+            {STATUS_DISPLAY[effectiveStatus].label}
           </Badge>
         )}
 

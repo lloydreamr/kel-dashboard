@@ -177,4 +177,64 @@ describe('ResetPasswordForm', () => {
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/login');
   });
+
+  describe('password visibility toggles', () => {
+    it('renders password visibility toggle buttons', () => {
+      render(<ResetPasswordForm />);
+
+      expect(screen.getByTestId('password-visibility-toggle')).toBeInTheDocument();
+      expect(screen.getByTestId('confirm-password-visibility-toggle')).toBeInTheDocument();
+    });
+
+    it('has password inputs hidden by default', () => {
+      render(<ResetPasswordForm />);
+
+      expect(screen.getByTestId('reset-password-input')).toHaveAttribute('type', 'password');
+      expect(screen.getByTestId('reset-password-confirm-input')).toHaveAttribute('type', 'password');
+    });
+
+    it('toggles password visibility independently', async () => {
+      const user = userEvent.setup();
+      render(<ResetPasswordForm />);
+
+      const passwordInput = screen.getByTestId('reset-password-input');
+      const confirmInput = screen.getByTestId('reset-password-confirm-input');
+      const passwordToggle = screen.getByTestId('password-visibility-toggle');
+      const confirmToggle = screen.getByTestId('confirm-password-visibility-toggle');
+
+      // Toggle only password field
+      await user.click(passwordToggle);
+      expect(passwordInput).toHaveAttribute('type', 'text');
+      expect(confirmInput).toHaveAttribute('type', 'password');
+
+      // Toggle only confirm field
+      await user.click(confirmToggle);
+      expect(passwordInput).toHaveAttribute('type', 'text');
+      expect(confirmInput).toHaveAttribute('type', 'text');
+
+      // Toggle password back to hidden
+      await user.click(passwordToggle);
+      expect(passwordInput).toHaveAttribute('type', 'password');
+      expect(confirmInput).toHaveAttribute('type', 'text');
+    });
+
+    it('has correct aria-labels for accessibility', async () => {
+      const user = userEvent.setup();
+      render(<ResetPasswordForm />);
+
+      const passwordToggle = screen.getByTestId('password-visibility-toggle');
+      const confirmToggle = screen.getByTestId('confirm-password-visibility-toggle');
+
+      // Initially should say "Show password"
+      expect(passwordToggle).toHaveAttribute('aria-label', 'Show password');
+      expect(confirmToggle).toHaveAttribute('aria-label', 'Show password');
+
+      // After click should say "Hide password"
+      await user.click(passwordToggle);
+      expect(passwordToggle).toHaveAttribute('aria-label', 'Hide password');
+
+      await user.click(confirmToggle);
+      expect(confirmToggle).toHaveAttribute('aria-label', 'Hide password');
+    });
+  });
 });
