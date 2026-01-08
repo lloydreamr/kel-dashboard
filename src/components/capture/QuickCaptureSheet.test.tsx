@@ -313,7 +313,7 @@ describe('QuickCaptureSheet', () => {
       />
     );
 
-    expect(screen.getByTestId('quick-capture-question-select')).toBeInTheDocument();
+    expect(screen.getByTestId('quick-capture-question-trigger')).toBeInTheDocument();
     expect(screen.getByText(/attach to question/i)).toBeInTheDocument();
   });
 
@@ -327,7 +327,7 @@ describe('QuickCaptureSheet', () => {
       />
     );
 
-    expect(screen.queryByTestId('quick-capture-question-select')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('quick-capture-question-trigger')).not.toBeInTheDocument();
   });
 
   it('includes selected questionId in capture data', async () => {

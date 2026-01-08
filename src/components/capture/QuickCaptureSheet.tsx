@@ -25,6 +25,8 @@ import {
   CATEGORY_LABELS,
 } from '@/types/question';
 
+import { SearchableQuestionCombobox } from './SearchableQuestionCombobox';
+
 export interface QuickCaptureData {
   /** The captured photo file */
   photo: File;
@@ -259,7 +261,7 @@ export function QuickCaptureSheet({
             </div>
           )}
 
-          {/* Question selector (optional) */}
+          {/* Question selector (optional) - Story 13.1: Searchable with virtualization */}
           {questions.length > 0 && (
             <div className="space-y-2">
               <span
@@ -269,41 +271,13 @@ export function QuickCaptureSheet({
                 Attach to Question{' '}
                 <span className="text-muted-foreground">(optional)</span>
               </span>
-              <Select
-                value={selectedQuestionId ?? '__none__'}
-                onValueChange={(value) =>
-                  setSelectedQuestionId(value === '__none__' ? null : value)
-                }
-              >
-                <SelectTrigger
-                  aria-labelledby="capture-question-label"
-                  data-testid="quick-capture-question-select"
-                >
-                  <SelectValue placeholder="Select a question" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">
-                    <span className="text-muted-foreground">
-                      None (unattached)
-                    </span>
-                  </SelectItem>
-                  {questions.map((q) => (
-                    <SelectItem key={q.id} value={q.id}>
-                      <span className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            'inline-block h-2 w-2 rounded-full',
-                            q.category === 'market' && 'bg-blue-500',
-                            q.category === 'product' && 'bg-green-500',
-                            q.category === 'distribution' && 'bg-orange-500'
-                          )}
-                        />
-                        <span className="truncate">{q.title}</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableQuestionCombobox
+                questions={questions}
+                value={selectedQuestionId}
+                onSelect={setSelectedQuestionId}
+                placeholder="Search questions..."
+                testIdPrefix="quick-capture-question"
+              />
             </div>
           )}
 
