@@ -346,6 +346,7 @@ export function QuestionDetailClient({
           {isDraft && (
             <div className="mt-6">
               <SendToKelButton
+                hasEvidence={evidenceCount > 0}
                 hasRecommendation={hasRecommendation}
                 onConfirm={() => markReadyForKel(questionId, question.status)}
                 isPending={isSending}
