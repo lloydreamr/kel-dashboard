@@ -344,10 +344,10 @@ export function SearchableQuestionCombobox({
             <button
               type="button"
               onClick={() => setSearch('')}
-              className="ml-2 rounded p-1 hover:bg-muted"
+              className="ml-2 flex h-8 w-8 items-center justify-center rounded hover:bg-muted"
               aria-label="Clear search"
             >
-              <X className="h-3 w-3 opacity-50" />
+              <X className="h-4 w-4 opacity-50" />
             </button>
           )}
         </div>
