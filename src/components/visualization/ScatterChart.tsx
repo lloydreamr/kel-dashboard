@@ -15,14 +15,12 @@ import {
 } from 'recharts';
 
 import { Button } from '@/components/ui/button';
-import { ChartClickLayer } from '@/components/visualization/ChartClickLayer';
 import { CompetitorDetailSheet } from '@/components/visualization/CompetitorDetailSheet';
 import { ScatterChartSkeleton } from '@/components/visualization/ScatterChartSkeleton';
 import { useCompetitorData } from '@/hooks/competitors';
 import { useHaptic, useResponsiveChartHeight } from '@/hooks/ui';
 import { isStale, getStalenessMessage } from '@/lib/utils/staleness';
 
-import type { OverlayPoint } from '@/components/visualization/ChartClickLayer';
 import type { CompetitorDataPoint } from '@/types';
 
 interface ChartPoint {
@@ -115,64 +113,6 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
       clearTimeout(fallbackTimer);
     };
   }, [competitors]);
-
-  // Calculate overlay positions when data or container size changes
-  // Using useMemo to derive state without causing cascading renders
-  const overlayPoints = useMemo<OverlayPoint[]>(() => {
-    if (!containerSize || !competitors || competitors.length === 0) return [];
-
-    const { width, height } = containerSize;
-    const chartAreaWidth = width - chartMargin.left - chartMargin.right;
-    const chartAreaHeight = height - chartMargin.top - chartMargin.bottom;
-    const domainRange = CHART_DOMAIN.max - CHART_DOMAIN.min;
-
-    // Convert data value to pixel position
-    const xToPixel = (value: number) =>
-      chartMargin.left + ((value - CHART_DOMAIN.min) / domainRange) * chartAreaWidth;
-    const yToPixel = (value: number) =>
-      chartMargin.top + ((CHART_DOMAIN.max - value) / domainRange) * chartAreaHeight;
-
-    return competitors.map((c) => ({
-      id: c.id,
-      x: xToPixel(c.price_score),
-      y: yToPixel(c.quality_score),
-      name: c.name,
-      priceScore: c.price_score,
-      qualityScore: c.quality_score,
-      isKel: c.is_kel_position ?? false,
-    }));
-  }, [containerSize, competitors, chartMargin]);
-
-  // Handle click from ChartClickLayer
-  // Don't use useCallback to avoid stale closure issues - re-create each render
-  const handleOverlayClick = (competitor: CompetitorDataPoint) => {
-    if (!containerRef.current) return;
-
-    // Trigger haptic feedback immediately on mobile (before any other logic)
-    if (isMobile) {
-      triggerHaptic('light');
-    }
-
-    // Get fresh container dimensions directly from the DOM
-    const containerRect = containerRef.current.getBoundingClientRect();
-    if (containerRect.width === 0 || containerRect.height === 0) return;
-
-    // Calculate popover position directly from competitor data
-    const chartAreaWidth = containerRect.width - chartMargin.left - chartMargin.right;
-    const chartAreaHeight = containerRect.height - chartMargin.top - chartMargin.bottom;
-    const domainRange = CHART_DOMAIN.max - CHART_DOMAIN.min;
-
-    const xToPixel = (value: number) =>
-      chartMargin.left + ((value - CHART_DOMAIN.min) / domainRange) * chartAreaWidth;
-    const yToPixel = (value: number) =>
-      chartMargin.top + ((CHART_DOMAIN.max - value) / domainRange) * chartAreaHeight;
-
-    setPopoverAnchor({
-      x: containerRect.left + xToPixel(competitor.price_score),
-      y: containerRect.top + yToPixel(competitor.quality_score),
-    });
-    setSelectedCompetitor(competitor);
-  };
 
   if (isLoading) {
     return <ScatterChartSkeleton />;
@@ -535,16 +475,6 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
 
         </RechartsScatter>
       </ResponsiveContainer>
-
-      {/* HTML click overlays for reliable E2E testing - disabled in pitch mode */}
-      {competitors && !isPitchMode && (
-        <ChartClickLayer
-          points={overlayPoints}
-          competitors={competitors}
-          onPointClick={handleOverlayClick}
-          isMaho={isMaho}
-        />
-      )}
       </div>
 
       {/* Edit popover (desktop) or bottom sheet (mobile) for clicked data points */}
