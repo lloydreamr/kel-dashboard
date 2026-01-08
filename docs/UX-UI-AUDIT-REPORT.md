@@ -16,10 +16,10 @@ The Kel Dashboard has **solid core functionality** with well-designed user flows
 - **User Flows Tested:** Question creation, recommendation, send-to-Kel, decision UI
 - **Critical Issues Found:** 3 (3 resolved)
 - **High Priority Issues:** 2 (2 resolved)
-- **Medium Priority Issues:** 3 (1 resolved)
+- **Medium Priority Issues:** 3 (2 resolved)
 
 ### Verdict
-**All P0 and P1 issues resolved.** P2 issues (status filters, loading states, category defaults) are polish items for future improvement.
+**All P0 and P1 issues resolved.** Only P2-3 (loading states) remains as a polish item.
 
 ---
 
@@ -276,7 +276,7 @@ Fixed button disabled styling in `button.tsx`:
 
 ## Medium Priority Issues (P2)
 
-### P2-1: Category Default Selection Bias
+### P2-1: Category Default Selection Bias ✅ RESOLVED
 
 **Problem Statement:**
 When creating a new question, "Product" is pre-selected as the default category. This may cause accidental miscategorization or bias users toward one category.
@@ -297,15 +297,23 @@ When creating a new question, "Product" is pre-selected as the default category.
 > **So that** questions are correctly categorized from the start
 
 **Acceptance Criteria:**
-- [ ] Category dropdown shows placeholder "Select category..." by default
-- [ ] Form cannot be submitted without selecting a category
-- [ ] Error state shown if user tries to submit without category
+- [x] Category dropdown shows placeholder "Select category..." by default
+- [x] Form cannot be submitted without selecting a category
+- [x] Error state shown if user tries to submit without category
 
 **Alternative Acceptance Criteria (if default preferred):**
 - [ ] Default changed to "Market" (most common for this project)
 - [ ] Visual highlight reminds user to verify category selection
 
 **Effort Estimate:** Low (0.5 days)
+
+**Resolution (2026-01-08):**
+Feature was already implemented correctly in QuestionForm.tsx:
+- `questionSchema.ts` - Empty string default, Zod validation requires category selection
+- `QuestionForm.tsx` - Placeholder "Select category..." with `disabled hidden` HTML pattern
+- Submit button disabled until category selected (`!categoryValue || !isValid`)
+- Error message shown via `data-testid="category-validation-error"` element
+- 4 tests verify: no default selection, placeholder text, disabled submit, validation
 
 ---
 
@@ -505,7 +513,7 @@ Document these as examples of good patterns to maintain:
 |-------|----------|----------|
 | ~~Improve disabled button contrast~~ | P1 | ✅ Done |
 | Add consistent loading skeletons | P2 | 1 day |
-| Review form default values | P2 | 0.5 days |
+| ~~Review form default values~~ | P2 | ✅ Done |
 
 ---
 
@@ -543,6 +551,7 @@ kel-dashboard/.playwright-mcp/
 | 1.5 | 2026-01-08 | Claude | P1-1 Quick Actions Menu resolved (was already implemented) |
 | 1.6 | 2026-01-08 | Claude | P1-2 Disabled Button Contrast resolved (fixed button.tsx disabled styles) - All P0 and P1 issues now resolved |
 | 1.7 | 2026-01-08 | Claude | P2-2 Status Filtering resolved (was already implemented) |
+| 1.8 | 2026-01-08 | Claude | P2-1 Category Default resolved (was already implemented) |
 
 ---
 
