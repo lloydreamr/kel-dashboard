@@ -143,7 +143,7 @@ describe('StaleQuestionsClient', () => {
     expect(screen.getByText('Failed to load questions')).toBeInTheDocument();
   });
 
-  it('shows empty state when no stale questions', () => {
+  it('shows celebratory empty state when no stale questions', () => {
     // Arrange
     vi.mocked(useStaleQuestionsByCategory).mockReturnValue({
       data: { staleCount: 0, staleQuestions: [] },
@@ -160,7 +160,8 @@ describe('StaleQuestionsClient', () => {
 
     // Assert
     expect(screen.getByTestId('stale-questions-empty')).toBeInTheDocument();
-    expect(screen.getByText('No stale questions in Distribution')).toBeInTheDocument();
+    expect(screen.getByText('All caught up!')).toBeInTheDocument();
+    expect(screen.getByText(/No Distribution questions have gone stale/)).toBeInTheDocument();
   });
 
   it('shows stale questions list', () => {
@@ -247,6 +248,26 @@ describe('StaleQuestionsClient', () => {
 
     // Assert
     expect(useStaleQuestionsByCategory).toHaveBeenCalledWith('distribution');
+  });
+
+  it('displays stale definition subtitle', () => {
+    // Arrange
+    vi.mocked(useStaleQuestionsByCategory).mockReturnValue({
+      data: { staleCount: 0, staleQuestions: [] },
+      isLoading: false,
+      isError: false,
+      error: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    // Act
+    render(<StaleQuestionsClient category="market" />, {
+      wrapper: createWrapper(),
+    });
+
+    // Assert
+    expect(screen.getByTestId('stale-definition')).toBeInTheDocument();
+    expect(screen.getByText(/Questions not updated in 14\+ days/)).toBeInTheDocument();
   });
 
   it('validates all three valid categories work', () => {

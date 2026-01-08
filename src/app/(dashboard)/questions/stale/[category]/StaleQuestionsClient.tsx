@@ -7,13 +7,14 @@
 
 'use client';
 
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
 import { QuestionCard } from '@/components/questions/QuestionCard';
 import { QuestionCardSkeleton } from '@/components/questions/QuestionCardSkeleton';
 import { Button } from '@/components/ui/button';
 import { useStaleQuestionsByCategory } from '@/hooks/questions';
+import { STALE_THRESHOLD_DAYS } from '@/lib/utils/staleness';
 import {
   CATEGORY_LABELS,
   QUESTION_CATEGORIES,
@@ -75,7 +76,12 @@ export function StaleQuestionsClient({ category }: StaleQuestionsClientProps) {
           </Button>
         </div>
 
-        <h1 className="text-2xl font-bold">Stale {categoryLabel} Questions</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Stale {categoryLabel} Questions</h1>
+          <p className="text-sm text-muted-foreground mt-1" data-testid="stale-definition">
+            Questions not updated in {STALE_THRESHOLD_DAYS}+ days
+          </p>
+        </div>
 
         <div className="space-y-4" data-testid="stale-questions-loading">
           {[1, 2, 3].map((i) => (
@@ -98,7 +104,12 @@ export function StaleQuestionsClient({ category }: StaleQuestionsClientProps) {
           </Button>
         </div>
 
-        <h1 className="text-2xl font-bold">Stale {categoryLabel} Questions</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Stale {categoryLabel} Questions</h1>
+          <p className="text-sm text-muted-foreground mt-1" data-testid="stale-definition">
+            Questions not updated in {STALE_THRESHOLD_DAYS}+ days
+          </p>
+        </div>
 
         <div
           className="text-center py-8 text-destructive"
@@ -122,16 +133,25 @@ export function StaleQuestionsClient({ category }: StaleQuestionsClientProps) {
         </Button>
       </div>
 
-      <h1 className="text-2xl font-bold" data-testid="stale-questions-title">
-        Stale {categoryLabel} Questions
-      </h1>
+      <div>
+        <h1 className="text-2xl font-bold" data-testid="stale-questions-title">
+          Stale {categoryLabel} Questions
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1" data-testid="stale-definition">
+          Questions not updated in {STALE_THRESHOLD_DAYS}+ days
+        </p>
+      </div>
 
       {data?.staleQuestions.length === 0 ? (
         <div
-          className="text-center py-8 text-muted-foreground"
+          className="flex flex-col items-center justify-center py-12 px-4 text-center border border-dashed border-border rounded-lg bg-muted/20"
           data-testid="stale-questions-empty"
         >
-          No stale questions in {categoryLabel}
+          <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
+          <h2 className="text-lg font-semibold text-foreground mb-2">All caught up!</h2>
+          <p className="text-muted-foreground max-w-sm">
+            No {categoryLabel} questions have gone stale. Keep up the great research!
+          </p>
         </div>
       ) : (
         <div className="space-y-4" data-testid="stale-questions-list">
