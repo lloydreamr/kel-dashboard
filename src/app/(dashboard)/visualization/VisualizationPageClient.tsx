@@ -14,6 +14,7 @@ import {
   ScatterChartSkeleton,
   EnterPitchModeButton,
   PdfExportContent,
+  PitchCompetitorTable,
 } from '@/components/visualization';
 import { useProfile } from '@/hooks/auth';
 import { useDeleteCompetitor, useCompetitorData } from '@/hooks/competitors';
@@ -156,6 +157,14 @@ export function VisualizationPageClient() {
               onAddClick={handleAddClick}
             />
             <ChartLegend hasKelPosition={hasKelPosition} isLoading={competitorsLoading} />
+          </div>
+
+          {/* Competitor Comparison Table (Story 11.4) */}
+          <div className="mt-6">
+            <PitchCompetitorTable
+              competitors={competitors ?? []}
+              kelPosition={existingKelPosition ?? null}
+            />
           </div>
         </div>
 

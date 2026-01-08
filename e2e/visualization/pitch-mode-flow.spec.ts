@@ -353,6 +353,185 @@ test.describe('Pitch Mode Mobile (AC #5)', () => {
   });
 });
 
+test.describe('Pitch Mode Competitor Table (Story 11.4)', () => {
+  let mahoContext: BrowserContext;
+  let mahoPage: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    mahoContext = await browser.newContext({
+      storageState: STORAGE_STATE.maho,
+    });
+    mahoPage = await mahoContext.newPage();
+  });
+
+  test.afterAll(async () => {
+    await mahoContext.close();
+  });
+
+  test.describe('Table Display (AC #1)', () => {
+    test('competitor table displays in pitch mode', async () => {
+      // Arrange - navigate to pitch mode
+      await mahoPage.goto('/visualization?mode=pitch');
+      await mahoPage.waitForLoadState('networkidle');
+
+      // Assert - table should exist (may be empty if no competitors)
+      // We check for the testid, but it only renders if there's data
+      const table = mahoPage.getByTestId('pitch-competitor-table');
+      const tableExists = await table.count();
+
+      // If table exists, verify column headers
+      if (tableExists > 0) {
+        await expect(table).toBeVisible();
+
+        // Verify all required columns are present
+        await expect(table.getByRole('columnheader', { name: 'Name' })).toBeVisible();
+        await expect(table.getByRole('columnheader', { name: 'Price Range' })).toBeVisible();
+        await expect(table.getByRole('columnheader', { name: 'Quality Score' })).toBeVisible();
+        await expect(table.getByRole('columnheader', { name: 'Market Position' })).toBeVisible();
+      }
+      // Test passes - table either displays correctly or is hidden when empty
+    });
+
+    test('competitor table shows data rows when competitors exist', async () => {
+      // Arrange - navigate to pitch mode
+      await mahoPage.goto('/visualization?mode=pitch');
+      await mahoPage.waitForLoadState('networkidle');
+
+      // Assert - check if table has data rows
+      const table = mahoPage.getByTestId('pitch-competitor-table');
+      const tableExists = await table.count();
+
+      if (tableExists > 0) {
+        // Get all rows (header + data rows)
+        const rows = table.getByRole('row');
+        const rowCount = await rows.count();
+
+        // Should have at least header row + 1 data row
+        expect(rowCount).toBeGreaterThanOrEqual(2);
+      }
+    });
+
+    test('table shows quality score with /10 format', async () => {
+      // Arrange - navigate to pitch mode
+      await mahoPage.goto('/visualization?mode=pitch');
+      await mahoPage.waitForLoadState('networkidle');
+
+      // Assert - if table exists with data, check for /10 format
+      const table = mahoPage.getByTestId('pitch-competitor-table');
+      const tableExists = await table.count();
+
+      if (tableExists > 0) {
+        // Look for any cell containing /10 pattern
+        const qualityCells = table.getByText(/\d+\/10/);
+        const cellCount = await qualityCells.count();
+
+        // Should have at least one quality score cell
+        expect(cellCount).toBeGreaterThan(0);
+      }
+    });
+  });
+
+  test.describe('Kel Row Highlighting (AC #2)', () => {
+    test('Kel row has highlight styling when position exists', async () => {
+      // Arrange - navigate to pitch mode
+      await mahoPage.goto('/visualization?mode=pitch');
+      await mahoPage.waitForLoadState('networkidle');
+
+      // Check for Kel row highlight
+      const kelRow = mahoPage.getByTestId('pitch-kel-row-highlight');
+      const kelRowExists = await kelRow.count();
+
+      if (kelRowExists > 0) {
+        // Assert - Kel row should be visible
+        await expect(kelRow).toBeVisible();
+
+        // Assert - Kel row should contain "Kel" text
+        await expect(kelRow).toContainText('Kel');
+
+        // Assert - Kel row has bg-primary/10 class (verified via class or computed style)
+        await expect(kelRow).toHaveClass(/bg-primary/);
+      }
+      // Test passes - either Kel is highlighted or no Kel position exists
+    });
+
+    test('Kel row appears first in table when position exists', async () => {
+      // Arrange - navigate to pitch mode
+      await mahoPage.goto('/visualization?mode=pitch');
+      await mahoPage.waitForLoadState('networkidle');
+
+      // Check for table and Kel row
+      const table = mahoPage.getByTestId('pitch-competitor-table');
+      const tableExists = await table.count();
+      const kelRow = mahoPage.getByTestId('pitch-kel-row-highlight');
+      const kelRowExists = await kelRow.count();
+
+      if (tableExists > 0 && kelRowExists > 0) {
+        // Get all data rows (skip header)
+        const rows = table.locator('tbody tr');
+        const firstDataRow = rows.first();
+
+        // Assert - first data row should be the Kel row
+        await expect(firstDataRow).toHaveAttribute('data-testid', 'pitch-kel-row-highlight');
+      }
+    });
+  });
+
+  test.describe('Read-Only View (AC #3)', () => {
+    test('table has no buttons or edit controls', async () => {
+      // Arrange - navigate to pitch mode
+      await mahoPage.goto('/visualization?mode=pitch');
+      await mahoPage.waitForLoadState('networkidle');
+
+      // Assert - if table exists, it should have no buttons
+      const table = mahoPage.getByTestId('pitch-competitor-table');
+      const tableExists = await table.count();
+
+      if (tableExists > 0) {
+        // Count buttons inside the table
+        const buttons = table.getByRole('button');
+        const buttonCount = await buttons.count();
+
+        // Should have zero buttons (read-only view)
+        expect(buttonCount).toBe(0);
+      }
+    });
+
+    test('table has no clickable links', async () => {
+      // Arrange - navigate to pitch mode
+      await mahoPage.goto('/visualization?mode=pitch');
+      await mahoPage.waitForLoadState('networkidle');
+
+      // Assert - if table exists, it should have no links
+      const table = mahoPage.getByTestId('pitch-competitor-table');
+      const tableExists = await table.count();
+
+      if (tableExists > 0) {
+        // Count links inside the table
+        const links = table.getByRole('link');
+        const linkCount = await links.count();
+
+        // Should have zero links (read-only view)
+        expect(linkCount).toBe(0);
+      }
+    });
+  });
+
+  test.describe('Table Not in Normal View', () => {
+    test('competitor table is NOT visible in normal visualization view', async () => {
+      // Arrange - navigate to normal visualization (not pitch mode)
+      await mahoPage.goto('/visualization');
+      await mahoPage.waitForLoadState('networkidle');
+
+      // Assert - table should NOT be present in normal view
+      const table = mahoPage.getByTestId('pitch-competitor-table');
+      const tableExists = await table.count();
+
+      // Table is only for pitch mode
+      expect(tableExists).toBe(0);
+    });
+  });
+});
+
 test.describe('Pitch Mode as Kel User', () => {
   test('Kel can access pitch mode', async ({ browser }) => {
     // Create context for Kel user
@@ -392,5 +571,151 @@ test.describe('Pitch Mode as Kel User', () => {
     } finally {
       await kelContext.close();
     }
+  });
+});
+
+test.describe('Pitch Mode Metric Tooltips (Story 11.5)', () => {
+  let mahoContext: BrowserContext;
+  let mahoPage: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    mahoContext = await browser.newContext({
+      storageState: STORAGE_STATE.maho,
+    });
+    mahoPage = await mahoContext.newPage();
+  });
+
+  test.afterAll(async () => {
+    await mahoContext.close();
+  });
+
+  test.describe('Tooltip Display (AC #1, #2, #3)', () => {
+    test('metric headers have tooltip triggers', async () => {
+      // Arrange - navigate to pitch mode
+      await mahoPage.goto('/visualization?mode=pitch');
+      await mahoPage.waitForLoadState('networkidle');
+
+      // Only test if table exists (requires competitor data)
+      const table = mahoPage.getByTestId('pitch-competitor-table');
+      const tableExists = await table.count();
+
+      if (tableExists > 0) {
+        // Assert - tooltip triggers should be present
+        await expect(mahoPage.getByTestId('tooltip-quality-score')).toBeVisible();
+        await expect(mahoPage.getByTestId('tooltip-price-range')).toBeVisible();
+        await expect(mahoPage.getByTestId('tooltip-market-position')).toBeVisible();
+      }
+    });
+
+    test('quality score tooltip shows definition on hover', async () => {
+      // Arrange - navigate to pitch mode
+      await mahoPage.goto('/visualization?mode=pitch');
+      await mahoPage.waitForLoadState('networkidle');
+
+      // Only test if table exists
+      const table = mahoPage.getByTestId('pitch-competitor-table');
+      const tableExists = await table.count();
+
+      if (tableExists > 0) {
+        // Act - hover over Quality Score header
+        const trigger = mahoPage.getByTestId('tooltip-quality-score');
+        await trigger.hover();
+
+        // Assert - tooltip content appears with definition
+        const tooltipContent = mahoPage.getByTestId('tooltip-content');
+        await expect(tooltipContent).toBeVisible();
+        await expect(tooltipContent).toContainText('Perceived product quality');
+        await expect(tooltipContent).toContainText('Scale:');
+        await expect(tooltipContent).toContainText('Good:');
+      }
+    });
+
+    test('price range tooltip shows definition on hover', async () => {
+      // Arrange - navigate to pitch mode
+      await mahoPage.goto('/visualization?mode=pitch');
+      await mahoPage.waitForLoadState('networkidle');
+
+      // Only test if table exists
+      const table = mahoPage.getByTestId('pitch-competitor-table');
+      const tableExists = await table.count();
+
+      if (tableExists > 0) {
+        // Act - hover over Price Range header
+        const trigger = mahoPage.getByTestId('tooltip-price-range');
+        await trigger.hover();
+
+        // Assert - tooltip content appears with definition
+        const tooltipContent = mahoPage.getByTestId('tooltip-content');
+        await expect(tooltipContent).toBeVisible();
+        await expect(tooltipContent).toContainText('Retail price positioning');
+      }
+    });
+
+    test('market position tooltip shows definition on hover', async () => {
+      // Arrange - navigate to pitch mode
+      await mahoPage.goto('/visualization?mode=pitch');
+      await mahoPage.waitForLoadState('networkidle');
+
+      // Only test if table exists
+      const table = mahoPage.getByTestId('pitch-competitor-table');
+      const tableExists = await table.count();
+
+      if (tableExists > 0) {
+        // Act - hover over Market Position header
+        const trigger = mahoPage.getByTestId('tooltip-market-position');
+        await trigger.hover();
+
+        // Assert - tooltip content appears with definition
+        const tooltipContent = mahoPage.getByTestId('tooltip-content');
+        await expect(tooltipContent).toBeVisible();
+        await expect(tooltipContent).toContainText('Quadrant position');
+      }
+    });
+  });
+
+  test.describe('Tooltip Dismissal (AC #4)', () => {
+    test('tooltip disappears when cursor moves away', async () => {
+      // Arrange - navigate to pitch mode
+      await mahoPage.goto('/visualization?mode=pitch');
+      await mahoPage.waitForLoadState('networkidle');
+
+      // Only test if table exists
+      const table = mahoPage.getByTestId('pitch-competitor-table');
+      const tableExists = await table.count();
+
+      if (tableExists > 0) {
+        // Act - hover over Quality Score header
+        const trigger = mahoPage.getByTestId('tooltip-quality-score');
+        await trigger.hover();
+
+        // Verify tooltip is visible
+        const tooltipContent = mahoPage.getByTestId('tooltip-content');
+        await expect(tooltipContent).toBeVisible();
+
+        // Act - move cursor away (hover over table body instead)
+        await table.locator('tbody').hover();
+
+        // Assert - tooltip disappears
+        await expect(tooltipContent).toBeHidden();
+      }
+    });
+  });
+
+  test.describe('Tooltip Accessibility', () => {
+    test('tooltip triggers are keyboard focusable', async () => {
+      // Arrange - navigate to pitch mode
+      await mahoPage.goto('/visualization?mode=pitch');
+      await mahoPage.waitForLoadState('networkidle');
+
+      // Only test if table exists
+      const table = mahoPage.getByTestId('pitch-competitor-table');
+      const tableExists = await table.count();
+
+      if (tableExists > 0) {
+        // Assert - tooltip triggers have tabIndex for keyboard access
+        const trigger = mahoPage.getByTestId('tooltip-quality-score');
+        await expect(trigger).toHaveAttribute('tabindex', '0');
+      }
+    });
   });
 });

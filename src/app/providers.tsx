@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Toaster } from 'sonner';
 
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useServiceWorkerUpdate, useSyncOnQuerySuccess } from '@/hooks/offline';
 
 /**
@@ -34,7 +35,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AppEffects />
-      {children}
+      <TooltipProvider delayDuration={300}>
+        {children}
+      </TooltipProvider>
       <Toaster position="bottom-right" richColors closeButton />
     </QueryClientProvider>
   );

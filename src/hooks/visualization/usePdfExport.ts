@@ -57,7 +57,6 @@ export function usePdfExport(): UsePdfExportReturn {
         // We must temporarily move it into the viewport for capture to work.
         // CRITICAL: Keep position:fixed (not absolute) to stay viewport-relative.
         const rect = element.getBoundingClientRect();
-        console.log('[BUG-001 FIX] Element rect.left:', rect.left);
 
         originalLeft = element.style.left;
         originalPosition = element.style.position;
@@ -65,7 +64,6 @@ export function usePdfExport(): UsePdfExportReturn {
         if (rect.left < 0) {
           // Move on-screen - keep fixed positioning, just change left
           element.style.left = '0px';
-          console.log('[BUG-001 FIX] Moved element to left:0px');
           // Ensure fixed positioning for viewport-relative placement
           const computedStyle = window.getComputedStyle(element);
           if (computedStyle.position !== 'fixed') {
@@ -86,13 +84,11 @@ export function usePdfExport(): UsePdfExportReturn {
         // BUG-001 FIX PART 3: Wait for Recharts to re-render after position change
         // Recharts may optimize rendering for off-screen elements.
         // Give it time to detect the position change and render SVG paths.
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        const RECHARTS_REPAINT_DELAY_MS = 100;
+        await new Promise((resolve) => setTimeout(resolve, RECHARTS_REPAINT_DELAY_MS));
 
         // Verify Recharts SVG has rendered with content
         const svg = element.querySelector('.recharts-surface');
-        console.log('[BUG-001 DEBUG] SVG element:', svg ? 'found' : 'NOT FOUND');
-        console.log('[BUG-001 DEBUG] SVG children:', svg?.childNodes.length);
-        console.log('[BUG-001 DEBUG] SVG innerHTML length:', svg?.innerHTML.length);
         if (svg && svg.getBoundingClientRect().width === 0) {
           throw new Error('Chart SVG not ready for export');
         }
@@ -131,8 +127,6 @@ export function usePdfExport(): UsePdfExportReturn {
                 clonedElement.style.transform = 'none';
                 clonedElement.style.visibility = 'visible';
                 clonedElement.style.opacity = '1';
-                console.log('[BUG-001 FIX] Reset cloned element to static position');
-                console.log('[BUG-001 DEBUG] Cloned element size:', clonedElement.offsetWidth, 'x', clonedElement.offsetHeight);
 
                 // Override computed styles to replace lab() colors with hex
                 const allElements = clonedDoc.querySelectorAll('*');
