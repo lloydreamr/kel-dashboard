@@ -280,4 +280,55 @@ describe('QuestionsList', () => {
     expect(screen.getByText('Sent to Kel')).toBeInTheDocument();
     expect(screen.getByText('Approved')).toBeInTheDocument();
   });
+
+  // Story 13.3: viewMode tests
+  describe('viewMode prop', () => {
+    it('renders grouped view by default (AC #5)', () => {
+      mockUseQuestions.mockReturnValue({
+        data: mockQuestions,
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionsList />);
+
+      // Should show category sections
+      expect(screen.getByTestId('category-section-market')).toBeInTheDocument();
+      expect(screen.getByTestId('category-section-product')).toBeInTheDocument();
+      expect(screen.getByTestId('category-section-distribution')).toBeInTheDocument();
+    });
+
+    it('renders flat view without category sections when viewMode is "flat" (AC #4)', () => {
+      mockUseQuestions.mockReturnValue({
+        data: mockQuestions,
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionsList questions={mockQuestions} viewMode="flat" />);
+
+      // Should NOT show category sections
+      expect(screen.queryByTestId('category-section-market')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('category-section-product')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('category-section-distribution')).not.toBeInTheDocument();
+
+      // Should still show question cards
+      const questionCards = screen.getAllByTestId('question-card');
+      expect(questionCards).toHaveLength(3);
+    });
+
+    it('renders questions list container in both modes', () => {
+      mockUseQuestions.mockReturnValue({
+        data: mockQuestions,
+        isLoading: false,
+        error: null,
+      });
+
+      const { rerender } = render(<QuestionsList questions={mockQuestions} viewMode="grouped" />);
+      expect(screen.getByTestId('questions-list')).toBeInTheDocument();
+
+      rerender(<QuestionsList questions={mockQuestions} viewMode="flat" />);
+      expect(screen.getByTestId('questions-list')).toBeInTheDocument();
+    });
+  });
 });

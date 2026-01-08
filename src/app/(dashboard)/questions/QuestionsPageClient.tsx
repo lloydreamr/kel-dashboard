@@ -2,16 +2,22 @@
 
 import { Archive } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 import { ArchivedQuestionsList } from '@/components/questions/ArchivedQuestionsList';
+import { CategoryTabs } from '@/components/questions/CategoryTabs';
 import { FilterEmptyState } from '@/components/questions/FilterEmptyState';
 import { QuestionForm } from '@/components/questions/QuestionForm';
 import { QuestionsList } from '@/components/questions/QuestionsList';
 import { StatusFilter } from '@/components/questions/StatusFilter';
 import { Button } from '@/components/ui/button';
 import { useFilteredQuestions } from '@/hooks/questions/useFilteredQuestions';
-import { StatusFilterKey, STATUS_FILTER_KEYS } from '@/types/question';
+import {
+  CategoryFilterKey,
+  CATEGORY_FILTER_KEYS,
+  StatusFilterKey,
+  STATUS_FILTER_KEYS,
+} from '@/types/question';
 
 interface QuestionsPageClientProps {
   userId: string;
@@ -27,40 +33,87 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
   const [showForm, setShowForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
 
-  // Parse and validate filter from URL
+  // Parse and validate status filter from URL
   const rawFilter = searchParams.get('status');
   const statusFilter: StatusFilterKey =
     rawFilter && STATUS_FILTER_KEYS.includes(rawFilter as StatusFilterKey)
       ? (rawFilter as StatusFilterKey)
       : 'all';
 
+  // Parse and validate category filter from URL
+  const rawCategory = searchParams.get('category');
+  const categoryFilter: CategoryFilterKey =
+    rawCategory && CATEGORY_FILTER_KEYS.includes(rawCategory as CategoryFilterKey)
+      ? (rawCategory as CategoryFilterKey)
+      : 'all';
+
   // Get filtered questions and counts
-  const { questions, counts, isLoading, error } = useFilteredQuestions(statusFilter);
+  const { questions, counts, categoryCounts, isLoading, error } = useFilteredQuestions(
+    statusFilter,
+    categoryFilter
+  );
 
-  // Update URL without page reload
-  const handleFilterChange = (filter: StatusFilterKey) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (filter === 'all') {
-      params.delete('status'); // Clean URL for default state
-    } else {
-      params.set('status', filter);
-    }
-    router.push(`?${params.toString()}`, { scroll: false });
-  };
+  // Update URL without page reload (status)
+  const handleFilterChange = useCallback(
+    (filter: StatusFilterKey) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (filter === 'all') {
+        params.delete('status'); // Clean URL for default state
+      } else {
+        params.set('status', filter);
+      }
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, router]
+  );
 
-  const handleNewQuestion = () => {
+  // Update URL without page reload (category)
+  const handleCategoryChange = useCallback(
+    (category: CategoryFilterKey) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (category === 'all') {
+        params.delete('category'); // Clean URL for default state
+      } else {
+        params.set('category', category);
+      }
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, router]
+  );
+
+  const handleNewQuestion = useCallback(() => {
     setShowForm(true);
     setShowArchived(false);
-  };
+  }, []);
 
-  const handleFormCancel = () => {
+  const handleFormCancel = useCallback(() => {
     setShowForm(false);
-  };
+  }, []);
 
-  const toggleArchived = () => {
-    setShowArchived(!showArchived);
+  const toggleArchived = useCallback(() => {
+    setShowArchived((prev) => !prev);
     setShowForm(false);
-  };
+  }, []);
+
+  const handleShowAll = useCallback(() => {
+    handleFilterChange('all');
+    handleCategoryChange('all');
+  }, [handleFilterChange, handleCategoryChange]);
+
+  // Memoize renderEmptyState to prevent recreation on every render
+  const renderEmptyState = useMemo(() => {
+    if (statusFilter === 'all' && categoryFilter === 'all') {
+      return undefined;
+    }
+    const EmptyStateRenderer = () => (
+      <FilterEmptyState
+        filter={statusFilter}
+        totalCount={counts.all}
+        onShowAll={handleShowAll}
+      />
+    );
+    return EmptyStateRenderer;
+  }, [statusFilter, categoryFilter, counts.all, handleShowAll]);
 
   return (
     <main
@@ -109,6 +162,17 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
           </div>
         )}
 
+        {/* Category Tabs - show only for active questions view */}
+        {!showForm && !showArchived && (
+          <div className="mb-4">
+            <CategoryTabs
+              value={categoryFilter}
+              counts={categoryCounts}
+              onChange={handleCategoryChange}
+            />
+          </div>
+        )}
+
         {/* Status Filter - show only for active questions view */}
         {!showForm && !showArchived && (
           <div className="mb-6">
@@ -128,17 +192,8 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
             questions={questions}
             isLoading={isLoading}
             error={error}
-            renderEmptyState={
-              statusFilter !== 'all'
-                ? () => (
-                    <FilterEmptyState
-                      filter={statusFilter}
-                      totalCount={counts.all}
-                      onShowAll={() => handleFilterChange('all')}
-                    />
-                  )
-                : undefined
-            }
+            viewMode={categoryFilter === 'all' ? 'grouped' : 'flat'}
+            renderEmptyState={renderEmptyState}
           />
         ))}
       </div>

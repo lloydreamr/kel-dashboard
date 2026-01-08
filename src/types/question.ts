@@ -126,3 +126,47 @@ export const STATUS_FILTER_CONFIG: Record<StatusFilterKey, StatusFilterConfig> =
  * Array of filter keys in display order.
  */
 export const STATUS_FILTER_KEYS: StatusFilterKey[] = ['all', 'draft', 'sent', 'decided'];
+
+// ============================================================================
+// Category Filter Types (Story 13.3)
+// ============================================================================
+
+/**
+ * Filter keys for category filtering UI.
+ * - 'all': Show all categories with grouped view
+ * - 'market', 'product', 'distribution': Show only that category
+ */
+export type CategoryFilterKey = 'all' | 'market' | 'product' | 'distribution';
+
+/**
+ * Configuration for a single category filter option.
+ */
+export interface CategoryFilterConfig {
+  /** Display text in UI (desktop) */
+  label: string;
+  /** Abbreviated label for mobile viewports */
+  shortLabel: string;
+}
+
+/**
+ * Configuration for category filters.
+ * - label: Display text in UI
+ * - shortLabel: Abbreviated label for mobile
+ */
+export const CATEGORY_FILTER_CONFIG: Record<CategoryFilterKey, CategoryFilterConfig> = {
+  all: { label: 'All Categories', shortLabel: 'All' },
+  market: { label: 'Market', shortLabel: 'Mkt' },
+  product: { label: 'Product', shortLabel: 'Prod' },
+  distribution: { label: 'Distribution', shortLabel: 'Dist' },
+};
+
+/**
+ * Array of category filter keys in display order.
+ */
+export const CATEGORY_FILTER_KEYS: CategoryFilterKey[] = ['all', 'market', 'product', 'distribution'];
+
+/**
+ * Count of questions for each category filter option.
+ * Used for displaying counts in category tabs.
+ */
+export type CategoryCounts = Record<CategoryFilterKey, number>;

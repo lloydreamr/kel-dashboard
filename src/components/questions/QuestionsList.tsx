@@ -12,8 +12,12 @@ import { CategoryEmptyState } from './CategoryEmptyState';
 import { CategorySection } from './CategorySection';
 import { QuestionCard } from './QuestionCard';
 import { QuestionsListSkeleton } from './QuestionsListSkeleton';
+import { VirtualizedQuestionsList } from './VirtualizedQuestionsList';
 
 import type { Question, QuestionCategory } from '@/types/question';
+
+/** Threshold for enabling virtualization (AC #7: 200+ questions) */
+const VIRTUALIZATION_THRESHOLD = 200;
 
 interface QuestionsListProps {
   /** Optional questions to display. If not provided, fetches from useQuestions. */
@@ -26,6 +30,12 @@ interface QuestionsListProps {
   onRetry?: () => void;
   /** Render prop for custom empty state. Used when filtered results are empty. */
   renderEmptyState?: () => React.ReactNode;
+  /**
+   * View mode for the questions list.
+   * - 'grouped': Questions grouped by category with section headers (default, AC #5)
+   * - 'flat': Flat list without grouping, for single-category views (AC #4)
+   */
+  viewMode?: 'grouped' | 'flat';
 }
 
 function groupByCategory(questions: Question[]): Record<QuestionCategory, Question[]> {
@@ -48,6 +58,7 @@ export function QuestionsList({
   error: propError,
   onRetry: propOnRetry,
   renderEmptyState,
+  viewMode = 'grouped',
 }: QuestionsListProps = {}) {
   const { data: profile } = useProfile();
   const {
@@ -107,6 +118,23 @@ export function QuestionsList({
     );
   }
 
+  // Flat view: render cards directly without category sections (AC #4)
+  if (viewMode === 'flat') {
+    // Use virtualization for large lists (AC #7)
+    if (questions.length >= VIRTUALIZATION_THRESHOLD) {
+      return <VirtualizedQuestionsList questions={questions} />;
+    }
+
+    return (
+      <div data-testid="questions-list" className="space-y-3">
+        {questions.map((question) => (
+          <QuestionCard key={question.id} question={question} />
+        ))}
+      </div>
+    );
+  }
+
+  // Grouped view: render by category with section headers (AC #5)
   const grouped = groupByCategory(questions);
 
   return (

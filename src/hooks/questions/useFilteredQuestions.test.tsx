@@ -219,4 +219,106 @@ describe('useFilteredQuestions', () => {
       });
     });
   });
+
+  // Story 13.3: Category filtering tests
+  describe('category filtering', () => {
+    it('returns all questions when category is "all"', async () => {
+      mockedUseQuestions.mockReturnValue({
+        data: mockQuestions,
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useQuestions>);
+
+      const { result } = renderHook(() => useFilteredQuestions('all', 'all'));
+
+      await waitFor(() => {
+        expect(result.current.questions).toHaveLength(5);
+      });
+    });
+
+    it('filters to only market questions when category is "market"', async () => {
+      mockedUseQuestions.mockReturnValue({
+        data: mockQuestions,
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useQuestions>);
+
+      const { result } = renderHook(() => useFilteredQuestions('all', 'market'));
+
+      await waitFor(() => {
+        expect(result.current.questions).toHaveLength(2);
+        expect(result.current.questions.every((q) => q.category === 'market')).toBe(true);
+      });
+    });
+
+    it('filters by both status AND category', async () => {
+      mockedUseQuestions.mockReturnValue({
+        data: mockQuestions,
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useQuestions>);
+
+      // Filter to draft + market = only id:1
+      const { result } = renderHook(() => useFilteredQuestions('draft', 'market'));
+
+      await waitFor(() => {
+        expect(result.current.questions).toHaveLength(1);
+        expect(result.current.questions[0].id).toBe('1');
+        expect(result.current.questions[0].status).toBe('draft');
+        expect(result.current.questions[0].category).toBe('market');
+      });
+    });
+
+    it('returns categoryCounts independent of status filter', async () => {
+      mockedUseQuestions.mockReturnValue({
+        data: mockQuestions,
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useQuestions>);
+
+      // Even when filtering by draft status, categoryCounts shows total per category
+      const { result } = renderHook(() => useFilteredQuestions('draft', 'all'));
+
+      await waitFor(() => {
+        expect(result.current.categoryCounts).toEqual({
+          all: 5,
+          market: 2,
+          product: 2,
+          distribution: 1,
+        });
+      });
+    });
+
+    it('returns zero categoryCounts when loading', async () => {
+      mockedUseQuestions.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        error: null,
+      } as ReturnType<typeof useQuestions>);
+
+      const { result } = renderHook(() => useFilteredQuestions('all', 'all'));
+
+      expect(result.current.categoryCounts).toEqual({
+        all: 0,
+        market: 0,
+        product: 0,
+        distribution: 0,
+      });
+    });
+
+    it('filters to distribution category', async () => {
+      mockedUseQuestions.mockReturnValue({
+        data: mockQuestions,
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useQuestions>);
+
+      const { result } = renderHook(() => useFilteredQuestions('all', 'distribution'));
+
+      await waitFor(() => {
+        expect(result.current.questions).toHaveLength(1);
+        expect(result.current.questions[0].category).toBe('distribution');
+      });
+    });
+  });
 });
