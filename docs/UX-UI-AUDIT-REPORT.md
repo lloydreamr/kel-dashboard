@@ -15,7 +15,7 @@ The Kel Dashboard has **solid core functionality** with well-designed user flows
 - **Pages Tested:** 5 (Dashboard, Questions, Question Detail, Visualization, Progress)
 - **User Flows Tested:** Question creation, recommendation, send-to-Kel, decision UI
 - **Critical Issues Found:** 3 (3 resolved)
-- **High Priority Issues:** 2
+- **High Priority Issues:** 2 (1 resolved)
 - **Medium Priority Issues:** 3
 
 ### Verdict
@@ -186,7 +186,7 @@ Feature was already implemented in ScatterChart.tsx (lines 142-171):
 
 ## High Priority Issues (P1)
 
-### P1-1: No Archive/Delete Actions on Questions List
+### P1-1: No Archive/Delete Actions on Questions List ✅ RESOLVED
 
 **Problem Statement:**
 The questions list page shows an "Archived" button to view archived questions, but provides no way to archive or delete questions from the list view. Users must navigate into each question to manage it.
@@ -208,13 +208,23 @@ The questions list page shows an "Archived" button to view archived questions, b
 > **So that** I can archive or delete questions without navigating into each one
 
 **Acceptance Criteria:**
-- [ ] Each question card has a "..." or kebab menu icon
-- [ ] Menu includes: Edit, Archive, Delete options
-- [ ] Archive moves question to archived list
-- [ ] Delete shows confirmation dialog before removing
-- [ ] Actions only visible to Maho (role-appropriate)
+- [x] Each question card has a "..." or kebab menu icon
+- [x] Menu includes: Edit, Archive, Delete options
+- [x] Archive moves question to archived list
+- [x] Delete shows confirmation dialog before removing
+- [x] Actions only visible to Maho (role-appropriate)
 
 **Effort Estimate:** Medium (1-2 days)
+
+**Resolution (2026-01-08):**
+Feature was already implemented in QuestionCardActions.tsx:
+- `MoreVertical` kebab icon trigger with dropdown menu
+- Edit: Navigates to `/questions/{id}?edit=true`
+- Archive: Confirmation dialog → `useArchiveQuestion` hook
+- Delete: Confirmation dialog with "cannot be undone" warning → `useDeleteQuestion` hook
+- Role-gated in QuestionCard.tsx: `{isMaho && <QuestionCardActions>}`
+- 17 unit tests in QuestionCardActions.test.tsx
+- E2E coverage in navigation-flow.spec.ts (AC5: Quick Actions Tests)
 
 ---
 
@@ -457,7 +467,7 @@ Document these as examples of good patterns to maintain:
 | Story | Priority | Estimate |
 |-------|----------|----------|
 | ~~Add edit capability for question title/description~~ | P0 | ✅ Done |
-| Add quick actions menu on questions list | P1 | 1-2 days |
+| ~~Add quick actions menu on questions list~~ | P1 | ✅ Done |
 | Add status filtering on questions list | P2 | 1-2 days |
 | ~~Add search functionality for questions~~ | P3 | ✅ Done |
 
@@ -511,6 +521,7 @@ kel-dashboard/.playwright-mcp/
 | 1.2 | 2026-01-08 | Claude | P0-2 Edit Question Title/Description resolved (was already implemented) |
 | 1.3 | 2026-01-08 | Claude | P0-3 Visualization Empty State resolved (was already implemented) |
 | 1.4 | 2026-01-08 | Claude | P0-1 Navigation System resolved (was already implemented) - All P0 issues now resolved |
+| 1.5 | 2026-01-08 | Claude | P1-1 Quick Actions Menu resolved (was already implemented) |
 
 ---
 
