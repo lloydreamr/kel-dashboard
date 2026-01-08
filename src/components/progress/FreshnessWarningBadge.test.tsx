@@ -119,7 +119,7 @@ describe('FreshnessWarningBadge', () => {
 
     const badge = screen.getByTestId('freshness-warning-badge');
 
-    expect(badge).toHaveClass('min-h-[48px]');
+    expect(badge).toHaveClass('min-h-12');
   });
 
   it('renders without onClick handler (not required)', () => {

@@ -60,14 +60,14 @@ describe('MarkCompleteDialog', () => {
     render(<MarkCompleteDialog {...defaultProps} />);
 
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
-    expect(cancelButton).toHaveClass('min-h-[48px]');
+    expect(cancelButton).toHaveClass('min-h-12');
   });
 
   it('renders Mark Complete button with 48px touch target', () => {
     render(<MarkCompleteDialog {...defaultProps} />);
 
     const confirmButton = screen.getByTestId('milestone-complete-confirm');
-    expect(confirmButton).toHaveClass('min-h-[48px]');
+    expect(confirmButton).toHaveClass('min-h-12');
   });
 
   it('calls onConfirm when Mark Complete is clicked', async () => {

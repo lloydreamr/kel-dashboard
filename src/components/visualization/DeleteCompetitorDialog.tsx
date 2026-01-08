@@ -36,13 +36,13 @@ export function DeleteCompetitorDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="min-h-[48px] min-w-[100px]">
+          <AlertDialogCancel className="min-h-12 min-w-[100px]">
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             data-testid="competitor-delete-confirm"
-            className="min-h-[48px] min-w-[100px]"
+            className="min-h-12 min-w-[100px]"
           >
             Delete
           </AlertDialogAction>

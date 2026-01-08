@@ -35,14 +35,14 @@ export function DeleteNoteDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending} className="min-h-[48px]">
+          <AlertDialogCancel disabled={isPending} className="min-h-12">
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isPending}
             data-testid="note-delete-confirm"
-            className="min-h-[48px] bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="min-h-12 bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {isPending ? 'Deleting...' : 'Delete'}
           </AlertDialogAction>

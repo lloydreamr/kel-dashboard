@@ -104,7 +104,7 @@ export function QuestionCardActions({
               e.stopPropagation();
               onClick?.(e);
             }}
-            className="p-2 rounded-md hover:bg-muted min-h-[48px] min-w-[48px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="p-2 rounded-md hover:bg-muted min-h-12 min-w-12 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             data-testid="question-card-menu-trigger"
             aria-label="Question actions"
           >
@@ -117,10 +117,10 @@ export function QuestionCardActions({
               e.stopPropagation();
               handleEdit();
             }}
-            className="min-h-[44px] cursor-pointer"
+            className="min-h-11 cursor-pointer"
             data-testid="question-card-menu-edit"
           >
-            <Pencil className="mr-2 h-4 w-4" />
+            <Pencil className="h-4 w-4" />
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -128,10 +128,10 @@ export function QuestionCardActions({
               e.stopPropagation();
               handleArchiveClick();
             }}
-            className="min-h-[44px] cursor-pointer"
+            className="min-h-11 cursor-pointer"
             data-testid="question-card-menu-archive"
           >
-            <Archive className="mr-2 h-4 w-4" />
+            <Archive className="h-4 w-4" />
             Archive
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -140,10 +140,10 @@ export function QuestionCardActions({
               e.stopPropagation();
               handleDeleteClick();
             }}
-            className="min-h-[44px] cursor-pointer text-destructive focus:text-destructive"
+            className="min-h-11 cursor-pointer text-destructive focus:text-destructive"
             data-testid="question-card-menu-delete"
           >
-            <Trash2 className="mr-2 h-4 w-4" />
+            <Trash2 className="h-4 w-4" />
             Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -160,7 +160,7 @@ export function QuestionCardActions({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
-              className="min-h-[48px] min-w-[100px]"
+              className="min-h-12 min-w-[100px]"
               data-testid="archive-question-cancel"
             >
               Cancel
@@ -168,7 +168,7 @@ export function QuestionCardActions({
             <AlertDialogAction
               onClick={handleArchiveConfirm}
               disabled={isArchiving}
-              className="min-h-[48px] min-w-[100px]"
+              className="min-h-12 min-w-[100px]"
               data-testid="archive-question-confirm"
             >
               {isArchiving ? 'Archiving...' : 'Archive'}
@@ -188,7 +188,7 @@ export function QuestionCardActions({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
-              className="min-h-[48px] min-w-[100px]"
+              className="min-h-12 min-w-[100px]"
               data-testid="delete-question-cancel"
             >
               Cancel
@@ -196,7 +196,7 @@ export function QuestionCardActions({
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
-              className="min-h-[48px] min-w-[100px] bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="min-h-12 min-w-[100px] bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="delete-question-confirm"
             >
               {isDeleting ? 'Deleting...' : 'Delete'}

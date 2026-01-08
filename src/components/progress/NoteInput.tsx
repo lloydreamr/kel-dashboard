@@ -33,7 +33,7 @@ export function NoteInput({
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="Add your note..."
-        className="min-h-[80px]"
+        className="min-h-20"
         disabled={isPending}
       />
       <div className="flex gap-2">
@@ -41,7 +41,7 @@ export function NoteInput({
           data-testid="note-save-button"
           onClick={handleSave}
           disabled={isPending || !content.trim()}
-          className="min-h-[48px]"
+          className="min-h-12"
         >
           {isPending ? 'Saving...' : 'Save'}
         </Button>
@@ -50,7 +50,7 @@ export function NoteInput({
           variant="outline"
           onClick={onCancel}
           disabled={isPending}
-          className="min-h-[48px]"
+          className="min-h-12"
         >
           Cancel
         </Button>

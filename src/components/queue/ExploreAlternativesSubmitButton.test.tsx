@@ -263,7 +263,7 @@ describe('ExploreAlternativesSubmitButton', () => {
       { wrapper: createWrapper() }
     );
     expect(screen.getByTestId('alternatives-submit-button')).toHaveClass(
-      'min-h-[48px]'
+      'min-h-12'
     );
   });
 });

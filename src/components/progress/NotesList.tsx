@@ -66,20 +66,10 @@ export function NotesList({
     );
   }
 
-  // Empty state - both roles can add notes, no role-specific messaging needed (AC: #5)
+  // Empty state - collapsed view, just return null since AddNoteSection provides the CTA
+  // (Previous design showed bordered empty state that took too much vertical space)
   if (!notes || notes.length === 0) {
-    return (
-      <div
-        data-testid="notes-empty-state"
-        role="status"
-        aria-label="No notes available"
-        className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center"
-      >
-        <p className="text-muted-foreground">
-          No notes yet. Add one to capture decisions.
-        </p>
-      </div>
-    );
+    return null;
   }
 
   // Notes are returned newest-first from repository (order by created_at DESC)

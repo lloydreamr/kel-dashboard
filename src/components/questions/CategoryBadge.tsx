@@ -74,7 +74,7 @@ export function CategoryBadge({
       <DropdownMenuTrigger asChild disabled={isPending}>
         <button
           data-testid="category-badge"
-          className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-2 text-xs font-medium text-muted-foreground capitalize hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 min-h-[48px] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-2 text-xs font-medium text-muted-foreground capitalize hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 min-h-12 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? 'Updating...' : category}
           <ChevronDown className="h-3 w-3" />
@@ -90,7 +90,7 @@ export function CategoryBadge({
             key={cat}
             data-testid={`category-option-${cat}`}
             onClick={() => handleCategoryChange(cat)}
-            className="capitalize min-h-[44px] cursor-pointer"
+            className="capitalize min-h-11 cursor-pointer"
           >
             <span className="flex-1">{cat}</span>
             {cat === category && <Check className="h-4 w-4 text-primary" />}

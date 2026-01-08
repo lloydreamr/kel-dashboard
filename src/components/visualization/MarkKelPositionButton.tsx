@@ -22,10 +22,10 @@ export function MarkKelPositionButton({ onClick, hasExistingPosition }: MarkKelP
     <Button
       onClick={onClick}
       variant="outline"
-      className="min-h-[48px] w-full whitespace-nowrap sm:w-auto"
+      className="min-h-12 w-full whitespace-nowrap sm:w-auto gap-2"
       data-testid="mark-kel-position-button"
     >
-      <Star className="mr-2 h-4 w-4" />
+      <Star className="h-4 w-4" aria-hidden="true" />
       {hasExistingPosition ? 'Update Kel Position' : 'Set Kel Position'}
     </Button>
   );

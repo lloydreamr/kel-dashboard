@@ -22,7 +22,7 @@ interface CategoryTabsProps {
  * Uses shadcn Tabs component with 48px touch targets.
  *
  * Story 13.3: Category Navigation for Questions
- * - Responsive labels (desktop: full, mobile: abbreviated)
+ * - Responsive design: horizontal scroll on mobile with full labels
  * - Displays count in each tab
  */
 export function CategoryTabs({ value, counts, onChange }: CategoryTabsProps) {
@@ -32,16 +32,20 @@ export function CategoryTabs({ value, counts, onChange }: CategoryTabsProps) {
       onValueChange={(v) => onChange(v as CategoryFilterKey)}
       data-testid="category-tabs"
     >
-      <TabsList aria-label="Filter questions by category" className="grid w-full grid-cols-4">
+      {/* Mobile: horizontal scroll with full labels, Desktop: grid layout */}
+      <TabsList
+        aria-label="Filter questions by category"
+        className="grid w-full grid-cols-4 sm:grid-cols-4 overflow-x-auto sm:overflow-visible"
+      >
         {CATEGORY_FILTER_KEYS.map((key) => (
           <TabsTrigger
             key={key}
             value={key}
             data-testid={`category-tab-${key}`}
-            className="min-h-[48px] flex-1"
+            className="min-h-12 flex-1 whitespace-nowrap px-3 sm:px-4"
           >
-            <span className="hidden sm:inline">{CATEGORY_FILTER_CONFIG[key].label}</span>
-            <span className="sm:hidden">{CATEGORY_FILTER_CONFIG[key].shortLabel}</span>
+            {/* Show full labels on all screen sizes for better UX */}
+            <span>{CATEGORY_FILTER_CONFIG[key].label}</span>
             <span className="ml-1">({counts[key]})</span>
           </TabsTrigger>
         ))}

@@ -63,7 +63,7 @@ describe('ConstraintChip', () => {
   it('has 48px minimum height touch target', () => {
     render(<ConstraintChip type="price" selected={false} onToggle={() => {}} />);
     const chip = screen.getByRole('checkbox');
-    expect(chip.className).toContain('min-h-[48px]');
+    expect(chip.className).toContain('min-h-12');
   });
 
   it('applies selected styles when selected', () => {

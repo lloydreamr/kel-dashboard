@@ -100,7 +100,7 @@ export function MobileNavDrawer({ userEmail }: MobileNavDrawerProps) {
               <button
                 type="button"
                 onClick={close}
-                className="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-md hover:bg-accent/50 transition-colors"
+                className="flex items-center justify-center min-h-12 min-w-12 rounded-md hover:bg-accent/50 transition-colors"
                 aria-label="Close navigation menu"
               >
                 <X className="h-6 w-6" />
@@ -120,7 +120,7 @@ export function MobileNavDrawer({ userEmail }: MobileNavDrawerProps) {
                     data-testid={`mobile-${link.testId}`}
                     onClick={handleLinkClick}
                     className={cn(
-                      'flex items-center gap-3 px-3 py-2 rounded-md min-h-[48px]',
+                      'flex items-center gap-3 px-3 py-2 rounded-md min-h-12',
                       'hover:bg-accent/50 transition-colors',
                       active && 'bg-accent text-accent-foreground font-medium'
                     )}

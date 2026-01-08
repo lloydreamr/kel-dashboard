@@ -21,7 +21,7 @@ interface ClarityMeterProps {
 
 // SVG Ring Configuration
 const RING_SIZE = 80; // px diameter
-const STROKE_WIDTH = 6; // px stroke width
+const STROKE_WIDTH = 8; // px stroke width - thicker for better visibility at 0%
 const RADIUS = (RING_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
@@ -63,14 +63,14 @@ function ClarityMeterRing({ percentage }: { percentage: number }) {
       viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
       className="transform -rotate-90"
     >
-      {/* Background ring */}
+      {/* Background ring - using border color for better visibility */}
       <circle
         cx={RING_SIZE / 2}
         cy={RING_SIZE / 2}
         r={RADIUS}
         strokeWidth={STROKE_WIDTH}
         fill="none"
-        className="stroke-muted"
+        className="stroke-border"
       />
       {/* Progress ring - Framer Motion handles transitions */}
       <circle

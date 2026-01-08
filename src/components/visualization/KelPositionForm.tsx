@@ -77,7 +77,7 @@ export function KelPositionForm({ defaultValues, onSuccess, onCancel }: KelPosit
             setPriceScore(value[0]);
             form.setValue('price_score', value[0], { shouldValidate: true });
           }}
-          className="min-h-[48px]"
+          className="min-h-12"
         />
         {form.formState.errors.price_score && (
           <p className="text-sm text-destructive">{form.formState.errors.price_score.message}</p>
@@ -102,7 +102,7 @@ export function KelPositionForm({ defaultValues, onSuccess, onCancel }: KelPosit
             setQualityScore(value[0]);
             form.setValue('quality_score', value[0], { shouldValidate: true });
           }}
-          className="min-h-[48px]"
+          className="min-h-12"
         />
         {form.formState.errors.quality_score && (
           <p className="text-sm text-destructive">{form.formState.errors.quality_score.message}</p>
@@ -117,7 +117,7 @@ export function KelPositionForm({ defaultValues, onSuccess, onCancel }: KelPosit
           data-testid="kel-notes-input"
           placeholder="Notes about this target position..."
           {...form.register('notes')}
-          className="min-h-[48px]"
+          className="min-h-12"
           rows={3}
         />
         {form.formState.errors.notes && (
@@ -131,14 +131,14 @@ export function KelPositionForm({ defaultValues, onSuccess, onCancel }: KelPosit
           type="button"
           variant="outline"
           onClick={onCancel}
-          className="min-h-[48px] min-w-[100px]"
+          className="min-h-12 min-w-[100px]"
         >
           Cancel
         </Button>
         <Button
           type="submit"
           disabled={!form.formState.isValid || isPending}
-          className="min-h-[48px] min-w-[120px]"
+          className="min-h-12 min-w-[120px]"
           data-testid="kel-position-submit"
         >
           {isPending ? 'Saving...' : 'Set Position'}

@@ -130,7 +130,7 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
           <button
             data-testid="retry-button"
             onClick={() => refetch()}
-            className="min-h-[48px] text-sm text-primary hover:underline"
+            className="min-h-12 text-sm text-primary hover:underline"
           >
             Try again
           </button>
@@ -160,7 +160,7 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
             <Button
               onClick={onAddClick}
               data-testid="empty-state-action"
-              className="min-h-[48px]"
+              className="min-h-12"
             >
               Add Competitor
             </Button>

@@ -8,6 +8,7 @@
  * Tracks when Kel views questions and displays viewed indicator to Maho.
  */
 
+import { Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -257,23 +258,10 @@ export function QuestionDetailClient({
                     type="button"
                     onClick={() => setIsEditingTitle(true)}
                     data-testid="question-edit-button"
-                    className="flex-shrink-0 p-2 text-muted-foreground hover:text-foreground"
+                    className="flex-shrink-0 p-2 text-muted-foreground hover:text-foreground transition-colors"
                     aria-label="Edit question title and description"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                      <path d="m15 5 4 4" />
-                    </svg>
+                    <Pencil className="h-4 w-4" />
                   </button>
                 )}
               </div>
@@ -312,7 +300,7 @@ export function QuestionDetailClient({
             <button
               onClick={() => setIsEditing(true)}
               data-testid="add-recommendation-button"
-              className="w-full rounded-md border-2 border-dashed border-border bg-background px-4 py-6 min-h-[48px] text-sm font-medium text-muted-foreground hover:border-primary hover:text-foreground"
+              className="w-full rounded-md border-2 border-dashed border-border bg-background px-4 py-6 min-h-12 text-sm font-medium text-muted-foreground hover:border-primary hover:text-foreground"
             >
               + Add Recommendation
             </button>

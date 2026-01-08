@@ -96,21 +96,21 @@ export function DashboardQuickStats() {
         testId="stat-total-questions"
         label="Questions"
         value={totalQuestions}
-        icon={<FileQuestion className="h-6 w-6" />}
+        icon={<FileQuestion className="h-5 w-5" />}
         subtext={approvedCount > 0 ? `${approvedCount} approved` : undefined}
       />
       <StatCard
         testId="stat-pending-decisions"
         label="Pending"
         value={pendingForKel}
-        icon={<Clock className="h-6 w-6" />}
+        icon={<Clock className="h-5 w-5" />}
         subtext="awaiting Kel"
       />
       <StatCard
         testId="stat-progress"
         label="Progress"
         value={`${progressPercent}%`}
-        icon={<TrendingUp className="h-6 w-6" />}
+        icon={<TrendingUp className="h-5 w-5" />}
         subtext={`${decidedCount}/${totalQuestions} decided`}
       />
     </div>

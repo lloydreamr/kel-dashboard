@@ -33,10 +33,10 @@ export function ErrorState({
         <Button
           variant="outline"
           onClick={onRetry}
-          className="mt-4 min-h-[48px]"
+          className="mt-4 min-h-12"
           data-testid="error-retry-button"
         >
-          <RefreshCw className="mr-2 h-4 w-4" />
+          <RefreshCw className="h-4 w-4" />
           Try Again
         </Button>
       )}

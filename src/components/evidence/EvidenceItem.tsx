@@ -54,7 +54,7 @@ export function EvidenceItem({
         type="button"
         onClick={onClick}
         data-testid="evidence-item"
-        className="flex w-full items-start gap-3 rounded-lg border border-border bg-surface p-4 text-left min-h-[48px] transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        className="flex w-full items-start gap-3 rounded-lg border border-border bg-surface p-4 text-left min-h-12 transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         aria-label={`View evidence: ${evidence.title}`}
       >
         {/* Number badge */}
@@ -124,7 +124,7 @@ export function EvidenceItem({
             type="button"
             onClick={handleEditClick}
             data-testid="evidence-edit-button"
-            className="flex h-[48px] w-[48px] items-center justify-center rounded-md bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="flex h-12 w-12 items-center justify-center rounded-md bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             aria-label={`Edit evidence: ${evidence.title}`}
           >
             <svg
@@ -146,7 +146,7 @@ export function EvidenceItem({
             type="button"
             onClick={handleRemoveClick}
             data-testid="evidence-remove-button"
-            className="flex h-[48px] w-[48px] items-center justify-center rounded-md bg-muted/80 text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-ring"
+            className="flex h-12 w-12 items-center justify-center rounded-md bg-muted/80 text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-ring"
             aria-label={`Remove evidence: ${evidence.title}`}
           >
             <svg

@@ -6,7 +6,7 @@
 
 // SVG Ring Configuration (matches ClarityMeter)
 const RING_SIZE = 80; // px diameter
-const STROKE_WIDTH = 6; // px stroke width
+const STROKE_WIDTH = 8; // px stroke width - matches ClarityMeter
 const RADIUS = (RING_SIZE - STROKE_WIDTH) / 2;
 
 export function ClarityMeterSkeleton() {

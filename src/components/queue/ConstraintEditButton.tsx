@@ -78,7 +78,7 @@ export function ConstraintEditButton({
       data-testid="constraint-edit-button"
       onClick={handleSave}
       disabled={isDisabled}
-      className="min-h-[48px] px-6 py-2 rounded-md font-medium bg-primary text-primary-foreground
+      className="min-h-12 px-6 py-2 rounded-md font-medium bg-primary text-primary-foreground
         hover:bg-primary/90 active:scale-[0.98] transition-all
         disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
         focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"

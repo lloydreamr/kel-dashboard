@@ -165,7 +165,7 @@ export function EvidencePanel({ evidence, onClose }: EvidencePanelProps) {
                   variant="outline"
                   size="sm"
                   onClick={handleCopyUrl}
-                  className="min-h-[48px] min-w-[48px] shrink-0"
+                  className="min-h-12 min-w-12 shrink-0"
                   aria-label="Copy URL"
                 >
                   {copied ? '✓' : 'Copy'}
@@ -201,12 +201,12 @@ export function EvidencePanel({ evidence, onClose }: EvidencePanelProps) {
           <Button
             data-testid="evidence-panel-open-source"
             onClick={handleOpenSource}
-            className="w-full min-h-[48px]"
+            className="w-full min-h-12"
             size="lg"
           >
             {isPhotoEvidence ? 'View Full Photo' : 'Open Source'}
             <svg
-              className="ml-2 h-4 w-4"
+              className="h-4 w-4"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"

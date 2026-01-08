@@ -33,7 +33,7 @@ export function EvidenceSection({
           onClick={() => setIsAdding(true)}
           data-testid="add-evidence-button"
           aria-label="Add evidence to this question"
-          className="w-full rounded-md border-2 border-dashed border-border bg-background px-4 py-4 min-h-[48px] text-sm font-medium text-muted-foreground hover:border-primary hover:text-foreground transition-colors"
+          className="w-full rounded-md border-2 border-dashed border-border bg-background px-4 py-4 min-h-12 text-sm font-medium text-muted-foreground hover:border-primary hover:text-foreground transition-colors"
         >
           + Add Evidence
         </button>

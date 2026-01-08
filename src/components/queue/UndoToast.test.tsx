@@ -146,7 +146,7 @@ describe('UndoToast', () => {
     );
 
     const undoButton = screen.getByTestId('undo-button');
-    expect(undoButton).toHaveClass('min-h-[48px]');
+    expect(undoButton).toHaveClass('min-h-12');
   });
 
   // Test 8: Uses success color tokens

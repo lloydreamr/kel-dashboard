@@ -77,10 +77,10 @@ describe('DiscardDraftDialog', () => {
     );
 
     expect(screen.getByTestId('discard-confirm-button')).toHaveClass(
-      'min-h-[48px]'
+      'min-h-12'
     );
     expect(screen.getByRole('button', { name: /cancel/i })).toHaveClass(
-      'min-h-[48px]'
+      'min-h-12'
     );
   });
 

@@ -75,7 +75,7 @@ export function CompetitorForm({ mode, defaultValues, onSuccess, onCancel }: Com
           data-testid="competitor-name-input"
           placeholder="Competitor name"
           {...form.register('name')}
-          className="min-h-[48px]"
+          className="min-h-12"
         />
         {form.formState.errors.name && (
           <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
@@ -100,7 +100,7 @@ export function CompetitorForm({ mode, defaultValues, onSuccess, onCancel }: Com
             setPriceScore(value[0]);
             form.setValue('price_score', value[0], { shouldValidate: true });
           }}
-          className="min-h-[48px]"
+          className="min-h-12"
         />
         {form.formState.errors.price_score && (
           <p className="text-sm text-destructive">{form.formState.errors.price_score.message}</p>
@@ -125,7 +125,7 @@ export function CompetitorForm({ mode, defaultValues, onSuccess, onCancel }: Com
             setQualityScore(value[0]);
             form.setValue('quality_score', value[0], { shouldValidate: true });
           }}
-          className="min-h-[48px]"
+          className="min-h-12"
         />
         {form.formState.errors.quality_score && (
           <p className="text-sm text-destructive">{form.formState.errors.quality_score.message}</p>
@@ -142,7 +142,7 @@ export function CompetitorForm({ mode, defaultValues, onSuccess, onCancel }: Com
           <SelectTrigger
             id="category"
             data-testid="competitor-category-select"
-            className="min-h-[48px]"
+            className="min-h-12"
           >
             <SelectValue placeholder="Select category" />
           </SelectTrigger>
@@ -165,7 +165,7 @@ export function CompetitorForm({ mode, defaultValues, onSuccess, onCancel }: Com
           data-testid="competitor-notes-input"
           placeholder="Additional notes..."
           {...form.register('notes')}
-          className="min-h-[48px]"
+          className="min-h-12"
           rows={3}
         />
         {form.formState.errors.notes && (
@@ -180,7 +180,7 @@ export function CompetitorForm({ mode, defaultValues, onSuccess, onCancel }: Com
           data-testid="competitor-kel-position-checkbox"
           checked={form.watch('is_kel_position')}
           onCheckedChange={(checked: boolean) => form.setValue('is_kel_position', checked, { shouldValidate: true })}
-          className="min-h-[24px] min-w-[24px]"
+          className="min-h-6 min-w-6"
         />
         <Label htmlFor="is_kel_position" className="cursor-pointer">
           Mark as Kel&apos;s Target Position
@@ -193,14 +193,14 @@ export function CompetitorForm({ mode, defaultValues, onSuccess, onCancel }: Com
           type="button"
           variant="outline"
           onClick={onCancel}
-          className="min-h-[48px] min-w-[100px]"
+          className="min-h-12 min-w-[100px]"
         >
           Cancel
         </Button>
         <Button
           type="submit"
           disabled={!form.formState.isValid || isPending}
-          className="min-h-[48px] min-w-[120px]"
+          className="min-h-12 min-w-[120px]"
           data-testid="competitor-submit"
         >
           {isPending ? 'Saving...' : mode === 'create' ? 'Add Competitor' : 'Save Changes'}

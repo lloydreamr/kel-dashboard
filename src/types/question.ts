@@ -180,3 +180,41 @@ export const CATEGORY_FILTER_KEYS: CategoryFilterKey[] = ['all', 'market', 'prod
  * Used for displaying counts in category tabs.
  */
 export type CategoryCounts = Record<CategoryFilterKey, number>;
+
+// ============================================================================
+// Sort Types (UX Audit: Sorting Options)
+// ============================================================================
+
+/**
+ * Sort options for questions list.
+ * - 'newest': Created date, newest first (default)
+ * - 'oldest': Created date, oldest first
+ * - 'updated': Recently updated first
+ * - 'title': Alphabetical by title
+ * - 'evidence': Most evidence first
+ */
+export type SortKey = 'newest' | 'oldest' | 'updated' | 'title' | 'evidence';
+
+/**
+ * Configuration for a sort option.
+ */
+export interface SortConfig {
+  /** Display label in dropdown */
+  label: string;
+}
+
+/**
+ * Configuration for all sort options.
+ */
+export const SORT_CONFIG: Record<SortKey, SortConfig> = {
+  newest: { label: 'Newest first' },
+  oldest: { label: 'Oldest first' },
+  updated: { label: 'Recently updated' },
+  title: { label: 'Alphabetical' },
+  evidence: { label: 'Most evidence' },
+};
+
+/**
+ * Array of sort keys in display order.
+ */
+export const SORT_KEYS: SortKey[] = ['newest', 'oldest', 'updated', 'title', 'evidence'];

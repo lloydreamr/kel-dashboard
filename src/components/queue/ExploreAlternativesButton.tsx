@@ -43,7 +43,7 @@ export function ExploreAlternativesButton({
       disabled={disabled}
       className={cn(
         // Base styles
-        'min-h-[48px] px-4 py-2 rounded-lg font-medium transition-colors',
+        'min-h-12 px-4 py-2 rounded-lg font-medium transition-colors',
         // Secondary button style (border, not filled)
         'border border-border text-foreground',
         // Hover state

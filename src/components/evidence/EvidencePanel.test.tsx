@@ -154,7 +154,7 @@ describe('EvidencePanel', () => {
     render(<EvidencePanel evidence={mockEvidence} onClose={mockOnClose} />);
 
     const button = screen.getByTestId('evidence-panel-open-source');
-    expect(button).toHaveClass('min-h-[48px]');
+    expect(button).toHaveClass('min-h-12');
   });
 
   it('has responsive width classes for different screen sizes', () => {

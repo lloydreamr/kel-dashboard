@@ -227,7 +227,7 @@ describe('ConstraintConfirmButton', () => {
     );
 
     const button = screen.getByTestId('constraint-confirm-button');
-    expect(button.className).toContain('min-h-[48px]');
+    expect(button.className).toContain('min-h-12');
   });
 
   it('renders without context when not provided', async () => {

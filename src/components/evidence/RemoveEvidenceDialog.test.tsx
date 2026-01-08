@@ -75,7 +75,7 @@ describe('RemoveEvidenceDialog', () => {
       />
     );
 
-    expect(screen.getByTestId('evidence-remove-confirm')).toHaveClass('min-h-[48px]');
+    expect(screen.getByTestId('evidence-remove-confirm')).toHaveClass('min-h-12');
   });
 
   it('displays evidence title in description', () => {

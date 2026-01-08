@@ -79,7 +79,7 @@ function CardHeader({
         }
       }}
       aria-expanded={isExpanded}
-      className="w-full text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-t-lg min-h-[48px] p-4 cursor-pointer"
+      className="w-full text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-t-lg min-h-12 p-4 cursor-pointer"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
@@ -208,7 +208,7 @@ function ExpandedContent({
             type="button"
             data-testid="approve-with-constraint-button"
             onClick={onOpenConstraintPanel}
-            className="min-h-[48px] px-4 py-2 rounded-lg border border-border text-foreground font-medium
+            className="min-h-12 px-4 py-2 rounded-lg border border-border text-foreground font-medium
               hover:bg-muted transition-colors
               focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           >
@@ -239,7 +239,7 @@ function ExpandedContent({
             e.stopPropagation();
             onToggle();
           }}
-          className="min-h-[48px] w-full py-2 text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="min-h-12 w-full py-2 text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           Collapse
         </button>

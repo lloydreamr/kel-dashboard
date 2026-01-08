@@ -47,9 +47,9 @@ export function AddNoteSection({ milestoneId }: AddNoteSectionProps) {
       data-testid="add-note-button"
       variant="outline"
       onClick={() => setIsExpanded(true)}
-      className="min-h-[48px] w-full"
+      className="min-h-12 w-full"
     >
-      <Plus className="mr-2 h-4 w-4" />
+      <Plus className="h-4 w-4" />
       Add Note
     </Button>
   );

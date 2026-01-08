@@ -91,7 +91,7 @@ export function LoginForm({ defaultEmail = '', errorFromUrl }: LoginFormProps) {
         <button
           type="button"
           onClick={() => setAuthMethod('password')}
-          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+          className={`flex-1 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
             authMethod === 'password'
               ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
@@ -103,7 +103,7 @@ export function LoginForm({ defaultEmail = '', errorFromUrl }: LoginFormProps) {
         <button
           type="button"
           onClick={() => setAuthMethod('magic-link')}
-          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+          className={`flex-1 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
             authMethod === 'magic-link'
               ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
@@ -219,7 +219,7 @@ export function LoginForm({ defaultEmail = '', errorFromUrl }: LoginFormProps) {
           type="submit"
           disabled={isButtonDisabled}
           data-testid="login-submit"
-          className="w-full"
+          className="w-full mt-2"
         >
           {authMethod === 'password' ? 'Sign In' : 'Send Magic Link'}
         </Button>

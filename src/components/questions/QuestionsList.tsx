@@ -109,7 +109,7 @@ export function QuestionsList({
         </p>
         {isMaho && (
           <Link href="/questions/new">
-            <Button data-testid="empty-state-action" className="mt-4 min-h-[48px]">
+            <Button data-testid="empty-state-action" className="mt-4 min-h-12">
               New Question
             </Button>
           </Link>

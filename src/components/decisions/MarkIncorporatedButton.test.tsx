@@ -123,7 +123,7 @@ describe('MarkIncorporatedButton', () => {
     );
 
     const button = screen.getByTestId('mark-incorporated-button');
-    expect(button).toHaveClass('min-h-[48px]');
+    expect(button).toHaveClass('min-h-12');
   });
 
   it('does not trigger mutation when clicked while pending (double-click protection)', async () => {

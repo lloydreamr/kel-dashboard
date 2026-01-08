@@ -93,7 +93,7 @@ export function NoteItem({
           <Textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="min-h-[80px]"
+            className="min-h-20"
             disabled={isUpdating}
           />
           <div className="flex gap-2">
@@ -104,7 +104,7 @@ export function NoteItem({
                 !editContent.trim() ||
                 editContent === note.content
               }
-              className="min-h-[48px]"
+              className="min-h-12"
             >
               {isUpdating ? 'Saving...' : 'Save'}
             </Button>
@@ -115,7 +115,7 @@ export function NoteItem({
                 setEditContent(note.content);
               }}
               disabled={isUpdating}
-              className="min-h-[48px]"
+              className="min-h-12"
             >
               Cancel
             </Button>
@@ -135,7 +135,7 @@ export function NoteItem({
                 <button
                   data-testid="note-edit-button"
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center justify-center min-h-[48px] min-w-[48px] hover:text-foreground"
+                  className="flex items-center justify-center min-h-12 min-w-12 hover:text-foreground"
                   aria-label="Edit note"
                 >
                   <Pencil className="h-4 w-4" />
@@ -143,7 +143,7 @@ export function NoteItem({
                 <button
                   data-testid="note-delete-button"
                   onClick={() => setShowDeleteDialog(true)}
-                  className="flex items-center justify-center min-h-[48px] min-w-[48px] hover:text-destructive"
+                  className="flex items-center justify-center min-h-12 min-w-12 hover:text-destructive"
                   aria-label="Delete note"
                 >
                   <Trash2 className="h-4 w-4" />

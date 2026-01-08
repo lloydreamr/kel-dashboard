@@ -197,7 +197,7 @@ export function ExploreAlternativesPanel({
                 type="button"
                 data-testid="alternatives-cancel-button"
                 onClick={handleCancel}
-                className="min-h-[48px] px-4 py-2 text-muted-foreground hover:text-foreground transition-colors
+                className="min-h-12 px-4 py-2 text-muted-foreground hover:text-foreground transition-colors
                   focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-lg"
               >
                 Cancel

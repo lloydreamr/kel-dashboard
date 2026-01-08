@@ -68,7 +68,7 @@ describe('StatusFilter', () => {
 
     const tabs = screen.getAllByRole('tab');
     tabs.forEach((tab) => {
-      expect(tab).toHaveClass('min-h-[48px]');
+      expect(tab).toHaveClass('min-h-12');
     });
   });
 

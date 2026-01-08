@@ -109,7 +109,7 @@ describe('ExploreAlternativesButton', () => {
       <ExploreAlternativesButton expanded={false} onToggle={() => {}} />
     );
     expect(screen.getByTestId('explore-alternatives-button')).toHaveClass(
-      'min-h-[48px]'
+      'min-h-12'
     );
   });
 });

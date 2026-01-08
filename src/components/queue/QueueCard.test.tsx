@@ -382,9 +382,9 @@ describe('QueueCard', () => {
         </Wrapper>
       );
 
-      // All interactive elements should have min-h-[48px]
+      // All interactive elements should have min-h-12
       const collapseButton = screen.getByTestId('queue-card-collapse-button');
-      expect(collapseButton).toHaveClass('min-h-[48px]');
+      expect(collapseButton).toHaveClass('min-h-12');
     });
   });
 });

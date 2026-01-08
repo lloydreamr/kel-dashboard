@@ -114,7 +114,7 @@ export function CompetitorDetailSheet({
                   onOpenChange(false);
                 }}
                 data-testid="competitor-edit-button"
-                className="min-h-[48px] w-full"
+                className="min-h-12 w-full"
               >
                 Edit
               </Button>
@@ -125,7 +125,7 @@ export function CompetitorDetailSheet({
                 }}
                 variant="destructive"
                 data-testid="competitor-delete-button"
-                className="min-h-[48px] w-full"
+                className="min-h-12 w-full"
               >
                 Delete
               </Button>

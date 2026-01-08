@@ -49,7 +49,7 @@ export function FreshnessWarningBadge({
         <TooltipTrigger asChild>
           <Badge
             variant="outline"
-            className="flex items-center gap-1.5 min-h-[48px] px-3 cursor-pointer text-warning border-warning/30 bg-warning/10 hover:bg-warning/20 transition-colors"
+            className="flex items-center gap-1.5 min-h-12 px-3 cursor-pointer text-warning border-warning/30 bg-warning/10 hover:bg-warning/20 transition-colors"
             data-testid="freshness-warning-badge"
             onClick={onClick}
             role="button"

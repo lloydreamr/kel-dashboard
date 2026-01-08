@@ -27,7 +27,7 @@ export function LogoutButton() {
       <button
         type="submit"
         data-testid="nav-logout"
-        className="flex items-center gap-3 px-3 py-2 rounded-md min-h-[48px] w-full text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+        className="flex items-center gap-3 px-3 py-2 rounded-md min-h-12 w-full text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
       >
         <LogOut className="h-5 w-5" />
         <span>Sign out</span>

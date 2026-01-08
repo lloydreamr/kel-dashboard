@@ -77,7 +77,7 @@ export function KeyboardShortcutsOverlay({
                       <span className="text-sm text-foreground">
                         {shortcut.description}
                       </span>
-                      <kbd className="inline-flex h-6 min-w-[24px] items-center justify-center rounded border border-border bg-muted px-2 font-mono text-xs text-muted-foreground">
+                      <kbd className="inline-flex h-6 min-w-6 items-center justify-center rounded border border-border bg-muted px-2 font-mono text-xs text-muted-foreground">
                         {shortcut.key}
                       </kbd>
                     </div>

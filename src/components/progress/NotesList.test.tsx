@@ -70,15 +70,14 @@ describe('NotesList', () => {
     expect(screen.getByLabelText('Loading notes')).toBeInTheDocument();
   });
 
-  it('shows empty state when no notes exist', () => {
-     
+  it('returns null when no notes exist (collapsed empty state)', () => {
     vi.mocked(useMilestoneNotes).mockReturnValue({
       data: [],
       isLoading: false,
       error: null,
     } as any);
 
-    renderWithProviders(
+    const { container } = renderWithProviders(
       <NotesList
         milestoneId="milestone-1"
         onUpdate={mockOnUpdate}
@@ -87,10 +86,10 @@ describe('NotesList', () => {
       />
     );
 
-    expect(screen.getByTestId('notes-empty-state')).toBeInTheDocument();
-    expect(
-      screen.getByText('No notes yet. Add one to capture decisions.')
-    ).toBeInTheDocument();
+    // Should render nothing when empty (collapsed state for space efficiency)
+    expect(container.firstChild).toBeNull();
+    expect(screen.queryByTestId('notes-list')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('notes-empty-state')).not.toBeInTheDocument();
   });
 
   it('renders notes when they exist', () => {

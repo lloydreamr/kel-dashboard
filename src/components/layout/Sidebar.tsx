@@ -60,7 +60,7 @@ export function Sidebar({ userEmail, className }: SidebarProps) {
               href={link.href}
               data-testid={link.testId}
               className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-md min-h-[48px]',
+                'flex items-center gap-3 px-3 py-2 rounded-md min-h-12',
                 'hover:bg-accent/50 transition-colors',
                 active && 'bg-accent text-accent-foreground font-medium'
               )}

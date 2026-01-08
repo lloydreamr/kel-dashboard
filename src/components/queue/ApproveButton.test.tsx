@@ -121,7 +121,7 @@ describe('ApproveButton', () => {
     renderButton();
 
     const button = screen.getByTestId('approve-button');
-    expect(button).toHaveClass('min-h-[48px]');
+    expect(button).toHaveClass('min-h-12');
   });
 
   it('triggers haptic feedback on click', async () => {

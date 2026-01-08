@@ -151,7 +151,7 @@ export function SyncIndicator({ onRefresh, className }: SyncIndicatorProps) {
             className="h-12 w-12"
           >
             <RefreshCw
-              className={cn('h-4 w-4', isRefreshing && 'animate-spin')}
+              className={cn('h-5 w-5', isRefreshing && 'animate-spin')}
               aria-hidden="true"
             />
           </Button>

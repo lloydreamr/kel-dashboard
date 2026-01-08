@@ -178,8 +178,8 @@ describe('EvidenceItem', () => {
         />
       );
 
-      expect(screen.getByTestId('evidence-edit-button')).toHaveClass('h-[48px]', 'w-[48px]');
-      expect(screen.getByTestId('evidence-remove-button')).toHaveClass('h-[48px]', 'w-[48px]');
+      expect(screen.getByTestId('evidence-edit-button')).toHaveClass('h-12', 'w-12');
+      expect(screen.getByTestId('evidence-remove-button')).toHaveClass('h-12', 'w-12');
     });
   });
 });

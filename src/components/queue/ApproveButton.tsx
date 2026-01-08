@@ -128,7 +128,7 @@ export function ApproveButton({
       data-testid="approve-button"
       onClick={handleApprove}
       disabled={isPending || isUndoing}
-      className="min-h-[48px] px-6 py-2 rounded-lg bg-success text-success-foreground font-medium
+      className="min-h-12 px-6 py-2 rounded-lg bg-success text-success-foreground font-medium
         hover:bg-success/90 active:scale-[0.98] transition-all
         disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
         focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"

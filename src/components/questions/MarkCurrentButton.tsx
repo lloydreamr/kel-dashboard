@@ -40,7 +40,7 @@ export function MarkCurrentButton({ questionId, updatedAt }: MarkCurrentButtonPr
     <Button
       variant="outline"
       size="sm"
-      className="min-h-[48px] gap-2"
+      className="min-h-12 gap-2"
       data-testid="mark-current-button"
       disabled={isPending}
       onClick={() => markCurrent(questionId)}

@@ -37,7 +37,7 @@ export function ArchiveButton({ onConfirm, isPending = false }: ArchiveButtonPro
           disabled={isPending}
           className="text-muted-foreground hover:text-destructive hover:border-destructive"
         >
-          <Archive className="h-4 w-4 mr-2" />
+          <Archive className="h-4 w-4" />
           {isPending ? 'Archiving...' : 'Archive'}
         </Button>
       </AlertDialogTrigger>

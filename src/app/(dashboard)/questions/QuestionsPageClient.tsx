@@ -10,12 +10,15 @@ import { FilterEmptyState } from '@/components/questions/FilterEmptyState';
 import { QuestionForm } from '@/components/questions/QuestionForm';
 import { QuestionsList } from '@/components/questions/QuestionsList';
 import { SearchInput } from '@/components/questions/SearchInput';
+import { SortDropdown } from '@/components/questions/SortDropdown';
 import { StatusFilter } from '@/components/questions/StatusFilter';
 import { Button } from '@/components/ui/button';
 import { useFilteredQuestions } from '@/hooks/questions/useFilteredQuestions';
 import {
   CategoryFilterKey,
   CATEGORY_FILTER_KEYS,
+  SortKey,
+  SORT_KEYS,
   StatusFilterKey,
   STATUS_FILTER_KEYS,
 } from '@/types/question';
@@ -49,11 +52,19 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
       ? (rawCategory as CategoryFilterKey)
       : 'all';
 
-  // Get filtered questions and counts
+  // Parse and validate sort from URL
+  const rawSort = searchParams.get('sort');
+  const sortBy: SortKey =
+    rawSort && SORT_KEYS.includes(rawSort as SortKey)
+      ? (rawSort as SortKey)
+      : 'newest';
+
+  // Get filtered and sorted questions with counts
   const { questions, counts, categoryCounts, isLoading, error } = useFilteredQuestions(
     statusFilter,
     categoryFilter,
-    searchQuery
+    searchQuery,
+    sortBy
   );
 
   // Update URL without page reload (status)
@@ -84,6 +95,20 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
     [searchParams, router]
   );
 
+  // Update URL without page reload (sort)
+  const handleSortChange = useCallback(
+    (sort: SortKey) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (sort === 'newest') {
+        params.delete('sort'); // Clean URL for default state
+      } else {
+        params.set('sort', sort);
+      }
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, router]
+  );
+
   const handleNewQuestion = useCallback(() => {
     setShowForm(true);
     setShowArchived(false);
@@ -101,8 +126,9 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
   const handleShowAll = useCallback(() => {
     handleFilterChange('all');
     handleCategoryChange('all');
+    handleSortChange('newest');
     setSearchQuery('');
-  }, [handleFilterChange, handleCategoryChange]);
+  }, [handleFilterChange, handleCategoryChange, handleSortChange]);
 
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
@@ -162,7 +188,7 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
                 data-testid="view-archived-button"
                 className="text-muted-foreground"
               >
-                <Archive className="h-4 w-4 mr-2" />
+                <Archive className="h-4 w-4" />
                 {showArchived ? 'Active' : 'Archived'}
               </Button>
               {!showArchived && (
@@ -170,7 +196,7 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
                   type="button"
                   onClick={handleNewQuestion}
                   data-testid="new-question-button"
-                  className="min-h-[48px] rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="min-h-12 rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
                   New Question
                 </button>
@@ -189,14 +215,17 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
           </div>
         )}
 
-        {/* Search Input - show only for active questions view */}
+        {/* Search Input and Sort - show only for active questions view */}
         {!showForm && !showArchived && (
-          <div className="mb-4">
-            <SearchInput
-              value={searchQuery}
-              onChange={handleSearchChange}
-              placeholder="Search questions..."
-            />
+          <div className="mb-4 flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <SearchInput
+                value={searchQuery}
+                onChange={handleSearchChange}
+                placeholder="Search questions..."
+              />
+            </div>
+            <SortDropdown value={sortBy} onChange={handleSortChange} />
           </div>
         )}
 

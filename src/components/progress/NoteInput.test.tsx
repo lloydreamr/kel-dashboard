@@ -105,8 +105,8 @@ describe('NoteInput', () => {
     const saveButton = screen.getByTestId('note-save-button');
     const cancelButton = screen.getByTestId('note-cancel-button');
 
-    expect(saveButton).toHaveClass('min-h-[48px]');
-    expect(cancelButton).toHaveClass('min-h-[48px]');
+    expect(saveButton).toHaveClass('min-h-12');
+    expect(cancelButton).toHaveClass('min-h-12');
   });
 
   it('does not call onSave if content is empty', async () => {

@@ -139,7 +139,7 @@ describe('SyncStatusIndicator', () => {
       render(<SyncStatusIndicator status="error" trigger={1} onRetry={handleRetry} />);
 
       const retryButton = screen.getByTestId('sync-retry-button');
-      expect(retryButton).toHaveClass('min-h-[48px]');
+      expect(retryButton).toHaveClass('min-h-12');
     });
   });
 

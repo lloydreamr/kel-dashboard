@@ -56,7 +56,7 @@ export function MarkCompleteButton({ milestone }: MarkCompleteButtonProps) {
       <Button
         data-testid="mark-milestone-complete-button"
         variant="default"
-        className="min-h-[48px] w-full"
+        className="min-h-12 w-full"
         onClick={() => setDialogOpen(true)}
         disabled={markComplete.isPending}
       >

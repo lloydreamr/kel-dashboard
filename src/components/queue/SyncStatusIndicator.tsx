@@ -198,7 +198,7 @@ export function SyncStatusIndicator({
                 e.stopPropagation(); // Prevent parent click handler (e.g., card toggle)
                 onRetry();
               }}
-              className="min-h-[48px] px-3 py-2 rounded-md text-destructive hover:bg-destructive/10
+              className="min-h-12 px-3 py-2 rounded-md text-destructive hover:bg-destructive/10
                 active:scale-[0.98] transition-all focus:outline-none focus:ring-2
                 focus:ring-destructive focus:ring-offset-2"
             >

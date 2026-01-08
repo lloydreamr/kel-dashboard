@@ -42,7 +42,7 @@ export function MobileNav({ userEmail, className }: MobileNavProps) {
               type="button"
               data-testid="nav-hamburger"
               onClick={toggle}
-              className="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-md hover:bg-accent/50 transition-colors"
+              className="flex items-center justify-center min-h-12 min-w-12 rounded-md hover:bg-accent/50 transition-colors"
               aria-label="Open navigation menu"
             >
               <Menu className="h-6 w-6" />

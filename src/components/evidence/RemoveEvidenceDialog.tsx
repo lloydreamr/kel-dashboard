@@ -48,7 +48,7 @@ export function RemoveEvidenceDialog({
         <AlertDialogFooter>
           <AlertDialogCancel
             disabled={isPending}
-            className="min-h-[48px]"
+            className="min-h-12"
           >
             Cancel
           </AlertDialogCancel>
@@ -56,7 +56,7 @@ export function RemoveEvidenceDialog({
             onClick={onConfirm}
             disabled={isPending}
             data-testid="evidence-remove-confirm"
-            className="min-h-[48px] bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="min-h-12 bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {isPending ? 'Removing...' : 'Remove'}
           </AlertDialogAction>

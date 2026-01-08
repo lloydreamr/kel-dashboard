@@ -112,7 +112,7 @@ export function UndoToast({ message, onUndo, onDismiss }: UndoToastProps) {
         data-testid="undo-button"
         onClick={handleUndo}
         disabled={isUndoing}
-        className="min-h-[48px] rounded-md bg-success-foreground/20 px-4 py-2 text-sm font-medium
+        className="min-h-12 rounded-md bg-success-foreground/20 px-4 py-2 text-sm font-medium
           hover:bg-success-foreground/30 focus:outline-none focus:ring-2 focus:ring-success-foreground focus:ring-offset-2
           disabled:opacity-50 disabled:cursor-not-allowed"
       >

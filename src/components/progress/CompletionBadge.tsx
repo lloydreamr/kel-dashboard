@@ -28,12 +28,12 @@ export function CompletionBadge({ completedAt }: CompletionBadgeProps) {
   return (
     <div
       data-testid="milestone-complete-badge"
-      className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1"
+      className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-sm"
     >
       <span className="text-green-700 font-medium">✓ Complete</span>
       <span
         data-testid="milestone-complete-date"
-        className="text-green-600 text-sm"
+        className="text-green-600"
       >
         {formattedDate}
       </span>

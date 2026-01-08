@@ -9,7 +9,7 @@ export function QuestionCardSkeleton() {
   return (
     <div
       data-testid="question-card-skeleton"
-      className="min-h-[48px] rounded-md border border-border bg-surface p-4 animate-pulse"
+      className="min-h-12 rounded-lg border border-border bg-surface p-4 animate-pulse"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="h-5 w-3/4 rounded bg-muted" />

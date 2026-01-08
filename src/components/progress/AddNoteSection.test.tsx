@@ -139,7 +139,7 @@ describe('AddNoteSection', () => {
     renderWithProviders(<AddNoteSection milestoneId="milestone-1" />);
 
     const button = screen.getByTestId('add-note-button');
-    expect(button).toHaveClass('min-h-[48px]');
+    expect(button).toHaveClass('min-h-12');
   });
 
   it('passes isPending to NoteInput', () => {

@@ -112,7 +112,7 @@ export function ExploreAlternativesSubmitButton({
       data-testid="alternatives-submit-button"
       onClick={handleSubmit}
       disabled={isDisabled}
-      className="min-h-[48px] px-4 py-2 rounded-lg bg-warning text-warning-foreground font-medium
+      className="min-h-12 px-4 py-2 rounded-lg bg-warning text-warning-foreground font-medium
         hover:bg-warning/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
         focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
         flex items-center gap-2"

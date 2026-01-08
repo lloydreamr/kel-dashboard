@@ -76,7 +76,7 @@ describe('LogoutButton', () => {
 
       // Assert
       const button = screen.getByTestId('nav-logout');
-      expect(button).toHaveClass('min-h-[48px]');
+      expect(button).toHaveClass('min-h-12');
     });
 
     it('has full width styling', () => {

@@ -33,7 +33,7 @@ export function StatusFilter({ value, counts, onChange }: StatusFilterProps) {
             key={key}
             value={key}
             data-testid={`status-filter-${key}`}
-            className="min-h-[48px] flex-1"
+            className="min-h-12 flex-1"
           >
             <span className="hidden sm:inline">{STATUS_FILTER_CONFIG[key].label}</span>
             <span className="sm:hidden">{STATUS_FILTER_CONFIG[key].shortLabel}</span>

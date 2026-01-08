@@ -132,7 +132,7 @@ export function QuestionForm({ userId, onCancel, onSuccess }: QuestionFormProps)
           id="category"
           data-testid="question-category-select"
           className={cn(
-            'min-h-[48px] w-full rounded-md border bg-surface px-4 py-3 focus:outline-none focus:ring-2 focus:ring-ring/20',
+            'min-h-12 w-full rounded-md border bg-surface px-4 py-3 focus:outline-none focus:ring-2 focus:ring-ring/20',
             !categoryValue ? 'text-muted-foreground' : 'text-foreground',
             errors.category ? 'border-destructive' : 'border-border focus:border-primary'
           )}

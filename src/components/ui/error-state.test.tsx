@@ -62,6 +62,6 @@ describe('ErrorState', () => {
     render(<ErrorState onRetry={onRetry} />);
 
     const retryButton = screen.getByTestId('error-retry-button');
-    expect(retryButton).toHaveClass('min-h-[48px]');
+    expect(retryButton).toHaveClass('min-h-12');
   });
 });

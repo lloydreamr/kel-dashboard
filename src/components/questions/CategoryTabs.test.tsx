@@ -20,24 +20,18 @@ describe('CategoryTabs', () => {
     onChange: vi.fn(),
   };
 
-  it('renders all category tabs with counts', () => {
+  it('renders all category tabs with full labels and counts', () => {
     render(<CategoryTabs {...defaultProps} />);
 
     expect(screen.getByTestId('category-tabs')).toBeInTheDocument();
-    // Note: Both desktop (label) and mobile (shortLabel) spans render in jsdom
-    // Desktop labels: All Categories, Market, Product, Distribution
-    // Mobile labels: All, Mkt, Prod, Dist
+    // Full labels shown on all screen sizes (horizontal scroll on mobile)
     expect(screen.getByTestId('category-tab-all')).toHaveTextContent('All Categories');
-    expect(screen.getByTestId('category-tab-all')).toHaveTextContent('All');
     expect(screen.getByTestId('category-tab-all')).toHaveTextContent('(100)');
     expect(screen.getByTestId('category-tab-market')).toHaveTextContent('Market');
-    expect(screen.getByTestId('category-tab-market')).toHaveTextContent('Mkt');
     expect(screen.getByTestId('category-tab-market')).toHaveTextContent('(50)');
     expect(screen.getByTestId('category-tab-product')).toHaveTextContent('Product');
-    expect(screen.getByTestId('category-tab-product')).toHaveTextContent('Prod');
     expect(screen.getByTestId('category-tab-product')).toHaveTextContent('(30)');
     expect(screen.getByTestId('category-tab-distribution')).toHaveTextContent('Distribution');
-    expect(screen.getByTestId('category-tab-distribution')).toHaveTextContent('Dist');
     expect(screen.getByTestId('category-tab-distribution')).toHaveTextContent('(20)');
   });
 
@@ -70,7 +64,7 @@ describe('CategoryTabs', () => {
 
     const tabs = screen.getAllByRole('tab');
     tabs.forEach((tab) => {
-      expect(tab).toHaveClass('min-h-[48px]');
+      expect(tab).toHaveClass('min-h-12');
     });
   });
 
@@ -86,18 +80,18 @@ describe('CategoryTabs', () => {
     expect(screen.getByTestId('category-tab-market')).toHaveTextContent('(75)');
   });
 
-  it('renders responsive labels with desktop and mobile variants', () => {
+  it('renders mobile-friendly tabs with horizontal scroll capability', () => {
     render(<CategoryTabs {...defaultProps} />);
 
-    // Verify desktop labels (hidden on mobile via sm:hidden class)
+    // Verify full labels are shown (not abbreviated)
     const distributionTab = screen.getByTestId('category-tab-distribution');
-    expect(distributionTab).toHaveTextContent('Distribution'); // Full desktop label
-    expect(distributionTab).toHaveTextContent('Dist'); // Abbreviated mobile label
+    expect(distributionTab).toHaveTextContent('Distribution');
 
-    // Verify the responsive CSS classes are applied
-    const desktopSpan = distributionTab.querySelector('.hidden.sm\\:inline');
-    const mobileSpan = distributionTab.querySelector('.sm\\:hidden');
-    expect(desktopSpan).toBeInTheDocument();
-    expect(mobileSpan).toBeInTheDocument();
+    // Verify tabs have whitespace-nowrap for horizontal scroll support
+    expect(distributionTab).toHaveClass('whitespace-nowrap');
+
+    // Verify tablist has overflow-x-auto for horizontal scrolling on mobile
+    const tabList = screen.getByRole('tablist');
+    expect(tabList).toHaveClass('overflow-x-auto');
   });
 });

@@ -47,7 +47,7 @@ export function StaleQuestionsClient({ category }: StaleQuestionsClientProps) {
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/progress">
-              <ArrowLeft className="h-4 w-4 mr-1" />
+              <ArrowLeft className="h-4 w-4" />
               Back to Progress
             </Link>
           </Button>
@@ -70,7 +70,7 @@ export function StaleQuestionsClient({ category }: StaleQuestionsClientProps) {
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/progress">
-              <ArrowLeft className="h-4 w-4 mr-1" />
+              <ArrowLeft className="h-4 w-4" />
               Back to Progress
             </Link>
           </Button>
@@ -98,7 +98,7 @@ export function StaleQuestionsClient({ category }: StaleQuestionsClientProps) {
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/progress">
-              <ArrowLeft className="h-4 w-4 mr-1" />
+              <ArrowLeft className="h-4 w-4" />
               Back to Progress
             </Link>
           </Button>
@@ -127,7 +127,7 @@ export function StaleQuestionsClient({ category }: StaleQuestionsClientProps) {
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/progress">
-            <ArrowLeft className="h-4 w-4 mr-1" />
+            <ArrowLeft className="h-4 w-4" />
             Back to Progress
           </Link>
         </Button>
@@ -144,12 +144,12 @@ export function StaleQuestionsClient({ category }: StaleQuestionsClientProps) {
 
       {data?.staleQuestions.length === 0 ? (
         <div
-          className="flex flex-col items-center justify-center py-12 px-4 text-center border border-dashed border-border rounded-lg bg-muted/20"
+          className="flex flex-col items-center justify-center py-12 px-4 text-center border border-dashed border-border rounded-lg bg-muted/10"
           data-testid="stale-questions-empty"
         >
-          <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
-          <h2 className="text-lg font-semibold text-foreground mb-2">All caught up!</h2>
-          <p className="text-muted-foreground max-w-sm">
+          <CheckCircle2 className="h-12 w-12 text-green-500 mb-5" />
+          <h2 className="text-lg font-semibold text-foreground mb-3">All caught up!</h2>
+          <p className="text-muted-foreground max-w-sm leading-relaxed">
             No {categoryLabel} questions have gone stale. Keep up the great research!
           </p>
         </div>

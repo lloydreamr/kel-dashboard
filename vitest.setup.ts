@@ -35,6 +35,14 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
 };
 
+// Mock pointer capture APIs for Radix UI components (Select, Combobox, etc.)
+// jsdom doesn't support these natively
+if (typeof Element !== 'undefined') {
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.setPointerCapture = () => {};
+  Element.prototype.releasePointerCapture = () => {};
+}
+
 // Mock matchMedia for responsive components
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

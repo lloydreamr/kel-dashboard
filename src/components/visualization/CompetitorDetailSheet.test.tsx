@@ -154,14 +154,14 @@ describe('CompetitorDetailSheet', () => {
       render(<CompetitorDetailSheet {...defaultProps} isMobile={true} />);
 
       const editButton = screen.getByTestId('competitor-edit-button');
-      expect(editButton).toHaveClass('min-h-[48px]');
+      expect(editButton).toHaveClass('min-h-12');
     });
 
     it('renders Delete button with 48px min-height', () => {
       render(<CompetitorDetailSheet {...defaultProps} isMobile={true} />);
 
       const deleteButton = screen.getByTestId('competitor-delete-button');
-      expect(deleteButton).toHaveClass('min-h-[48px]');
+      expect(deleteButton).toHaveClass('min-h-12');
     });
 
     it('calls onEdit and closes sheet when Edit clicked', () => {

@@ -47,11 +47,11 @@ export function DiscardDraftDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="min-h-[48px]">Cancel</AlertDialogCancel>
+          <AlertDialogCancel className="min-h-12">Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             data-testid="discard-confirm-button"
-            className="min-h-[48px] bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="min-h-12 bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             Discard
           </AlertDialogAction>

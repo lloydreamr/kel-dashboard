@@ -35,7 +35,7 @@ export function UpdateStaleButton({ updatedAt, onUpdate }: UpdateStaleButtonProp
     <Button
       variant="outline"
       size="sm"
-      className="min-h-[48px] gap-2 text-warning border-warning/30 hover:bg-warning/10"
+      className="min-h-12 gap-2 text-warning border-warning/30 hover:bg-warning/10"
       data-testid="update-stale-button"
       onClick={onUpdate}
     >

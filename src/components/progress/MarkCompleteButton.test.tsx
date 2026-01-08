@@ -240,7 +240,7 @@ describe('MarkCompleteButton', () => {
     renderWithProviders(<MarkCompleteButton milestone={milestone} />);
 
     const button = screen.getByTestId('mark-milestone-complete-button');
-    expect(button).toHaveClass('min-h-[48px]');
+    expect(button).toHaveClass('min-h-12');
   });
 
   it('closes dialog and does not call mutation when Cancel is clicked', async () => {

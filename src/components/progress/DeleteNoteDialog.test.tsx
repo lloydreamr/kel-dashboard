@@ -95,8 +95,8 @@ describe('DeleteNoteDialog', () => {
     const cancelButton = screen.getByText('Cancel');
     const deleteButton = screen.getByTestId('note-delete-confirm');
 
-    expect(cancelButton).toHaveClass('min-h-[48px]');
-    expect(deleteButton).toHaveClass('min-h-[48px]');
+    expect(cancelButton).toHaveClass('min-h-12');
+    expect(deleteButton).toHaveClass('min-h-12');
   });
 
   it('uses destructive styling for Delete button', () => {
