@@ -23,6 +23,7 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
+import { useMountedRef } from '@/hooks/utils/useMountedRef';
 import { usePitchModeStore } from '@/stores/pitchMode';
 
 interface UsePitchModeReturn {
@@ -38,6 +39,7 @@ export function usePitchMode(): UsePitchModeReturn {
   const searchParams = useSearchParams();
   const router = useRouter();
   const setIsPitchMode = usePitchModeStore((s) => s.setIsPitchMode);
+  const { isMounted } = useMountedRef();
 
   // Read pitch mode from URL query param
   const isPitchMode = searchParams.get('mode') === 'pitch';
@@ -48,12 +50,17 @@ export function usePitchMode(): UsePitchModeReturn {
     setIsPitchMode(isPitchMode);
   }, [isPitchMode, setIsPitchMode]);
 
+  // BUG-009 Fix: Only navigate if component is still mounted (consistency with other hooks)
   const enterPitchMode = () => {
-    router.push('/visualization?mode=pitch', { scroll: false });
+    if (isMounted()) {
+      router.push('/visualization?mode=pitch', { scroll: false });
+    }
   };
 
   const exitPitchMode = () => {
-    router.push('/visualization', { scroll: false });
+    if (isMounted()) {
+      router.push('/visualization', { scroll: false });
+    }
   };
 
   return { isPitchMode, enterPitchMode, exitPitchMode };

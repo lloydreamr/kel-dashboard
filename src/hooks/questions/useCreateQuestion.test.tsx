@@ -177,4 +177,101 @@ describe('useCreateQuestion', () => {
 
     expect(mockPush).not.toHaveBeenCalled();
   });
+
+  // BUG-009: Mount-state aware navigation tests
+  describe('mount-state aware navigation (BUG-009)', () => {
+    it('does not navigate when component unmounts before success', async () => {
+      // Arrange - Create a delayed mutation that we can control
+      let resolveCreate: (value: unknown) => void;
+      mockCreate.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveCreate = resolve;
+          })
+      );
+
+      const { result, unmount } = renderHook(() => useCreateQuestion(), {
+        wrapper: createWrapper(),
+      });
+
+      // Act - Start mutation
+      result.current.mutate({
+        title: 'Test',
+        category: 'product',
+        created_by: 'user-123',
+      });
+
+      // Wait for onMutate (which has async operations) to complete and mutationFn to start
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Unmount before mutation completes (simulates user navigating away)
+      unmount();
+
+      // Now resolve the mutation
+      resolveCreate!({ id: 'q-123', title: 'Test' });
+
+      // Wait a tick for callbacks to fire
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Assert - Navigation should NOT have happened (component unmounted)
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it('still shows toast when unmounted', async () => {
+      // Arrange
+      let resolveCreate: (value: unknown) => void;
+      mockCreate.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveCreate = resolve;
+          })
+      );
+
+      const { result, unmount } = renderHook(() => useCreateQuestion(), {
+        wrapper: createWrapper(),
+      });
+
+      // Act
+      result.current.mutate({
+        title: 'Test',
+        category: 'product',
+        created_by: 'user-123',
+      });
+
+      // Wait for onMutate (which has async operations) to complete and mutationFn to start
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      unmount();
+      resolveCreate!({ id: 'q-123', title: 'Test' });
+
+      const { toast } = await import('sonner');
+
+      // Wait for callbacks
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Assert - Toast should still show (feedback is important even if navigated away)
+      expect(toast.success).toHaveBeenCalledWith('Question created');
+    });
+
+    it('navigates when component stays mounted (regression test)', async () => {
+      // Arrange
+      mockCreate.mockResolvedValue({ id: 'q-123', title: 'Test' });
+
+      const { result } = renderHook(() => useCreateQuestion(), {
+        wrapper: createWrapper(),
+      });
+
+      // Act - do NOT unmount
+      result.current.mutate({
+        title: 'Test',
+        category: 'product',
+        created_by: 'user-123',
+      });
+
+      // Assert - Should navigate normally when staying on page
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith('/questions/q-123');
+      });
+    });
+  });
 });

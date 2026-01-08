@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { useOfflineGuard, isOfflineError } from '@/hooks/offline';
+import { useMountedRef } from '@/hooks/utils/useMountedRef';
 import { queryKeys } from '@/lib/queryKeys';
 import { questionsRepo } from '@/lib/repositories/questions';
 
@@ -22,6 +23,7 @@ export function useCreateQuestion() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const { guardOffline } = useOfflineGuard();
+  const { isMounted } = useMountedRef();
 
   return useMutation({
     mutationFn: (input: CreateQuestionInput) => {
@@ -82,9 +84,12 @@ export function useCreateQuestion() {
     },
 
     // Success: toast and navigate to detail page
+    // BUG-009 Fix: Only navigate if component is still mounted (prevents race condition)
     onSuccess: (data) => {
-      toast.success('Question created');
-      router.push(`/questions/${data.id}`);
+      toast.success('Question created'); // Always show toast
+      if (isMounted()) {
+        router.push(`/questions/${data.id}`);
+      }
     },
 
     // Always invalidate to ensure consistency
