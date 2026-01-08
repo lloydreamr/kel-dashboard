@@ -573,6 +573,128 @@ describe('QuestionDetailClient', () => {
     });
   });
 
+  describe('question title/description editing (P0-2)', () => {
+    it('shows edit button for Maho on non-archived questions', async () => {
+      mockUseProfile.mockReturnValue({
+        data: { ...mockProfile, role: 'maho' },
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('question-edit-button')).toBeInTheDocument();
+      });
+    });
+
+    it('does not show edit button for Kel', async () => {
+      mockUseProfile.mockReturnValue({
+        data: { ...mockProfile, role: 'kel' },
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('question-title')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId('question-edit-button')).not.toBeInTheDocument();
+    });
+
+    it('does not show edit button for archived questions', async () => {
+      mockUseProfile.mockReturnValue({
+        data: { ...mockProfile, role: 'maho' },
+      });
+
+      mockUseQuestion.mockReturnValue({
+        data: { ...mockQuestion, status: 'archived' },
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('question-title')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId('question-edit-button')).not.toBeInTheDocument();
+    });
+
+    it('shows edit form when edit button is clicked', async () => {
+      const user = userEvent.setup();
+      mockUseProfile.mockReturnValue({
+        data: { ...mockProfile, role: 'maho' },
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('question-edit-button')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId('question-edit-button'));
+
+      expect(screen.getByTestId('question-edit-form')).toBeInTheDocument();
+      expect(screen.getByTestId('question-edit-title')).toHaveValue('Test Question');
+      expect(screen.getByTestId('question-edit-description')).toHaveValue('Test description');
+    });
+
+    it('calls updateQuestion with new values on save', async () => {
+      const user = userEvent.setup();
+      mockUseProfile.mockReturnValue({
+        data: { ...mockProfile, role: 'maho' },
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('question-edit-button')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId('question-edit-button'));
+
+      const titleInput = screen.getByTestId('question-edit-title');
+      await user.clear(titleInput);
+      await user.type(titleInput, 'Updated Title');
+
+      await user.click(screen.getByTestId('question-edit-save'));
+
+      await waitFor(() => {
+        expect(mockUpdateQuestion).toHaveBeenCalledWith(
+          {
+            id: 'q-1',
+            updates: {
+              title: 'Updated Title',
+              description: 'Test description',
+            },
+          },
+          expect.any(Object)
+        );
+      });
+    });
+
+    it('hides edit form when cancel is clicked', async () => {
+      const user = userEvent.setup();
+      mockUseProfile.mockReturnValue({
+        data: { ...mockProfile, role: 'maho' },
+      });
+
+      render(<QuestionDetailClient questionId="q-1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('question-edit-button')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId('question-edit-button'));
+      expect(screen.getByTestId('question-edit-form')).toBeInTheDocument();
+
+      await user.click(screen.getByTestId('question-edit-cancel'));
+
+      expect(screen.queryByTestId('question-edit-form')).not.toBeInTheDocument();
+      expect(screen.getByTestId('question-title')).toBeInTheDocument();
+    });
+  });
+
   describe('StatusBadge with decisionType (Story 4-10)', () => {
     it('shows constrained badge when approved with constraint', async () => {
       mockUseQuestion.mockReturnValue({

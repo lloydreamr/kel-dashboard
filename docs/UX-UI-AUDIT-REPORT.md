@@ -14,7 +14,7 @@ The Kel Dashboard has **solid core functionality** with well-designed user flows
 ### Key Metrics
 - **Pages Tested:** 5 (Dashboard, Questions, Question Detail, Visualization, Progress)
 - **User Flows Tested:** Question creation, recommendation, send-to-Kel, decision UI
-- **Critical Issues Found:** 3
+- **Critical Issues Found:** 3 (1 resolved)
 - **High Priority Issues:** 2
 - **Medium Priority Issues:** 3
 
@@ -85,7 +85,7 @@ The layout has a comment noting it "can be extended with shared UI elements (nav
 
 ---
 
-### P0-2: No Way to Edit Question Title/Description
+### P0-2: No Way to Edit Question Title/Description ✅ RESOLVED
 
 **Problem Statement:**
 Once a question is created, users cannot edit the title or description. The only editable element is the recommendation.
@@ -108,14 +108,24 @@ Once a question is created, users cannot edit the title or description. The only
 > **So that** I can refine questions without recreating them
 
 **Acceptance Criteria:**
-- [ ] Edit button/icon visible on question detail page header
-- [ ] Clicking edit opens inline form or modal with current title/description
-- [ ] Can save changes or cancel
-- [ ] Toast notification confirms "Question updated"
-- [ ] Changes persist and reflect in questions list
-- [ ] Only Maho can edit (same as create permission)
+- [x] Edit button/icon visible on question detail page header
+- [x] Clicking edit opens inline form or modal with current title/description
+- [x] Can save changes or cancel
+- [x] Toast notification confirms "Question updated"
+- [x] Changes persist and reflect in questions list
+- [x] Only Maho can edit (same as create permission)
 
 **Effort Estimate:** Low (1 day)
+
+**Resolution (2026-01-08):**
+Feature was already implemented in QuestionDetailClient.tsx with QuestionEditForm component:
+- Pencil icon edit button in question header (Maho only, non-archived)
+- Inline form with react-hook-form + Zod validation
+- Escape key or Cancel button to close
+- Toast notification on successful save via updateQuestion mutation
+- Role-based visibility (Maho only)
+- URL param support (?edit=true) for direct edit mode
+- Added 6 integration tests to verify end-to-end functionality
 
 ---
 
@@ -424,7 +434,7 @@ Document these as examples of good patterns to maintain:
 
 | Story | Priority | Estimate |
 |-------|----------|----------|
-| Add edit capability for question title/description | P0 | 1 day |
+| ~~Add edit capability for question title/description~~ | P0 | ✅ Done |
 | Add quick actions menu on questions list | P1 | 1-2 days |
 | Add status filtering on questions list | P2 | 1-2 days |
 | ~~Add search functionality for questions~~ | P3 | ✅ Done |
@@ -476,6 +486,7 @@ kel-dashboard/.playwright-mcp/
 |---------|------|--------|---------|
 | 1.0 | 2026-01-05 | Multi-Agent Audit Team | Initial comprehensive audit |
 | 1.1 | 2026-01-08 | Claude | P3-2 Search Functionality resolved |
+| 1.2 | 2026-01-08 | Claude | P0-2 Edit Question Title/Description resolved (was already implemented) |
 
 ---
 
