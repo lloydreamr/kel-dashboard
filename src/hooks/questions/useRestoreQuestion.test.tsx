@@ -2,8 +2,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { useRestoreQuestion } from './useRestoreQuestion';
 import { createMockQuestion } from '@/test/factories';
+
+import { useRestoreQuestion } from './useRestoreQuestion';
 
 // Use factory for restored question mock
 const mockQuestion = createMockQuestion({

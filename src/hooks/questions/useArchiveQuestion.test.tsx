@@ -2,8 +2,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { useArchiveQuestion } from './useArchiveQuestion';
 import { createMockQuestion } from '@/test/factories';
+
+import { useArchiveQuestion } from './useArchiveQuestion';
 
 // Use factory for archived question mock
 const mockQuestion = createMockQuestion({

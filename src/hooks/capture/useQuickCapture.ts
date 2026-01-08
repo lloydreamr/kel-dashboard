@@ -13,10 +13,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { useOnlineStatus, isOfflineError } from '@/hooks/offline';
-import { uploadQuickCapture, fileToBase64 } from '@/lib/storage';
-import { captureQueue } from '@/lib/storage/captureQueue';
 import { queryKeys } from '@/lib/queryKeys';
 import { evidenceRepo } from '@/lib/repositories/evidence';
+import { uploadQuickCapture, fileToBase64 } from '@/lib/storage';
+import { captureQueue } from '@/lib/storage/captureQueue';
 
 import type { QuickCaptureData } from '@/components/capture';
 import type { Evidence } from '@/types/evidence';

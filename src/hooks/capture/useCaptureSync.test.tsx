@@ -6,14 +6,17 @@ import 'fake-indexeddb/auto';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor, act } from '@testing-library/react';
+import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useCaptureSync } from './useCaptureSync';
-// Import actual captureQueue for real IndexedDB testing
+import { useOnlineStatus } from '@/hooks/offline';
 import {
   captureQueue,
   CAPTURE_QUEUE_DB_NAME,
 } from '@/lib/storage/captureQueue';
+
+import { useCaptureSync } from './useCaptureSync';
+// Import actual captureQueue for real IndexedDB testing
 
 // Mock dependencies
 vi.mock('@/hooks/offline', () => ({
@@ -51,8 +54,6 @@ vi.mock('sonner', () => ({
 }));
 
 // Import mocked modules for assertions
-import { toast } from 'sonner';
-import { useOnlineStatus } from '@/hooks/offline';
 
 describe('useCaptureSync', () => {
   let queryClient: QueryClient;

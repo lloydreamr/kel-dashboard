@@ -1,6 +1,6 @@
+import { Target } from 'lucide-react';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import { Target } from 'lucide-react';
 import { redirect } from 'next/navigation';
 
 import { DashboardQuickStats } from '@/components/dashboard';

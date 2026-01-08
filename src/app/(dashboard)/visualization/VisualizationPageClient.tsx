@@ -18,8 +18,8 @@ import {
 } from '@/components/visualization';
 import { useProfile } from '@/hooks/auth';
 import { useDeleteCompetitor, useCompetitorData } from '@/hooks/competitors';
-import { usePitchMode } from '@/hooks/visualization/usePitchMode';
 import { usePdfExport } from '@/hooks/visualization/usePdfExport';
+import { usePitchMode } from '@/hooks/visualization/usePitchMode';
 import { usePitchModeStore } from '@/stores/pitchMode';
 
 import type { CompetitorDataPoint } from '@/types';
@@ -47,7 +47,7 @@ export function VisualizationPageClient() {
 
   // PDF export setup (Story 11.2)
   const pdfContentRef = useRef<HTMLDivElement>(null);
-  const { exportToPdf, isGenerating } = usePdfExport();
+  const { exportToPdf } = usePdfExport();
   const registerPdfDownload = usePitchModeStore((s) => s.registerPdfDownload);
   const unregisterPdfDownload = usePitchModeStore((s) => s.unregisterPdfDownload);
   const setIsGeneratingPdf = usePitchModeStore((s) => s.setIsGeneratingPdf);

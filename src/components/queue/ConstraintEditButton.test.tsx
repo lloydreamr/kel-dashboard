@@ -4,8 +4,10 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ConstraintEditButton } from './ConstraintEditButton';
 import { createMockDecisionWithConstraints } from '@/test/factories';
+
+import { ConstraintEditButton } from './ConstraintEditButton';
+
 import type { Decision } from '@/types/database';
 
 // Mock haptic hook

@@ -21,11 +21,12 @@
  * />
  */
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+
 import { CompetitorEditPopover } from './CompetitorEditPopover';
 import { SwipeableSheetContent } from './SwipeableSheetContent';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 
 import type { CompetitorDataPoint } from '@/types';
 

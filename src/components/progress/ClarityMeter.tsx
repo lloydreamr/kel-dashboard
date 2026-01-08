@@ -7,8 +7,8 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
 import { ANIMATION } from '@/lib/constants/animations';
 

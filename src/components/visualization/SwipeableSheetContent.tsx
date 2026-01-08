@@ -15,7 +15,9 @@
  */
 
 import { motion, useMotionValue, useTransform, useAnimation } from 'framer-motion';
+
 import { ANIMATION } from '@/lib/constants/animations';
+
 import type { ReactNode } from 'react';
 
 /** Pixels of downward movement required to trigger dismiss */

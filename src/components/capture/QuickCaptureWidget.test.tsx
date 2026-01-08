@@ -10,8 +10,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { QuickCaptureWidget } from './QuickCaptureWidget';
 import { captureQueue, CAPTURE_QUEUE_DB_NAME } from '@/lib/storage';
+
+import { QuickCaptureWidget } from './QuickCaptureWidget';
 
 // Mock dependencies
 vi.mock('@/hooks/offline', () => ({

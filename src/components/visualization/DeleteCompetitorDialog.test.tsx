@@ -1,9 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi } from 'vitest';
+
+import { createMockCompetitor } from '@/test/factories';
 
 import { DeleteCompetitorDialog } from './DeleteCompetitorDialog';
-import { createMockCompetitor } from '@/test/factories';
 
 // Use factory with minimal overrides for dialog tests
 const mockCompetitor = createMockCompetitor({

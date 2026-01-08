@@ -7,9 +7,10 @@
  * Note: Actual CSS behavior is tested in E2E tests using Playwright's emulateMedia.
  * These unit tests verify the CSS file structure as a safety net.
  */
-import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+
+import { describe, it, expect, beforeAll } from 'vitest';
 
 describe('Print Styles (Story 11.3)', () => {
   let cssContent: string;

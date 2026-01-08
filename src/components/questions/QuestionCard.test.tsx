@@ -2,8 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { QuestionCard } from './QuestionCard';
 import { createMockQuestionWithEvidenceCount } from '@/test/factories';
+
+import { QuestionCard } from './QuestionCard';
 
 // Mock date to get consistent relative time output
 const mockDate = new Date('2025-12-23T12:00:00Z');

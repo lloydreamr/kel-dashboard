@@ -1,6 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor, act } from '@testing-library/react';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { useOnlineStatus } from '@/hooks/offline';
 
 import { useQuickCapture } from './useQuickCapture';
 
@@ -41,8 +44,6 @@ vi.mock('sonner', () => ({
 }));
 
 // Import mocked modules for assertions
-import { toast } from 'sonner';
-import { useOnlineStatus } from '@/hooks/offline';
 
 describe('useQuickCapture', () => {
   let queryClient: QueryClient;

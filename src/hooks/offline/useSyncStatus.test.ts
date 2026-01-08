@@ -9,7 +9,9 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
 import { useSyncStatus } from './useSyncStatus';
+
 import type { SyncState } from './useSyncStatus';
+
 import * as features from '@/lib/features';
 import * as syncStorage from '@/lib/storage/syncStorage';
 

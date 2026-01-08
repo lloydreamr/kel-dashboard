@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor } from '@testing-library/react';
 import { toast } from 'sonner';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import { competitorsRepo } from '@/lib/repositories/competitors';
 
 import { useCreateCompetitor, useUpdateCompetitor, useDeleteCompetitor } from './useCompetitorMutations';
-import { competitorsRepo } from '@/lib/repositories/competitors';
 
 import type { CompetitorDataPoint } from '@/types';
 import type { ReactNode } from 'react';

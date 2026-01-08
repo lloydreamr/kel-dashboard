@@ -3,8 +3,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { QuestionsList } from './QuestionsList';
 
-import type { QuestionWithEvidenceCount } from '@/types/question';
 import type { Profile } from '@/types';
+import type { QuestionWithEvidenceCount } from '@/types/question';
 
 // Mock Next.js navigation (needed by QuestionCard)
 vi.mock('next/navigation', () => ({

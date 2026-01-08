@@ -27,9 +27,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-import { useOnlineStatus } from './useOnlineStatus';
-import { getSyncTimestamp, setSyncTimestamp } from '@/lib/storage/syncStorage';
 import { FEATURES } from '@/lib/features';
+import { getSyncTimestamp, setSyncTimestamp } from '@/lib/storage/syncStorage';
+
+import { useOnlineStatus } from './useOnlineStatus';
 
 /** Sync state types */
 export type SyncState = 'fresh' | 'stale' | 'offline';

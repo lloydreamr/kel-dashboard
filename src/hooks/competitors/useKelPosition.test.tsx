@@ -4,14 +4,15 @@
  * Tests create/update logic and basic mutation behavior.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { useSetKelPosition } from './useKelPosition';
-import { useCompetitorData } from './useCompetitorData';
 import { queryKeys } from '@/lib/queryKeys';
 import { competitorsRepo } from '@/lib/repositories/competitors';
+
+import { useCompetitorData } from './useCompetitorData';
+import { useSetKelPosition } from './useKelPosition';
 
 import type { CompetitorDataPoint } from '@/types';
 

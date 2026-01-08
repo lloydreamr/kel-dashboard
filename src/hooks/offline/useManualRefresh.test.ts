@@ -8,8 +8,9 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { useManualRefresh } from './useManualRefresh';
 import * as features from '@/lib/features';
+
+import { useManualRefresh } from './useManualRefresh';
 
 // Mock dependencies
 vi.mock('@/lib/features', () => ({

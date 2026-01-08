@@ -15,8 +15,8 @@
  * ```
  */
 
-import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
 import { SyncIndicator } from '@/components/offline';
 import { useManualRefresh } from '@/hooks/offline';

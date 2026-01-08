@@ -2,6 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { useUpdatePassword } from '@/hooks/auth/useAuth';
+
 import { ResetPasswordForm } from './ResetPasswordForm';
 
 // Mock next/link
@@ -35,7 +37,6 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 }));
 
 // Import after mock to get the mocked version
-import { useUpdatePassword } from '@/hooks/auth/useAuth';
 
 describe('ResetPasswordForm', () => {
   beforeEach(() => {

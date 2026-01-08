@@ -2,8 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { EvidenceList } from './EvidenceList';
 import { createMockEvidence } from '@/test/factories/evidence';
+
+import { EvidenceList } from './EvidenceList';
 
 const mockEvidence = [
   createMockEvidence({

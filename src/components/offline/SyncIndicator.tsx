@@ -20,14 +20,10 @@
  * ```
  */
 
-import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
+import { useState, useCallback } from 'react';
 
-import { useSyncStatus } from '@/hooks/offline';
-import type { SyncState } from '@/hooks/offline';
-import { FEATURES } from '@/lib/features';
-import { ANIMATION } from '@/lib/constants/animations';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -35,7 +31,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useSyncStatus } from '@/hooks/offline';
+import { ANIMATION } from '@/lib/constants/animations';
+import { FEATURES } from '@/lib/features';
 import { cn } from '@/lib/utils';
+
+import type { SyncState } from '@/hooks/offline';
 
 export interface SyncIndicatorProps {
   /** Callback when refresh button is clicked. If not provided, refresh button is hidden. */

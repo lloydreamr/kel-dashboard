@@ -28,20 +28,20 @@
  * ```
  */
 
-import { useCallback, useEffect, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useOnlineStatus } from '@/hooks/offline';
+import { queryKeys } from '@/lib/queryKeys';
+import { evidenceRepo } from '@/lib/repositories/evidence';
 import {
   captureQueue,
   base64ToFile,
   uploadQuickCapture,
   type QueuedCapture,
 } from '@/lib/storage';
-import { queryKeys } from '@/lib/queryKeys';
-import { evidenceRepo } from '@/lib/repositories/evidence';
 
 /** Maximum number of sync attempts before giving up on a capture */
 const MAX_ATTEMPTS = 3;

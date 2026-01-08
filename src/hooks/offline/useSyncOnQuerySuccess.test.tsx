@@ -8,10 +8,13 @@
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { ReactNode } from 'react';
+
+import * as features from '@/lib/features';
 
 import { useSyncOnQuerySuccess } from './useSyncOnQuerySuccess';
-import * as features from '@/lib/features';
+
+import type { ReactNode } from 'react';
+
 
 // Mock features
 vi.mock('@/lib/features', () => ({

@@ -3,8 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-import { EvidencePanel } from './EvidencePanel';
 import { createMockEvidence } from '@/test/factories/evidence';
+
+import { EvidencePanel } from './EvidencePanel';
 
 // Mock sonner toast
 vi.mock('sonner', () => ({

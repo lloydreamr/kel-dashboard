@@ -2,8 +2,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { EvidenceEditForm } from './EvidenceEditForm';
 import { createMockEvidence } from '@/test/factories/evidence';
+
+import { EvidenceEditForm } from './EvidenceEditForm';
 
 const mockEvidence = createMockEvidence({
   id: 'e1',

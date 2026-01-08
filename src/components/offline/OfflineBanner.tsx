@@ -18,13 +18,13 @@
  * ```
  */
 
-import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Wifi, WifiOff } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 
 import { useOnlineStatus } from '@/hooks/offline';
-import { FEATURES } from '@/lib/features';
 import { ANIMATION } from '@/lib/constants/animations';
+import { FEATURES } from '@/lib/features';
 import { cn } from '@/lib/utils';
 
 export interface OfflineBannerProps {

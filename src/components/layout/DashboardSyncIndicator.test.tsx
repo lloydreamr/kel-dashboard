@@ -10,8 +10,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { DashboardSyncIndicator } from './DashboardSyncIndicator';
 import * as features from '@/lib/features';
+
+import { DashboardSyncIndicator } from './DashboardSyncIndicator';
 
 // Mock the offline hooks
 const mockUpdateSyncTime = vi.fn();

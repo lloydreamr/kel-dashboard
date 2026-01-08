@@ -2,8 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { EvidenceItem } from './EvidenceItem';
 import { createMockEvidence } from '@/test/factories';
+
+import { EvidenceItem } from './EvidenceItem';
 
 // Use factory with specific overrides for display tests
 const mockEvidence = createMockEvidence({

@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { CompetitorDetailSheet } from './CompetitorDetailSheet';
+
 import type { CompetitorDataPoint } from '@/types';
 
 // Mock framer-motion (used by SwipeableSheetContent)
