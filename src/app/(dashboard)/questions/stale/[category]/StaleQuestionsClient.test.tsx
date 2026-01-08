@@ -57,6 +57,7 @@ function createMockQuestion(overrides: Partial<{
   category: string;
   status: string;
   updated_at: string;
+  evidence_count: number;
 }> = {}) {
   const staleDate = new Date();
   staleDate.setDate(staleDate.getDate() - 20);
@@ -73,6 +74,7 @@ function createMockQuestion(overrides: Partial<{
     recommendation: null,
     recommendation_rationale: null,
     viewed_by_kel_at: null,
+    evidence_count: overrides.evidence_count ?? 0,
   };
 }
 

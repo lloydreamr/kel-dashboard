@@ -14,14 +14,14 @@ import { QuestionCard } from './QuestionCard';
 import { QuestionsListSkeleton } from './QuestionsListSkeleton';
 import { VirtualizedQuestionsList } from './VirtualizedQuestionsList';
 
-import type { Question, QuestionCategory } from '@/types/question';
+import type { QuestionWithEvidenceCount, QuestionCategory } from '@/types/question';
 
 /** Threshold for enabling virtualization (AC #7: 200+ questions) */
 const VIRTUALIZATION_THRESHOLD = 200;
 
 interface QuestionsListProps {
   /** Optional questions to display. If not provided, fetches from useQuestions. */
-  questions?: Question[];
+  questions?: QuestionWithEvidenceCount[];
   /** Optional loading state override. Only used when questions prop is provided. */
   isLoading?: boolean;
   /** Optional error override. Only used when questions prop is provided. */
@@ -38,8 +38,8 @@ interface QuestionsListProps {
   viewMode?: 'grouped' | 'flat';
 }
 
-function groupByCategory(questions: Question[]): Record<QuestionCategory, Question[]> {
-  const grouped: Record<QuestionCategory, Question[]> = {
+function groupByCategory(questions: QuestionWithEvidenceCount[]): Record<QuestionCategory, QuestionWithEvidenceCount[]> {
+  const grouped: Record<QuestionCategory, QuestionWithEvidenceCount[]> = {
     market: [],
     product: [],
     distribution: [],

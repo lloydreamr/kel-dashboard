@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { VirtualizedQuestionsList } from './VirtualizedQuestionsList';
 
-import type { Question } from '@/types/database';
+import type { QuestionWithEvidenceCount } from '@/types/question';
 
 // Mock Next.js navigation (needed by QuestionCard)
 vi.mock('next/navigation', () => ({
@@ -30,7 +30,7 @@ vi.mock('@/hooks/auth/useProfile', () => ({
 }));
 
 // Generate mock questions
-function generateMockQuestions(count: number): Question[] {
+function generateMockQuestions(count: number): QuestionWithEvidenceCount[] {
   return Array.from({ length: count }, (_, i) => ({
     id: `q-${i}`,
     title: `Question ${i}`,
@@ -43,6 +43,7 @@ function generateMockQuestions(count: number): Question[] {
     created_by: 'user-123',
     created_at: '2025-12-23T10:00:00Z',
     updated_at: '2025-12-23T10:00:00Z',
+    evidence_count: i % 5, // Vary evidence count for testing
   }));
 }
 

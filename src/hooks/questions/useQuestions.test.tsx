@@ -5,10 +5,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useQuestions } from './useQuestions';
 
 // Mock dependencies
-const mockGetAll = vi.fn();
+const mockGetAllWithEvidenceCount = vi.fn();
 vi.mock('@/lib/repositories/questions', () => ({
   questionsRepo: {
-    getAll: () => mockGetAll(),
+    getAllWithEvidenceCount: () => mockGetAllWithEvidenceCount(),
   },
 }));
 
@@ -31,7 +31,7 @@ describe('useQuestions', () => {
   });
 
   it('returns query result with data, isLoading, and error', () => {
-    mockGetAll.mockImplementation(() => new Promise(() => {})); // Never resolves
+    mockGetAllWithEvidenceCount.mockImplementation(() => new Promise(() => {})); // Never resolves
 
     const { result } = renderHook(() => useQuestions(), {
       wrapper: createWrapper(),
@@ -52,6 +52,7 @@ describe('useQuestions', () => {
         created_by: 'user-123',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        evidence_count: 2,
       },
       {
         id: 'q-2',
@@ -61,9 +62,10 @@ describe('useQuestions', () => {
         created_by: 'user-123',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        evidence_count: 0,
       },
     ];
-    mockGetAll.mockResolvedValue(mockQuestions);
+    mockGetAllWithEvidenceCount.mockResolvedValue(mockQuestions);
 
     const { result } = renderHook(() => useQuestions(), {
       wrapper: createWrapper(),
@@ -73,13 +75,13 @@ describe('useQuestions', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(mockGetAll).toHaveBeenCalledTimes(1);
+    expect(mockGetAllWithEvidenceCount).toHaveBeenCalledTimes(1);
     expect(result.current.data).toEqual(mockQuestions);
     expect(result.current.data).toHaveLength(2);
   });
 
   it('returns empty array when no questions exist', async () => {
-    mockGetAll.mockResolvedValue([]);
+    mockGetAllWithEvidenceCount.mockResolvedValue([]);
 
     const { result } = renderHook(() => useQuestions(), {
       wrapper: createWrapper(),
@@ -94,7 +96,7 @@ describe('useQuestions', () => {
 
   it('handles error from repository', async () => {
     const error = new Error('Failed to fetch questions');
-    mockGetAll.mockRejectedValue(error);
+    mockGetAllWithEvidenceCount.mockRejectedValue(error);
 
     const { result } = renderHook(() => useQuestions(), {
       wrapper: createWrapper(),

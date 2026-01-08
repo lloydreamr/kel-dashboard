@@ -16,6 +16,8 @@ export {
   createMockQuestion,
   createMockQuestionReadyForKel,
   createMockStaleQuestion,
+  createMockQuestionWithEvidenceCount,
+  createMockStaleQuestionWithEvidenceCount,
 } from './question';
 
 // Evidence factories

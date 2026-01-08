@@ -20,11 +20,11 @@ import {
 
 import { useQuestions } from './useQuestions';
 
-import type { Question } from '@/types/database';
+import type { QuestionWithEvidenceCount } from '@/types/question';
 
 interface FilteredQuestionsResult {
   /** Filtered questions based on current status and category filters */
-  questions: Question[];
+  questions: QuestionWithEvidenceCount[];
   /** Count of questions for each status filter option */
   counts: Record<StatusFilterKey, number>;
   /** Count of questions for each category (independent of status filter) */

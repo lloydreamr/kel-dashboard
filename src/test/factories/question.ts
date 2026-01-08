@@ -6,6 +6,7 @@
  */
 
 import type { Question } from '@/types/database';
+import type { QuestionWithEvidenceCount } from '@/types/question';
 
 /**
  * Creates a mock Question with sensible defaults.
@@ -66,4 +67,35 @@ export function createMockStaleQuestion(overrides?: Partial<Question>): Question
     updated_at: thirtyDaysAgo.toISOString(),
     ...overrides,
   });
+}
+
+/**
+ * Creates a mock Question with evidence count.
+ * Used for components that display evidence counts (QuestionCard, QuestionsList).
+ *
+ * @example
+ * const question = createMockQuestionWithEvidenceCount({ evidence_count: 5 });
+ */
+export function createMockQuestionWithEvidenceCount(
+  overrides?: Partial<QuestionWithEvidenceCount>
+): QuestionWithEvidenceCount {
+  const { evidence_count = 0, ...questionOverrides } = overrides ?? {};
+  return {
+    ...createMockQuestion(questionOverrides),
+    evidence_count,
+  };
+}
+
+/**
+ * Creates a mock stale Question with evidence count.
+ * Combines staleness (30 days old) with evidence count for freshness testing.
+ */
+export function createMockStaleQuestionWithEvidenceCount(
+  overrides?: Partial<QuestionWithEvidenceCount>
+): QuestionWithEvidenceCount {
+  const { evidence_count = 0, ...questionOverrides } = overrides ?? {};
+  return {
+    ...createMockStaleQuestion(questionOverrides),
+    evidence_count,
+  };
 }

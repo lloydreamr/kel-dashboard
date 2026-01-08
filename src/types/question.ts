@@ -5,12 +5,22 @@
  * for working with strategic questions.
  */
 
+import type { Question } from './database';
+
 // Re-export database types for convenience
 export type {
   Question,
   QuestionInsert,
   QuestionUpdate,
 } from './database';
+
+/**
+ * Question with evidence count for list display.
+ * Includes the count of evidence items attached to the question.
+ */
+export interface QuestionWithEvidenceCount extends Question {
+  evidence_count: number;
+}
 
 /**
  * Valid question status values.

@@ -12,10 +12,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useStaleQuestionsByCategory } from './useStaleQuestionsByCategory';
 
 // Mock the repository
-const mockGetByCategory = vi.fn();
+const mockGetByCategoryWithEvidenceCount = vi.fn();
 vi.mock('@/lib/repositories/questions', () => ({
   questionsRepo: {
-    getByCategory: () => mockGetByCategory(),
+    getByCategoryWithEvidenceCount: () => mockGetByCategoryWithEvidenceCount(),
   },
 }));
 
@@ -40,6 +40,7 @@ function createMockQuestion(overrides: Partial<{
   updated_at: string;
   created_at: string;
   created_by: string;
+  evidence_count: number;
 }> = {}) {
   return {
     id: overrides.id ?? 'q-1',
@@ -53,6 +54,7 @@ function createMockQuestion(overrides: Partial<{
     recommendation: null,
     recommendation_rationale: null,
     viewed_by_kel_at: null,
+    evidence_count: overrides.evidence_count ?? 0,
   };
 }
 
@@ -67,7 +69,7 @@ describe('useStaleQuestionsByCategory', () => {
       category: 'market',
       updated_at: new Date().toISOString(),
     });
-    mockGetByCategory.mockResolvedValue([freshQuestion]);
+    mockGetByCategoryWithEvidenceCount.mockResolvedValue([freshQuestion]);
 
     // Act
     const { result } = renderHook(
@@ -96,7 +98,7 @@ describe('useStaleQuestionsByCategory', () => {
       category: 'market',
       updated_at: new Date().toISOString(),
     });
-    mockGetByCategory.mockResolvedValue([staleQuestion, freshQuestion]);
+    mockGetByCategoryWithEvidenceCount.mockResolvedValue([staleQuestion, freshQuestion]);
 
     // Act
     const { result } = renderHook(
@@ -128,7 +130,7 @@ describe('useStaleQuestionsByCategory', () => {
       category: 'product',
       updated_at: staleDate2.toISOString(),
     });
-    mockGetByCategory.mockResolvedValue([staleQuestion1, staleQuestion2]);
+    mockGetByCategoryWithEvidenceCount.mockResolvedValue([staleQuestion1, staleQuestion2]);
 
     // Act
     const { result } = renderHook(
@@ -144,7 +146,7 @@ describe('useStaleQuestionsByCategory', () => {
 
   it('returns empty stale questions array when no questions exist', async () => {
     // Arrange
-    mockGetByCategory.mockResolvedValue([]);
+    mockGetByCategoryWithEvidenceCount.mockResolvedValue([]);
 
     // Act
     const { result } = renderHook(
@@ -160,7 +162,7 @@ describe('useStaleQuestionsByCategory', () => {
 
   it('handles loading state correctly', () => {
     // Arrange - delay the response
-    mockGetByCategory.mockImplementation(
+    mockGetByCategoryWithEvidenceCount.mockImplementation(
       () => new Promise(() => {}) // Never resolves to test loading state
     );
 
@@ -177,7 +179,7 @@ describe('useStaleQuestionsByCategory', () => {
 
   it('handles error state correctly', async () => {
     // Arrange
-    mockGetByCategory.mockRejectedValue(new Error('Database error'));
+    mockGetByCategoryWithEvidenceCount.mockRejectedValue(new Error('Database error'));
 
     // Act
     const { result } = renderHook(
@@ -201,7 +203,7 @@ describe('useStaleQuestionsByCategory', () => {
       category: 'market',
       updated_at: almostAtThreshold.toISOString(),
     });
-    mockGetByCategory.mockResolvedValue([borderlineQuestion]);
+    mockGetByCategoryWithEvidenceCount.mockResolvedValue([borderlineQuestion]);
 
     // Act
     const { result } = renderHook(
@@ -224,7 +226,7 @@ describe('useStaleQuestionsByCategory', () => {
       category: 'market',
       updated_at: oneDayPastThreshold.toISOString(),
     });
-    mockGetByCategory.mockResolvedValue([staleQuestion]);
+    mockGetByCategoryWithEvidenceCount.mockResolvedValue([staleQuestion]);
 
     // Act
     const { result } = renderHook(

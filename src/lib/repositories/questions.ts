@@ -16,6 +16,7 @@ import type {
   QuestionCategory,
   CreateQuestionInput,
   UpdateQuestionInput,
+  QuestionWithEvidenceCount,
 } from '@/types/question';
 
 /**
@@ -42,6 +43,32 @@ export const questionsRepo = {
     }
 
     return data ?? [];
+  },
+
+  /**
+   * Get all non-archived questions with evidence counts
+   * Returns questions with the count of attached evidence items
+   *
+   * @returns Array of questions with evidence_count
+   * @throws RepositoryError on database errors
+   */
+  getAllWithEvidenceCount: async (): Promise<QuestionWithEvidenceCount[]> => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('questions')
+      .select('*, evidence(count)')
+      .neq('status', 'archived')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw mapPostgrestError(error);
+    }
+
+    // Transform the result to flatten evidence count
+    return (data ?? []).map((question) => ({
+      ...question,
+      evidence_count: question.evidence?.[0]?.count ?? 0,
+    }));
   },
 
   /**
@@ -116,6 +143,33 @@ export const questionsRepo = {
     }
 
     return data ?? [];
+  },
+
+  /**
+   * Get questions filtered by category with evidence counts
+   *
+   * @param category - Question category to filter by
+   * @returns Array of questions with evidence_count
+   * @throws RepositoryError on database errors
+   */
+  getByCategoryWithEvidenceCount: async (category: QuestionCategory): Promise<QuestionWithEvidenceCount[]> => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('questions')
+      .select('*, evidence(count)')
+      .eq('category', category)
+      .neq('status', 'archived')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw mapPostgrestError(error);
+    }
+
+    // Transform the result to flatten evidence count
+    return (data ?? []).map((question) => ({
+      ...question,
+      evidence_count: question.evidence?.[0]?.count ?? 0,
+    }));
   },
 
   /**
@@ -385,5 +439,5 @@ export const questionsRepo = {
 };
 
 // Re-export types for consumers
-export type { Question, CreateQuestionInput, UpdateQuestionInput };
+export type { Question, CreateQuestionInput, UpdateQuestionInput, QuestionWithEvidenceCount };
 export type { QuestionStatus, QuestionCategory };

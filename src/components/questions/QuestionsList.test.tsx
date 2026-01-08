@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { QuestionsList } from './QuestionsList';
 
-import type { Question } from '@/types/question';
+import type { QuestionWithEvidenceCount } from '@/types/question';
 import type { Profile } from '@/types';
 
 // Mock Next.js navigation (needed by QuestionCard)
@@ -51,7 +51,7 @@ function createMockProfile(role: 'maho' | 'kel'): Partial<Profile> {
 // Mock date for consistent relative time
 const mockNow = new Date('2025-12-23T12:00:00Z');
 
-const mockQuestions: Question[] = [
+const mockQuestions: QuestionWithEvidenceCount[] = [
   {
     id: 'q-1',
     title: 'Market question 1',
@@ -64,6 +64,7 @@ const mockQuestions: Question[] = [
     created_by: 'user-123',
     created_at: '2025-12-23T10:00:00Z',
     updated_at: '2025-12-23T10:00:00Z',
+    evidence_count: 2,
   },
   {
     id: 'q-2',
@@ -77,6 +78,7 @@ const mockQuestions: Question[] = [
     created_by: 'user-123',
     created_at: '2025-12-23T09:00:00Z',
     updated_at: '2025-12-23T09:00:00Z',
+    evidence_count: 5,
   },
   {
     id: 'q-3',
@@ -90,6 +92,7 @@ const mockQuestions: Question[] = [
     created_by: 'user-123',
     created_at: '2025-12-23T08:00:00Z',
     updated_at: '2025-12-23T08:00:00Z',
+    evidence_count: 0,
   },
 ];
 

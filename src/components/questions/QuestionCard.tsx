@@ -3,10 +3,11 @@
 /**
  * QuestionCard Component
  *
- * Displays a question summary with status, stale badge, and quick actions.
+ * Displays a question summary with status, stale badge, evidence count, and quick actions.
  * Quick actions menu visible only for Maho.
  */
 
+import { FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { StaleDataBadge } from '@/components/ui/StaleDataBadge';
@@ -16,10 +17,10 @@ import { formatRelativeTime } from '@/lib/utils/date';
 import { QuestionCardActions } from './QuestionCardActions';
 import { StatusBadge } from './StatusBadge';
 
-import type { Question } from '@/types/question';
+import type { QuestionWithEvidenceCount } from '@/types/question';
 
 interface QuestionCardProps {
-  question: Question;
+  question: QuestionWithEvidenceCount;
 }
 
 export function QuestionCard({ question }: QuestionCardProps) {
@@ -61,9 +62,17 @@ export function QuestionCard({ question }: QuestionCardProps) {
           </span>
         </div>
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">
-        {formatRelativeTime(question.created_at)}
-      </p>
+      <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+        <span>{formatRelativeTime(question.created_at)}</span>
+        <span
+          className="flex items-center gap-1"
+          data-testid="evidence-count"
+          title={`${question.evidence_count} evidence item${question.evidence_count !== 1 ? 's' : ''}`}
+        >
+          <FileText className="h-3 w-3" />
+          {question.evidence_count}
+        </span>
+      </div>
     </div>
   );
 }

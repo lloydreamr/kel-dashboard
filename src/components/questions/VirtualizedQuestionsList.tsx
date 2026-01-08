@@ -14,10 +14,10 @@ import { useRef } from 'react';
 
 import { QuestionCard } from './QuestionCard';
 
-import type { Question } from '@/types/database';
+import type { QuestionWithEvidenceCount } from '@/types/question';
 
 interface VirtualizedQuestionsListProps {
-  questions: Question[];
+  questions: QuestionWithEvidenceCount[];
   /**
    * Maximum height of the scroll container.
    * Defaults to 'calc(100vh - 300px)' which works for typical page layouts.

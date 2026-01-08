@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { QuestionCard } from './QuestionCard';
-import { createMockQuestion } from '@/test/factories';
+import { createMockQuestionWithEvidenceCount } from '@/test/factories';
 
 // Mock date to get consistent relative time output
 const mockDate = new Date('2025-12-23T12:00:00Z');
@@ -42,7 +42,7 @@ describe('QuestionCard', () => {
   });
 
   // Use factory with specific overrides for time-sensitive tests
-  const mockQuestion = createMockQuestion({
+  const mockQuestion = createMockQuestionWithEvidenceCount({
     id: 'q-123',
     title: 'What is the target market size?',
     description: 'Research the total addressable market',
@@ -50,6 +50,7 @@ describe('QuestionCard', () => {
     status: 'draft',
     created_at: '2025-12-23T10:00:00Z', // 2 hours ago from mockDate
     updated_at: '2025-12-23T10:00:00Z',
+    evidence_count: 3,
   });
 
   it('renders with correct test ID', () => {
@@ -97,6 +98,18 @@ describe('QuestionCard', () => {
   it('displays relative time', () => {
     render(<QuestionCard question={mockQuestion} />);
     expect(screen.getByText('2 hours ago')).toBeInTheDocument();
+  });
+
+  it('displays evidence count', () => {
+    render(<QuestionCard question={mockQuestion} />);
+    expect(screen.getByTestId('evidence-count')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+  });
+
+  it('shows zero evidence count', () => {
+    const noEvidenceQuestion = { ...mockQuestion, evidence_count: 0 };
+    render(<QuestionCard question={noEvidenceQuestion} />);
+    expect(screen.getByTestId('evidence-count')).toHaveTextContent('0');
   });
 
   it('displays "Just now" for very recent questions', () => {
