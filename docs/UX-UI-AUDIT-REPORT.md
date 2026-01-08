@@ -19,7 +19,7 @@ The Kel Dashboard has **solid core functionality** with well-designed user flows
 - **Medium Priority Issues:** 3 (3 resolved)
 
 ### Verdict
-**All P0, P1, and P2 issues resolved.** Only low-priority polish items (P3) remain: keyboard shortcuts and evidence section.
+**All P0, P1, P2, and most P3 issues resolved.** Only P3-3 (Evidence Section) remains as a potential future enhancement pending product clarification.
 
 ---
 
@@ -402,18 +402,29 @@ Feature was already implemented with comprehensive skeleton loading across all p
 
 ## Low Priority Issues (P3)
 
-### P3-1: No Keyboard Shortcuts
+### P3-1: No Keyboard Shortcuts ✅ RESOLVED
 
 **Problem Statement:**
 Power users cannot navigate or take actions via keyboard shortcuts.
 
 **Potential Shortcuts:**
-- `N` - New question
-- `?` - Help/shortcuts overlay
-- `1/2/3/4` - Navigate to main sections
-- `Esc` - Close modals
+- [x] `N` - New question
+- [x] `?` - Help/shortcuts overlay
+- [x] `1/2/3/4` - Navigate to main sections
+- [x] `Esc` - Close modals
 
 **Effort Estimate:** Medium (2 days)
+
+**Resolution (2026-01-08):**
+Implemented global keyboard shortcuts system with help overlay:
+- `useKeyboardShortcuts.ts` - Hook with input guards (won't fire in inputs/textareas)
+- `KeyboardShortcutsOverlay.tsx` - Modal showing all shortcuts, triggered by `?` key
+- Integration in `DashboardContent.tsx` - Enabled globally, disabled during pitch mode
+- `N` navigates to `/questions?action=new` which auto-opens the create form
+- `1-4` navigate to Dashboard, Questions, Visualization, Progress
+- `Esc` closes overlays even when focused in input fields
+- Modifier keys (Ctrl/Cmd/Alt) blocked to prevent conflicts with browser shortcuts
+- 33 unit tests covering all shortcuts and edge cases
 
 ---
 
@@ -524,6 +535,7 @@ Document these as examples of good patterns to maintain:
 | ~~Improve disabled button contrast~~ | P1 | ✅ Done |
 | ~~Add consistent loading skeletons~~ | P2 | ✅ Done |
 | ~~Review form default values~~ | P2 | ✅ Done |
+| ~~Add keyboard shortcuts for power users~~ | P3 | ✅ Done |
 
 ---
 
@@ -563,6 +575,7 @@ kel-dashboard/.playwright-mcp/
 | 1.7 | 2026-01-08 | Claude | P2-2 Status Filtering resolved (was already implemented) |
 | 1.8 | 2026-01-08 | Claude | P2-1 Category Default resolved (was already implemented) |
 | 1.9 | 2026-01-08 | Claude | P2-3 Loading States resolved (was already implemented) - All P0, P1, and P2 issues now resolved |
+| 2.0 | 2026-01-08 | Claude | P3-1 Keyboard Shortcuts resolved (implemented useKeyboardShortcuts hook + KeyboardShortcutsOverlay) |
 
 ---
 

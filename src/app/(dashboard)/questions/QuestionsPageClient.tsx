@@ -2,7 +2,7 @@
 
 import { Archive } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 
 import { ArchivedQuestionsList } from '@/components/questions/ArchivedQuestionsList';
 import { CategoryTabs } from '@/components/questions/CategoryTabs';
@@ -107,6 +107,20 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
   }, []);
+
+  // Handle keyboard shortcut action=new (P3-1)
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'new') {
+      setShowForm(true);
+      setShowArchived(false);
+      // Clean up URL after opening form
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('action');
+      const newUrl = params.toString() ? `?${params.toString()}` : '/questions';
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [searchParams, router]);
 
   // Memoize renderEmptyState to prevent recreation on every render
   const renderEmptyState = useMemo(() => {

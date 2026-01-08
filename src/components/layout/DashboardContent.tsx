@@ -3,6 +3,7 @@
  *
  * Client Component wrapper for dashboard layout.
  * Handles pitch mode visibility for sidebar and mobile navigation.
+ * Also provides global keyboard shortcuts (P3-1).
  *
  * This component exists because layout.tsx is a Server Component
  * (uses async, cookies()) and cannot use React hooks like Zustand.
@@ -11,6 +12,7 @@
  *
  * Story 11.1: Pitch Mode View
  * Story 11.2: Added PDF export integration via Zustand callbacks
+ * P3-1: Added global keyboard shortcuts
  *
  * @example
  * ```tsx
@@ -27,8 +29,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useCallback, useState } from 'react';
 
+import { KeyboardShortcutsOverlay } from '@/components/layout/KeyboardShortcutsOverlay';
 import { PitchModeHeader } from '@/components/visualization';
+import { useKeyboardShortcuts } from '@/hooks/ui/useKeyboardShortcuts';
 import { cn } from '@/lib/utils';
 import { usePitchModeStore } from '@/stores/pitchMode';
 
@@ -50,6 +55,24 @@ export function DashboardContent({
   const isPitchMode = usePitchModeStore((s) => s.isPitchMode);
   const isGeneratingPdf = usePitchModeStore((s) => s.isGeneratingPdf);
   const onDownloadPdf = usePitchModeStore((s) => s.onDownloadPdf);
+
+  // Keyboard shortcuts state (P3-1)
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+
+  const handleToggleHelp = useCallback(() => {
+    setShowShortcutsHelp((prev) => !prev);
+  }, []);
+
+  const handleCloseHelp = useCallback(() => {
+    setShowShortcutsHelp(false);
+  }, []);
+
+  // Enable global keyboard shortcuts
+  useKeyboardShortcuts({
+    enabled: !isPitchMode, // Disable during pitch mode
+    onToggleHelp: handleToggleHelp,
+    onEscape: handleCloseHelp,
+  });
 
   // Exit handler navigates to visualization page without pitch mode.
   // The URL change triggers usePitchMode hook in page to sync store.
@@ -94,6 +117,12 @@ export function DashboardContent({
         {/* Page Content */}
         <main className="flex-1 p-4 md:p-6 overflow-auto">{children}</main>
       </div>
+
+      {/* Keyboard Shortcuts Help Overlay (P3-1) */}
+      <KeyboardShortcutsOverlay
+        open={showShortcutsHelp}
+        onOpenChange={setShowShortcutsHelp}
+      />
     </div>
   );
 }
