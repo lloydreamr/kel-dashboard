@@ -34,6 +34,7 @@ export {
 } from './recommendationSchema';
 export { RestoreButton } from './RestoreButton';
 export { SendToKelButton } from './SendToKelButton';
+export { SendToKelChecklist } from './SendToKelChecklist';
 export { StatusBadge } from './StatusBadge';
 export type { StatusBadgeProps } from './StatusBadge';
 export { StatusFilter } from './StatusFilter';

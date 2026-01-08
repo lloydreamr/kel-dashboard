@@ -30,6 +30,7 @@ import { QuestionEditForm } from '@/components/questions/QuestionEditForm';
 import { RecommendationDisplay } from '@/components/questions/RecommendationDisplay';
 import { RecommendationForm } from '@/components/questions/RecommendationForm';
 import { SendToKelButton } from '@/components/questions/SendToKelButton';
+import { SendToKelChecklist } from '@/components/questions/SendToKelChecklist';
 import { StatusBadge } from '@/components/questions/StatusBadge';
 import { UpdateStaleButton } from '@/components/questions/UpdateStaleButton';
 import { StaleDataBadge } from '@/components/ui/StaleDataBadge';
@@ -342,9 +343,14 @@ export function QuestionDetailClient({
             />
           )}
 
-          {/* Send to Kel button (only for draft status) */}
+          {/* Send to Kel section (only for draft status) */}
           {isDraft && (
-            <div className="mt-6">
+            <div className="mt-6 space-y-3">
+              <SendToKelChecklist
+                hasEvidence={evidenceCount > 0}
+                hasRecommendation={hasRecommendation}
+                evidenceCount={evidenceCount}
+              />
               <SendToKelButton
                 hasEvidence={evidenceCount > 0}
                 hasRecommendation={hasRecommendation}
