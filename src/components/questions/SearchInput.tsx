@@ -34,7 +34,7 @@ export function SearchInput({
 }: SearchInputProps) {
   // Internal state for immediate input updates
   const [internalValue, setInternalValue] = useState(value);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Sync internal value when external value changes
   useEffect(() => {
