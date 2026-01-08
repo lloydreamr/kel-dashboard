@@ -5,20 +5,20 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 min-h-[48px]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 min-h-[48px]",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:bg-primary/30",
+          "bg-primary text-primary-foreground shadow hover:bg-primary/90 hover:disabled:bg-primary",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 disabled:bg-destructive/30",
+          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:disabled:bg-destructive",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground disabled:bg-background/50 disabled:border-input/50",
+          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground hover:disabled:bg-background disabled:border-muted",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 disabled:bg-secondary/30",
-        ghost: "hover:bg-accent hover:text-accent-foreground disabled:bg-transparent",
-        link: "text-primary underline-offset-4 hover:underline disabled:text-primary/50 disabled:no-underline",
+          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 hover:disabled:bg-secondary",
+        ghost: "hover:bg-accent hover:text-accent-foreground hover:disabled:bg-transparent",
+        link: "text-primary underline-offset-4 hover:underline disabled:no-underline",
       },
       size: {
         default: "h-9 px-4 py-2",

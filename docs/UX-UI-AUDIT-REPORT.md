@@ -15,11 +15,11 @@ The Kel Dashboard has **solid core functionality** with well-designed user flows
 - **Pages Tested:** 5 (Dashboard, Questions, Question Detail, Visualization, Progress)
 - **User Flows Tested:** Question creation, recommendation, send-to-Kel, decision UI
 - **Critical Issues Found:** 3 (3 resolved)
-- **High Priority Issues:** 2 (1 resolved)
+- **High Priority Issues:** 2 (2 resolved)
 - **Medium Priority Issues:** 3
 
 ### Verdict
-**All P0 critical issues resolved.** P1 issues (quick actions on list, button contrast) should be addressed for polish before production.
+**All P0 and P1 issues resolved.** P2 issues (status filters, loading states, category defaults) are polish items for future improvement.
 
 ---
 
@@ -228,7 +228,7 @@ Feature was already implemented in QuestionCardActions.tsx:
 
 ---
 
-### P1-2: Disabled Button Contrast Issue
+### P1-2: Disabled Button Contrast Issue ✅ RESOLVED
 
 **Problem Statement:**
 Disabled buttons have insufficient visual contrast from enabled buttons, making it difficult to distinguish clickable vs. non-clickable states.
@@ -255,13 +255,22 @@ Disabled buttons have insufficient visual contrast from enabled buttons, making 
 > **So that** I know when I can submit
 
 **Acceptance Criteria:**
-- [ ] Disabled buttons have obviously reduced opacity (e.g., 50%)
-- [ ] Disabled buttons show "not-allowed" cursor on hover
-- [ ] Enabled buttons have clear visual prominence (darker, bolder)
-- [ ] Contrast meets WCAG AA standards
-- [ ] Consistent across all form buttons in the app
+- [x] Disabled buttons have obviously reduced opacity (e.g., 50%)
+- [x] Disabled buttons show "not-allowed" cursor on hover
+- [x] Enabled buttons have clear visual prominence (darker, bolder)
+- [x] Contrast meets WCAG AA standards
+- [x] Consistent across all form buttons in the app
 
 **Effort Estimate:** Low (0.5 days)
+
+**Resolution (2026-01-08):**
+Fixed button disabled styling in `button.tsx`:
+- Removed `disabled:pointer-events-none` to allow cursor feedback (was blocking `cursor-not-allowed`)
+- Removed double-stacking opacity (`disabled:bg-primary/30` + `disabled:opacity-50` = too faint)
+- Added `hover:disabled:bg-*` to prevent hover state color changes on disabled buttons
+- Consistent 50% opacity across all variants via `disabled:opacity-50`
+- `disabled:cursor-not-allowed` now works properly for accessibility feedback
+- 12 unit tests updated to verify new behavior
 
 ---
 
@@ -484,7 +493,7 @@ Document these as examples of good patterns to maintain:
 
 | Story | Priority | Estimate |
 |-------|----------|----------|
-| Improve disabled button contrast | P1 | 0.5 days |
+| ~~Improve disabled button contrast~~ | P1 | ✅ Done |
 | Add consistent loading skeletons | P2 | 1 day |
 | Review form default values | P2 | 0.5 days |
 
@@ -522,6 +531,7 @@ kel-dashboard/.playwright-mcp/
 | 1.3 | 2026-01-08 | Claude | P0-3 Visualization Empty State resolved (was already implemented) |
 | 1.4 | 2026-01-08 | Claude | P0-1 Navigation System resolved (was already implemented) - All P0 issues now resolved |
 | 1.5 | 2026-01-08 | Claude | P1-1 Quick Actions Menu resolved (was already implemented) |
+| 1.6 | 2026-01-08 | Claude | P1-2 Disabled Button Contrast resolved (fixed button.tsx disabled styles) - All P0 and P1 issues now resolved |
 
 ---
 

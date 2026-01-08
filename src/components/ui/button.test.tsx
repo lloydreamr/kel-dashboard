@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest';
 import { Button, buttonVariants } from './button';
 
 describe('Button', () => {
-  describe('Disabled State Styling (AC1, AC2, AC3)', () => {
+  describe('Disabled State Styling (P1-2 UX Audit)', () => {
     it('applies disabled styles when disabled prop is true', () => {
       render(<Button disabled data-testid="disabled-button">Disabled</Button>);
       const button = screen.getByTestId('disabled-button');
@@ -12,10 +12,10 @@ describe('Button', () => {
       // AC1: Disabled button has reduced opacity (50%)
       expect(button).toHaveClass('disabled:opacity-50');
 
-      // AC1: Cursor shows "not-allowed" on hover
+      // AC2: Cursor shows "not-allowed" on hover
       expect(button).toHaveClass('disabled:cursor-not-allowed');
 
-      // AC1: Button is disabled in DOM
+      // Button is disabled in DOM
       expect(button).toBeDisabled();
     });
 
@@ -23,61 +23,62 @@ describe('Button', () => {
       render(<Button data-testid="enabled-button">Enabled</Button>);
       const button = screen.getByTestId('enabled-button');
 
-      // AC2: Button is not disabled
+      // AC3: Enabled button is not disabled
       expect(button).not.toBeDisabled();
 
-      // AC2: Has full opacity (100%) - disabled classes not active
+      // Has full opacity (100%) - disabled classes not active
       expect(button).toHaveClass('disabled:opacity-50'); // class exists but not active
     });
 
-    it('applies disabled background styles for default variant', () => {
+    it('applies hover:disabled:bg override for default variant to prevent hover effects', () => {
       const classes = buttonVariants({ variant: 'default' });
 
-      // AC1: Button color is visually muted (30% of primary)
-      expect(classes).toContain('disabled:bg-primary/30');
+      // AC5: Disabled buttons don't show hover state color changes
+      expect(classes).toContain('hover:disabled:bg-primary');
     });
 
-    it('applies disabled background styles for destructive variant', () => {
+    it('applies hover:disabled:bg override for destructive variant', () => {
       const classes = buttonVariants({ variant: 'destructive' });
 
-      // AC1: Destructive buttons also get muted background
-      expect(classes).toContain('disabled:bg-destructive/30');
+      // AC5: Destructive disabled buttons don't show hover state
+      expect(classes).toContain('hover:disabled:bg-destructive');
     });
 
     it('applies disabled border styles for outline variant', () => {
       const classes = buttonVariants({ variant: 'outline' });
 
-      // AC1: Outline buttons get muted background and border
-      expect(classes).toContain('disabled:bg-background/50');
-      expect(classes).toContain('disabled:border-input/50');
+      // AC5: Outline buttons get muted border
+      expect(classes).toContain('disabled:border-muted');
+      expect(classes).toContain('hover:disabled:bg-background');
     });
 
-    it('applies disabled background styles for secondary variant', () => {
+    it('applies hover:disabled:bg override for secondary variant', () => {
       const classes = buttonVariants({ variant: 'secondary' });
 
-      expect(classes).toContain('disabled:bg-secondary/30');
+      expect(classes).toContain('hover:disabled:bg-secondary');
     });
 
     it('applies transparent background for ghost variant when disabled', () => {
       const classes = buttonVariants({ variant: 'ghost' });
 
-      expect(classes).toContain('disabled:bg-transparent');
+      expect(classes).toContain('hover:disabled:bg-transparent');
     });
 
-    it('applies muted text and removes underline for link variant when disabled', () => {
+    it('removes underline for link variant when disabled', () => {
       const classes = buttonVariants({ variant: 'link' });
 
-      // AC1: Link buttons get muted text color
-      expect(classes).toContain('disabled:text-primary/50');
+      // AC5: Link buttons remove underline when disabled
       expect(classes).toContain('disabled:no-underline');
     });
 
-    it('prevents pointer events on disabled buttons', () => {
-      render(<Button disabled data-testid="no-pointer-events">No Events</Button>);
-      const button = screen.getByTestId('no-pointer-events');
+    it('allows pointer events for cursor feedback (AC2: cursor-not-allowed)', () => {
+      render(<Button disabled data-testid="cursor-button">Cursor</Button>);
+      const button = screen.getByTestId('cursor-button');
 
-      // AC1: Disabled buttons prevent pointer events
-      expect(button).toHaveClass('disabled:pointer-events-none');
+      // We intentionally DON'T use pointer-events-none
+      // This allows cursor:not-allowed to work for accessibility
+      expect(button).not.toHaveClass('disabled:pointer-events-none');
+      expect(button).toHaveClass('disabled:cursor-not-allowed');
     });
   });
 
@@ -127,7 +128,7 @@ describe('Button', () => {
         // All variants have core disabled styles
         expect(classes).toContain('disabled:opacity-50');
         expect(classes).toContain('disabled:cursor-not-allowed');
-        expect(classes).toContain('disabled:pointer-events-none');
+        // We intentionally DON'T use pointer-events-none for accessibility
       });
     });
   });
