@@ -55,6 +55,15 @@ export const queryKeys = {
     byId: (id: string) => ['researchDocs', id] as const,
     byCategory: (category: string) => ['researchDocs', 'category', category] as const,
   },
+  entityConnections: {
+    all: ['entityConnections'] as const,
+    bySource: (type: string, id: string) =>
+      ['entityConnections', 'source', type, id] as const,
+    byTarget: (type: string, id: string) =>
+      ['entityConnections', 'target', type, id] as const,
+    related: (type: string, id: string) =>
+      ['entityConnections', 'related', type, id] as const,
+  },
 } as const;
 
 export type QueryKeys = typeof queryKeys;

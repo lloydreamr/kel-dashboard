@@ -19,6 +19,7 @@ export { milestonesRepo, milestoneNotesRepo } from './milestones';
 export { companiesRepo } from './companies';
 export { productsRepo } from './products';
 export { researchDocsRepo } from './researchDocs';
+export { entityConnectionsRepo } from './entityConnections';
 
 // Error handling utilities
 export {
@@ -43,3 +44,4 @@ export type {
 export type { Company } from './companies';
 export type { Product, ProductWithCompany } from './products';
 export type { ResearchDoc } from './researchDocs';
+export type { EntityConnection, EntityType } from './entityConnections';
