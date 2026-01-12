@@ -126,6 +126,7 @@ export function SyncIndicator({ onRefresh, className }: SyncIndicatorProps) {
                   transition={ANIMATION.fade}
                   className={cn(
                     'h-2.5 w-2.5 rounded-full',
+                    'hidden sm:block',
                     SYNC_COLORS[syncState]
                   )}
                   aria-hidden="true"

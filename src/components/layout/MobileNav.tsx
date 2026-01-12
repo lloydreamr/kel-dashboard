@@ -36,7 +36,7 @@ export function MobileNav({ userEmail, className }: MobileNavProps) {
       >
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold text-foreground">Kel Dashboard</h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <DashboardSyncIndicator />
             <button
               type="button"
