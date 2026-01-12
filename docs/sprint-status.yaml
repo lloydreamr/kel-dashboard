@@ -1,0 +1,106 @@
+# generated: 2026-01-11 (Vision Pivot: Intelligence Platform)
+# project: Kel Intelligence Platform
+# project_key: kel-intelligence
+# tracking_system: file-system
+# story_location: docs/stories
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+#
+# VISION PIVOT (2026-01-11):
+# ==========================
+# Transformed from standalone Market Intelligence Dashboard to Kel Intelligence Platform.
+# Epics now align with main Kel project numbering (14-18).
+# Focus: RAG-powered AI chat, AI-generated opportunities, unified knowledge base.
+
+generated: 2026-01-11
+project: Kel Intelligence Platform
+project_key: kel-intelligence
+tracking_system: file-system
+story_location: docs/stories
+
+development_status:
+  # ===========================================
+  # Epic 14: Knowledge Base Foundation (6 stories)
+  # Import and organize 100+ research documents into queryable database
+  # ===========================================
+  epic-14: in-progress
+  14-1-database-schema-entities: done
+  14-2-markdown-import-pipeline: done
+  14-3-companies-browse-page: done
+  14-4-products-browse-page: done
+  14-5-research-browse-page: backlog
+  14-6-entity-detail-pages: backlog
+  epic-14-retrospective: optional
+
+  # ===========================================
+  # Epic 15: AI Chat Integration (5 stories)
+  # RAG-powered conversational AI over market intelligence
+  # ===========================================
+  epic-15: backlog
+  15-1-document-embeddings-infrastructure: backlog
+  15-2-ai-chat-api-endpoint: backlog
+  15-3-ask-ai-chat-interface: backlog
+  15-4-suggested-questions: backlog
+  15-5-chat-export-and-share: backlog
+  epic-15-retrospective: optional
+
+  # ===========================================
+  # Epic 16: AI-Powered Opportunities (5 stories)
+  # AI analyzes knowledge base to surface market opportunities
+  # ===========================================
+  epic-16: backlog
+  16-1-opportunities-data-model: backlog
+  16-2-ai-opportunity-generation-job: backlog
+  16-3-opportunities-dashboard: backlog
+  16-4-opportunity-detail-view: backlog
+  16-5-manual-opportunity-refresh: backlog
+  epic-16-retrospective: optional
+
+  # ===========================================
+  # Epic 17: Dashboard & Integration (4 stories)
+  # Unified landing page and integration with existing features
+  # ===========================================
+  epic-17: backlog
+  17-1-market-intelligence-landing-dashboard: backlog
+  17-2-global-search-knowledge-base: backlog
+  17-3-existing-visualization-integration: backlog
+  17-4-questions-page-integration: backlog
+  epic-17-retrospective: optional
+
+  # ===========================================
+  # Epic 18: Pitch Builder Enhancement (4 stories)
+  # AI-assisted pitch content generation from knowledge base
+  # ===========================================
+  epic-18: backlog
+  18-1-ai-assisted-pitch-content: backlog
+  18-2-dynamic-data-integration-pitch: backlog
+  18-3-export-with-ai-summary: backlog
+  18-4-pitch-template-library: backlog
+  epic-18-retrospective: optional
