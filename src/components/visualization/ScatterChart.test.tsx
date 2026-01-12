@@ -40,10 +40,24 @@ function createMockUseQueryResult<T>(
 /**
  * Mock ResizeObserver for Recharts ResponsiveContainer
  * Recharts requires ResizeObserver to calculate container dimensions
+ * The callback is triggered immediately on observe() to simulate dimension detection
  */
 global.ResizeObserver = class ResizeObserver {
-  observe() {
-    // Mock observe
+  private callback: ResizeObserverCallback;
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+  }
+
+  observe(target: Element) {
+    // Trigger callback immediately with mock dimensions
+    this.callback([{
+      target,
+      contentRect: { width: 800, height: 400 } as DOMRectReadOnly,
+      borderBoxSize: [],
+      contentBoxSize: [],
+      devicePixelContentBoxSize: [],
+    }], this);
   }
   unobserve() {
     // Mock unobserve
@@ -51,6 +65,19 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {
     // Mock disconnect
   }
+};
+
+/**
+ * Mock requestAnimationFrame to execute callback asynchronously
+ * Using setTimeout to avoid infinite recursion with Recharts' animation controller
+ */
+global.requestAnimationFrame = (callback: FrameRequestCallback): number => {
+  setTimeout(() => callback(0), 0);
+  return 0;
+};
+
+global.cancelAnimationFrame = () => {
+  // Mock cancelAnimationFrame
 };
 
 /**
@@ -404,7 +431,7 @@ describe('ScatterChart', () => {
       expect(chartContainer).toHaveStyle({ height: '400px' });
     });
 
-    it('renders chart with Kel position data', () => {
+    it('renders chart with Kel position data', async () => {
       // Arrange
       const mockCompetitors = [
         createMockCompetitor({
@@ -436,11 +463,13 @@ describe('ScatterChart', () => {
       // Chart renders successfully with both regular and Kel data
       expect(screen.getByTestId('scatter-chart')).toBeInTheDocument();
 
-      // Verify ResponsiveContainer is rendered (indicates chart is rendering)
-      const responsiveContainer = container.querySelector(
-        '.recharts-responsive-container'
-      );
-      expect(responsiveContainer).toBeInTheDocument();
+      // Verify chart is fully rendered with Recharts SVG content
+      // Using waitFor because requestAnimationFrame is async in tests
+      await waitFor(() => {
+        // Check for Recharts surface wrapper (always rendered with chart)
+        const rechartsWrapper = container.querySelector('.recharts-wrapper');
+        expect(rechartsWrapper).toBeInTheDocument();
+      });
     });
 
     it('does not display Kel marker when no Kel position exists', () => {
@@ -1215,6 +1244,169 @@ describe('ScatterChart', () => {
       expect(fill).toContain('50%'); // Has percentage
       expect(fill).toContain('transparent'); // Mixes with transparent
       expect(fill).toMatch(/\)$/); // Must end with closing paren
+    });
+  });
+
+  describe('Competitor Chart Rendering Bug (DL-03)', () => {
+    /**
+     * This test suite addresses DL-03: Competitor dots not rendering on chart
+     * despite data saving correctly.
+     *
+     * Observed behavior:
+     * - Added competitor "Oishi" with Quality=5, Innovation=5
+     * - Toast showed "Competitor added"
+     * - Chart only showed Kel Target Position (star)
+     * - Pitch Mode data table correctly showed competitors
+     *
+     * Root cause investigation: The chart rendering layer may fail to render
+     * competitor dots when both Kel position AND competitors exist.
+     */
+
+    it('renders competitor dots when both Kel position AND competitors exist (DL-03)', () => {
+      // Arrange: Create scenario matching the bug report
+      // - One Kel position exists (renders as star)
+      // - One competitor exists (should render as circle dot)
+      const mockCompetitors = [
+        createMockCompetitor({
+          id: 'kel-target',
+          name: 'Kel Target',
+          price_score: 4,
+          quality_score: 8,
+          is_kel_position: true,
+        }),
+        createMockCompetitor({
+          id: 'oishi-competitor',
+          name: 'Oishi',
+          price_score: 5,
+          quality_score: 5,
+          is_kel_position: false,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
+
+      // Assert: BOTH Kel position AND competitor should render
+      expect(screen.getByTestId('chart-kel-position')).toBeInTheDocument();
+      expect(screen.getByTestId('chart-data-point')).toBeInTheDocument();
+    });
+
+    it('renders multiple competitors when no Kel position exists', () => {
+      // Arrange: Multiple competitors, no Kel position
+      const mockCompetitors = [
+        createMockCompetitor({
+          id: 'competitor-1',
+          name: 'Oishi',
+          price_score: 5,
+          quality_score: 5,
+          is_kel_position: false,
+        }),
+        createMockCompetitor({
+          id: 'competitor-2',
+          name: 'Jack n Jill',
+          price_score: 7,
+          quality_score: 6,
+          is_kel_position: false,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
+
+      // Assert: Both competitors should render as data points
+      const dataPoints = screen.getAllByTestId('chart-data-point');
+      expect(dataPoints).toHaveLength(2);
+    });
+
+    it('correctly separates Kel position from competitors in chartData transformation', () => {
+      // Arrange: Mix of Kel and competitors
+      const mockCompetitors = [
+        createMockCompetitor({
+          id: 'kel-position',
+          name: 'Kel Target',
+          price_score: 4,
+          quality_score: 8,
+          is_kel_position: true,
+        }),
+        createMockCompetitor({
+          id: 'competitor-a',
+          name: 'Competitor A',
+          price_score: 3,
+          quality_score: 7,
+          is_kel_position: false,
+        }),
+        createMockCompetitor({
+          id: 'competitor-b',
+          name: 'Competitor B',
+          price_score: 8,
+          quality_score: 4,
+          is_kel_position: false,
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
+
+      // Assert: 1 Kel position + 2 competitor points
+      expect(screen.getByTestId('chart-kel-position')).toBeInTheDocument();
+      const dataPoints = screen.getAllByTestId('chart-data-point');
+      expect(dataPoints).toHaveLength(2);
+    });
+
+    it('handles is_kel_position: null as non-Kel (competitor)', () => {
+      // Arrange: Test null handling - should default to competitor
+      const mockCompetitors = [
+        createMockCompetitor({
+          id: 'null-kel-position',
+          name: 'Old Entry',
+          price_score: 6,
+          quality_score: 6,
+          is_kel_position: null as unknown as boolean, // Simulate database null
+        }),
+      ];
+
+      vi.spyOn(useCompetitorDataHook, 'useCompetitorData').mockReturnValue(
+        createMockUseQueryResult<CompetitorDataPoint[]>({
+          data: mockCompetitors,
+          isLoading: false,
+          isSuccess: true,
+          status: 'success',
+        })
+      );
+
+      // Act
+      renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
+
+      // Assert: Entry with null is_kel_position should render as competitor
+      expect(screen.getByTestId('chart-data-point')).toBeInTheDocument();
+      expect(screen.queryByTestId('chart-kel-position')).not.toBeInTheDocument();
     });
   });
 
