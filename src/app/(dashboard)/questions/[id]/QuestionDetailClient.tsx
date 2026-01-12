@@ -48,7 +48,9 @@ import { useUpdateQuestion } from '@/hooks/questions/useUpdateQuestion';
 
 import type { QuestionEditFormData } from '@/components/questions/QuestionEditForm';
 import type { RecommendationFormData } from '@/components/questions/recommendationSchema';
+import type { QuestionCategory, QuestionStatus } from '@/types/question';
 import type { Evidence } from '@/types/evidence';
+import type { DecisionType } from '@/types/decision';
 
 interface QuestionDetailClientProps {
   questionId: string;
@@ -214,12 +216,12 @@ export function QuestionDetailClient({
             <div className="flex items-center gap-2">
               <CategoryBadge
                 questionId={questionId}
-                category={question.category}
+                category={question.category as QuestionCategory}
                 isEditable={isMaho && !isArchived}
               />
               <StatusBadge
-                status={question.status}
-                decisionType={decision?.decision_type}
+                status={question.status as QuestionStatus}
+                decisionType={decision?.decision_type as DecisionType}
                 isPending={isSending}
               />
               <EvidenceCountBadge count={evidenceCount} />
@@ -342,7 +344,7 @@ export function QuestionDetailClient({
               <SendToKelButton
                 hasEvidence={evidenceCount > 0}
                 hasRecommendation={hasRecommendation}
-                onConfirm={() => markReadyForKel(questionId, question.status)}
+                onConfirm={() => markReadyForKel(questionId, question.status as QuestionStatus)}
                 isPending={isSending}
               />
             </div>
@@ -389,7 +391,7 @@ export function QuestionDetailClient({
         <div className="mt-6">
           <DecisionSection
             questionId={questionId}
-            questionStatus={question.status}
+            questionStatus={question.status as QuestionStatus}
           />
         </div>
       </div>

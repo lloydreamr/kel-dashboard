@@ -17,7 +17,7 @@ import { formatRelativeTime } from '@/lib/utils/date';
 import { QuestionCardActions } from './QuestionCardActions';
 import { StatusBadge } from './StatusBadge';
 
-import type { QuestionWithEvidenceCount } from '@/types/question';
+import type { QuestionWithEvidenceCount, QuestionStatus } from '@/types/question';
 
 interface QuestionCardProps {
   question: QuestionWithEvidenceCount;
@@ -53,7 +53,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
         <h3 className="font-medium text-foreground line-clamp-3 sm:line-clamp-2 text-sm sm:text-base flex-1">{question.title}</h3>
         {/* Badges row: horizontal on all screens, compact on mobile */}
         <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
-          <StatusBadge status={question.status} />
+          <StatusBadge status={question.status as QuestionStatus} />
           <span data-testid="stale-question-badge">
             <StaleDataBadge updatedAt={question.updated_at} />
           </span>

@@ -24,7 +24,7 @@ import {
 
 import { useQuestions } from './useQuestions';
 
-import type { QuestionWithEvidenceCount } from '@/types/question';
+import type { QuestionWithEvidenceCount, QuestionStatus } from '@/types/question';
 
 interface FilteredQuestionsResult {
   /** Filtered questions based on current status and category filters */
@@ -130,7 +130,7 @@ export function useFilteredQuestions(
       acc[key] =
         config.statuses === null
           ? allQuestions.length
-          : allQuestions.filter((q) => config.statuses!.includes(q.status)).length;
+          : allQuestions.filter((q) => config.statuses!.includes(q.status as QuestionStatus)).length;
       return acc;
     }, {} as Record<StatusFilterKey, number>);
 
@@ -149,7 +149,7 @@ export function useFilteredQuestions(
     let filteredQuestions =
       statusConfig.statuses === null
         ? allQuestions
-        : allQuestions.filter((q) => statusConfig.statuses!.includes(q.status));
+        : allQuestions.filter((q) => statusConfig.statuses!.includes(q.status as QuestionStatus));
 
     // Also filter by category if not 'all'
     if (category !== 'all') {

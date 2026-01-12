@@ -46,7 +46,7 @@ function groupByCategory(questions: QuestionWithEvidenceCount[]): Record<Questio
   };
 
   for (const question of questions) {
-    grouped[question.category].push(question);
+    grouped[question.category as QuestionCategory].push(question);
   }
 
   return grouped;

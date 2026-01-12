@@ -17,6 +17,7 @@ import { useMemo, useState } from 'react';
 
 import { useQuickCapture, useCaptureSync } from '@/hooks/capture';
 import { useQuestions } from '@/hooks/questions';
+import type { QuestionCategory } from '@/types/question';
 
 import { QuickCaptureFAB } from './QuickCaptureFAB';
 import {
@@ -61,7 +62,7 @@ export function QuickCaptureWidget({
       questions.map((q) => ({
         id: q.id,
         title: q.title,
-        category: q.category,
+        category: q.category as QuestionCategory,
       })),
     [questions]
   );

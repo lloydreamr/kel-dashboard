@@ -106,7 +106,7 @@ export function useSubmitDecision(
         approved_with_constraint: 'Approved with constraints',
         explore_alternatives: 'Exploring alternatives',
       };
-      toast.success(messages[decision.decision_type] ?? 'Decision saved');
+      toast.success(messages[decision.decision_type as DecisionType] ?? 'Decision saved');
 
       // Call optional success callback
       options?.onSuccess?.(decision);

@@ -35,7 +35,7 @@ import { SyncStatusIndicator } from './SyncStatusIndicator';
 
 import type { SyncState } from './ApproveButton';
 import type { SyncStatus } from './SyncStatusIndicator';
-import type { Question } from '@/types/question';
+import type { Question, QuestionCategory } from '@/types/question';
 
 /** Card approval state for animation sequencing */
 type ApprovalState = 'idle' | 'celebrating' | 'exiting' | 'exited';
@@ -102,7 +102,7 @@ function CardHeader({
         <div className="flex-shrink-0 flex items-center gap-2">
           <CategoryBadge
             questionId={question.id}
-            category={question.category}
+            category={question.category as QuestionCategory}
             isEditable={false}
           />
           {/* Sync status indicator - right side, before chevron */}

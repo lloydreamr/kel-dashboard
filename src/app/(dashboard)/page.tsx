@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/server';
 
 import { logout } from './actions';
 
-import type { Profile } from '@/types/database';
+import type { Profile } from '@/types';
 
 /**
  * Get test user from cookie (only in PLAYWRIGHT_TEST_MODE).
@@ -153,7 +153,7 @@ export default async function DashboardPage() {
     email = testUser.email;
     // Look up role from profiles for test user
     const profile = await getProfileByEmail(supabase, email);
-    role = profile?.role ?? 'maho';
+    role = (profile?.role as 'maho' | 'kel') ?? 'maho';
   } else {
     // Regular Supabase auth flow
     const {
@@ -167,7 +167,7 @@ export default async function DashboardPage() {
 
     email = user.email ?? 'Unknown';
     const profile = await getProfileByEmail(supabase, email);
-    role = profile?.role ?? 'maho';
+    role = (profile?.role as 'maho' | 'kel') ?? 'maho';
   }
 
   // Role-based rendering
