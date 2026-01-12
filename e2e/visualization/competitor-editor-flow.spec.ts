@@ -134,6 +134,10 @@ test.describe('Competitor Data Point Editor Flow', () => {
 
     // Verify data point appears on chart (optimistic update)
     await expect(mahoPage.getByTestId('scatter-chart')).toBeVisible();
+
+    // DL-03 Bug Fix: Explicitly verify competitor dot renders after adding
+    // This catches the bug where data saves but dots don't appear on chart
+    await expect(mahoPage.getByTestId('chart-data-point').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('Step 3: Maho adds Kel\'s target position with star marker', async () => {
@@ -184,6 +188,9 @@ test.describe('Competitor Data Point Editor Flow', () => {
 
     await mahoPage.getByTestId('competitor-submit').click();
     await expect(mahoPage.getByText('Competitor added').first()).toBeVisible();
+
+    // Wait for dialog to close before proceeding to Step 5
+    await expect(mahoPage.getByTestId('competitor-dialog')).not.toBeVisible();
   });
 
   test('Step 5: Maho clicks on a data point to edit it', async () => {
@@ -191,21 +198,22 @@ test.describe('Competitor Data Point Editor Flow', () => {
     const chart = mahoPage.getByTestId('scatter-chart');
     await chart.waitFor({ state: 'visible' });
 
-    // Wait for chart to be fully interactive (overlays need time to render)
+    // Wait for chart to be fully interactive
     await mahoPage.waitForLoadState('networkidle');
 
-    // Wait for overlay positions to be calculated (depends on ResizeObserver)
-    // Poll until chart-click-layer has buttons inside it
-    await expect(async () => {
-      const clickLayer = mahoPage.getByTestId('chart-click-layer');
-      const buttonCount = await clickLayer.locator('button').count();
-      expect(buttonCount).toBeGreaterThan(0);
-    }).toPass({ timeout: 10000 });
+    // Dismiss any visible toasts that might cover the chart (mobile issue)
+    // Press Escape to close toasts before clicking
+    await mahoPage.keyboard.press('Escape');
+    await mahoPage.waitForTimeout(300); // Wait for toast animation
 
-    // Use HTML overlay for reliable click (Story 6.7 fix)
-    // Using evaluate to trigger click directly (bypasses coordinate-based click issues)
-    const overlay = mahoPage.locator('.chart-click-overlay').first();
-    await overlay.evaluate((el) => (el as HTMLElement).click());
+    // Wait for click overlay layer to be rendered (HTML buttons over SVG data points)
+    // The overlay provides reliable click targets for E2E tests
+    const clickOverlays = mahoPage.getByTestId('chart-click-overlay');
+    await expect(clickOverlays.first()).toBeAttached({ timeout: 10000 });
+
+    // Click on the first competitor overlay button
+    // Using force:true to bypass overlapping elements (multiple buttons may be at same position)
+    await clickOverlays.first().click({ force: true });
 
     // Edit popover (desktop) or bottom sheet (mobile) should appear
     // On mobile devices, the UI uses a bottom sheet instead of popover
@@ -237,21 +245,21 @@ test.describe('Competitor Data Point Editor Flow', () => {
     const chart = mahoPage.getByTestId('scatter-chart');
     await chart.waitFor({ state: 'visible' });
 
-    // Wait for chart to be fully interactive (overlays need time to render)
+    // Wait for chart to be fully interactive
     await mahoPage.waitForLoadState('networkidle');
 
-    // Wait for overlay positions to be calculated (depends on ResizeObserver)
-    // Poll until chart-click-layer has buttons inside it
-    await expect(async () => {
-      const clickLayer = mahoPage.getByTestId('chart-click-layer');
-      const buttonCount = await clickLayer.locator('button').count();
-      expect(buttonCount).toBeGreaterThan(0);
-    }).toPass({ timeout: 10000 });
+    // Dismiss any visible toasts that might cover the chart (mobile issue)
+    await mahoPage.keyboard.press('Escape');
+    await mahoPage.waitForTimeout(300);
 
-    // Use HTML overlay for reliable click (Story 6.7 fix)
-    // Using evaluate to trigger click directly (bypasses coordinate-based click issues)
-    const overlay = mahoPage.locator('.chart-click-overlay').first();
-    await overlay.evaluate((el) => (el as HTMLElement).click());
+    // Wait for click overlay layer to be rendered (HTML buttons over SVG data points)
+    // The overlay provides reliable click targets for E2E tests
+    const clickOverlays = mahoPage.getByTestId('chart-click-overlay');
+    await expect(clickOverlays.first()).toBeAttached({ timeout: 10000 });
+
+    // Click on the first competitor overlay button
+    // Using force:true to bypass overlapping elements (multiple buttons may be at same position)
+    await clickOverlays.first().click({ force: true });
 
     // Edit popover (desktop) or bottom sheet (mobile) should appear
     const editPopover = mahoPage.getByTestId('competitor-edit-popover');
