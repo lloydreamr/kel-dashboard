@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 
 import { extractDomain } from '@/types/evidence';
@@ -33,6 +34,7 @@ export function EvidenceItem({
   onEdit,
   onRemove,
 }: EvidenceItemProps) {
+  const [faviconError, setFaviconError] = useState(false);
   const domain = extractDomain(evidence.url);
   const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
 
@@ -65,16 +67,35 @@ export function EvidenceItem({
           {number}
         </span>
 
-        {/* Favicon */}
-        <Image
-          src={faviconUrl}
-          alt=""
-          width={16}
-          height={16}
-          unoptimized
-          data-testid="evidence-favicon"
-          className="mt-0.5 flex-shrink-0 rounded"
-        />
+        {/* Favicon with fallback */}
+        {faviconError ? (
+          <svg
+            className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+            data-testid="evidence-favicon-fallback"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+            />
+          </svg>
+        ) : (
+          <Image
+            src={faviconUrl}
+            alt=""
+            width={16}
+            height={16}
+            unoptimized
+            data-testid="evidence-favicon"
+            className="mt-0.5 flex-shrink-0 rounded"
+            onError={() => setFaviconError(true)}
+          />
+        )}
 
         {/* Content */}
         <div className="flex-1 min-w-0 pr-16">
