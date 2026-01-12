@@ -39,6 +39,22 @@ export const queryKeys = {
     all: ['competitors'] as const,
     byId: (id: string) => ['competitors', id] as const,
   },
+  companies: {
+    all: ['companies'] as const,
+    byId: (id: string) => ['companies', id] as const,
+    byCategory: (category: string) => ['companies', 'category', category] as const,
+  },
+  products: {
+    all: ['products'] as const,
+    byId: (id: string) => ['products', id] as const,
+    byCategory: (category: string) => ['products', 'category', category] as const,
+    byPriceTier: (tier: string) => ['products', 'priceTier', tier] as const,
+  },
+  researchDocs: {
+    all: ['researchDocs'] as const,
+    byId: (id: string) => ['researchDocs', id] as const,
+    byCategory: (category: string) => ['researchDocs', 'category', category] as const,
+  },
 } as const;
 
 export type QueryKeys = typeof queryKeys;

@@ -20,7 +20,8 @@
     "test:e2e:visualization": "playwright test e2e/visualization",
     "test:e2e:pitch-mode": "playwright test e2e/visualization/pitch-mode-flow.spec.ts e2e/visualization/pdf-export-flow.spec.ts e2e/visualization/print-preview.spec.ts",
     "db:types": "npx supabase gen types typescript --project-id ${SUPABASE_PROJECT_ID:-your-project-id} > src/types/database.ts",
-    "db:seed": "npx tsx scripts/seed.ts"
+    "db:seed": "npx tsx scripts/seed.ts",
+    "db:import": "npx tsx --env-file=.env.local scripts/import-market-intelligence.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -45,6 +46,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.26",
+    "gray-matter": "^4.0.3",
     "html2pdf.js": "^0.13.0",
     "lucide-react": "^0.562.0",
     "next": "16.1.0",

@@ -5,7 +5,13 @@
  * Single source of truth for navigation structure.
  */
 
-import { Home, FileQuestion, BarChart3, Target } from 'lucide-react';
+import {
+  Home,
+  FileQuestion,
+  BarChart3,
+  Target,
+  TrendingUp,
+} from 'lucide-react';
 
 import type { LucideIcon } from 'lucide-react';
 
@@ -36,4 +42,11 @@ export const navLinks: NavLink[] = [
     icon: Target,
     testId: 'nav-link-progress',
   },
+  // Story 14.2 TODO: Uncomment when MI dashboard landing is complete
+  // {
+  //   href: '/market-intelligence',
+  //   label: 'Market Intel',
+  //   icon: TrendingUp,
+  //   testId: 'nav-link-market-intelligence',
+  // },
 ];

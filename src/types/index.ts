@@ -53,6 +53,35 @@ export type {
   UpdateCompetitorInput,
 } from './competitor';
 
+// Re-export company domain types
+export type {
+  Company,
+  CompanyInsert,
+  CompanyUpdate,
+  CategoryFilterKey,
+} from './company';
+export { CATEGORY_LABELS } from './company';
+
+// Re-export product domain types
+export type {
+  Product,
+  ProductInsert,
+  ProductUpdate,
+  ProductWithCompany,
+  ProductCategoryFilterKey,
+  PriceTierFilterKey,
+} from './product';
+export { PRODUCT_CATEGORY_LABELS, PRICE_TIER_LABELS } from './product';
+
+// Re-export research doc domain types
+export type {
+  ResearchDoc,
+  ResearchDocInsert,
+  ResearchDocUpdate,
+  ResearchCategoryFilterKey,
+} from './researchDoc';
+export { RESEARCH_CATEGORY_LABELS } from './researchDoc';
+
 import type { Profile } from './database';
 
 /** User roles in the application - derived from database schema */

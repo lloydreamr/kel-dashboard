@@ -16,6 +16,9 @@
 export { profilesRepo } from './profiles';
 export { questionsRepo } from './questions';
 export { milestonesRepo, milestoneNotesRepo } from './milestones';
+export { companiesRepo } from './companies';
+export { productsRepo } from './products';
+export { researchDocsRepo } from './researchDocs';
 
 // Error handling utilities
 export {
@@ -36,3 +39,7 @@ export type {
   QuestionStatus,
   QuestionCategory,
 } from './questions';
+
+export type { Company } from './companies';
+export type { Product, ProductWithCompany } from './products';
+export type { ResearchDoc } from './researchDocs';
