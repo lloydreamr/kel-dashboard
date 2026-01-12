@@ -20,6 +20,9 @@ export { companiesRepo } from './companies';
 export { productsRepo } from './products';
 export { researchDocsRepo } from './researchDocs';
 export { entityConnectionsRepo } from './entityConnections';
+export { consumersRepo } from './consumers';
+export { trendsRepo } from './trends';
+export { embeddingsRepo } from './embeddings';
 
 // Error handling utilities
 export {
@@ -45,3 +48,6 @@ export type { Company } from './companies';
 export type { Product, ProductWithCompany } from './products';
 export type { ResearchDoc } from './researchDocs';
 export type { EntityConnection, EntityType } from './entityConnections';
+export type { Consumer } from './consumers';
+export type { Trend } from './trends';
+export type { DocumentType, EmbeddingChunk, SearchResult } from './embeddings';

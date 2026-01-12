@@ -184,6 +184,39 @@ export type Database = {
           },
         ]
       }
+      document_embeddings: {
+        Row: {
+          chunk_index: number
+          chunk_text: string
+          created_at: string
+          document_id: string
+          document_type: string
+          embedding: string
+          id: string
+          token_count: number
+        }
+        Insert: {
+          chunk_index: number
+          chunk_text: string
+          created_at?: string
+          document_id: string
+          document_type: string
+          embedding: string
+          id?: string
+          token_count: number
+        }
+        Update: {
+          chunk_index?: number
+          chunk_text?: string
+          created_at?: string
+          document_id?: string
+          document_type?: string
+          embedding?: string
+          id?: string
+          token_count?: number
+        }
+        Relationships: []
+      }
       entity_connections: {
         Row: {
           created_at: string
@@ -526,6 +559,22 @@ export type Database = {
         Args: { constraints: Json }
         Returns: boolean
       }
+      match_embeddings: {
+        Args: {
+          filter_type?: string
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          chunk_index: number
+          chunk_text: string
+          document_id: string
+          document_type: string
+          id: string
+          similarity: number
+        }[]
+      }
     }
     Enums: {
       clarity_category: "market" | "product" | "distribution"
@@ -663,47 +712,50 @@ export const Constants = {
   },
 } as const
 
-// =============================================================================
+// ─────────────────────────────────────────────────────────────────────────────
 // Convenience Type Aliases
-// =============================================================================
-// These aliases provide direct access to table Row, Insert, and Update types
-// without needing to use the generic Tables<> helper.
+// These provide shorter names for commonly used table types
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Profiles
+/** @deprecated Use TablesInsert<'tablename'> instead */
+export type InsertTables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Insert'];
+
+/** @deprecated Use TablesUpdate<'tablename'> instead */
+export type UpdateTables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Update'];
+
+// Profile types
 export type Profile = Tables<'profiles'>;
 export type ProfileInsert = TablesInsert<'profiles'>;
 export type ProfileUpdate = TablesUpdate<'profiles'>;
 
-// Questions
+// Question types
 export type Question = Tables<'questions'>;
 export type QuestionInsert = TablesInsert<'questions'>;
 export type QuestionUpdate = TablesUpdate<'questions'>;
 
-// Milestones
+// Milestone types
 export type Milestone = Tables<'milestones'>;
 export type MilestoneInsert = TablesInsert<'milestones'>;
 export type MilestoneUpdate = TablesUpdate<'milestones'>;
 
-// Milestone Notes
+// Milestone note types
 export type MilestoneNote = Tables<'milestone_notes'>;
 export type MilestoneNoteInsert = TablesInsert<'milestone_notes'>;
 export type MilestoneNoteUpdate = TablesUpdate<'milestone_notes'>;
 
-// Competitor Data
+// Competitor data types
 export type CompetitorDataPoint = Tables<'competitor_data'>;
 export type CompetitorDataPointInsert = TablesInsert<'competitor_data'>;
 export type CompetitorDataPointUpdate = TablesUpdate<'competitor_data'>;
 
-// Decisions
-export type Decision = Tables<'decisions'>;
-export type DecisionInsert = TablesInsert<'decisions'>;
-export type DecisionUpdate = TablesUpdate<'decisions'>;
-
-// Evidence
+// Evidence types
 export type Evidence = Tables<'evidence'>;
 export type EvidenceInsert = TablesInsert<'evidence'>;
 export type EvidenceUpdate = TablesUpdate<'evidence'>;
 
-// Helper type aliases for compatibility
-export type InsertTables<T extends keyof DefaultSchema['Tables']> = TablesInsert<T>;
-export type UpdateTables<T extends keyof DefaultSchema['Tables']> = TablesUpdate<T>;
+// Decision types
+export type Decision = Tables<'decisions'>;
+export type DecisionInsert = TablesInsert<'decisions'>;
+export type DecisionUpdate = TablesUpdate<'decisions'>

@@ -63,8 +63,8 @@ development_status:
   # Epic 15: AI Chat Integration (5 stories)
   # RAG-powered conversational AI over market intelligence
   # ===========================================
-  epic-15: backlog
-  15-1-document-embeddings-infrastructure: backlog
+  epic-15: in-progress
+  15-1-document-embeddings-infrastructure: done
   15-2-ai-chat-api-endpoint: backlog
   15-3-ask-ai-chat-interface: backlog
   15-4-suggested-questions: backlog

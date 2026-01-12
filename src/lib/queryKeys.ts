@@ -64,6 +64,22 @@ export const queryKeys = {
     related: (type: string, id: string) =>
       ['entityConnections', 'related', type, id] as const,
   },
+  consumers: {
+    all: ['consumers'] as const,
+    byId: (id: string) => ['consumers', id] as const,
+  },
+  trends: {
+    all: ['trends'] as const,
+    byId: (id: string) => ['trends', id] as const,
+    byCategory: (category: string) => ['trends', 'category', category] as const,
+  },
+  embeddings: {
+    all: ['embeddings'] as const,
+    search: (query: string) => ['embeddings', 'search', query] as const,
+    byDocument: (type: string, id: string) =>
+      ['embeddings', 'document', type, id] as const,
+    count: (type?: string) => ['embeddings', 'count', type] as const,
+  },
 } as const;
 
 export type QueryKeys = typeof queryKeys;

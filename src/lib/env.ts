@@ -44,6 +44,19 @@ export const env = {
     return getOptionalEnvVar('SUPABASE_SERVICE_ROLE_KEY');
   },
 
+  // ─────────────────────────────────────────────────────────────────
+  // AI / Embeddings (Server-side only)
+  // ─────────────────────────────────────────────────────────────────
+
+  /**
+   * OpenAI API key for embedding generation.
+   * Server-side only - NEVER expose to client.
+   * Required for: embeddings:generate script, semantic search API.
+   */
+  get OPENAI_API_KEY(): string | undefined {
+    return getOptionalEnvVar('OPENAI_API_KEY');
+  },
+
   /** Current environment */
   get NODE_ENV(): string {
     return process.env.NODE_ENV ?? 'development';
