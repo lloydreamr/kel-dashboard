@@ -57,6 +57,15 @@ export const env = {
     return getOptionalEnvVar('OPENAI_API_KEY');
   },
 
+  /**
+   * Anthropic API key for Claude chat completions.
+   * Server-side only - NEVER expose to client.
+   * Required for: AI chat API endpoint.
+   */
+  get ANTHROPIC_API_KEY(): string | undefined {
+    return getOptionalEnvVar('ANTHROPIC_API_KEY');
+  },
+
   /** Current environment */
   get NODE_ENV(): string {
     return process.env.NODE_ENV ?? 'development';
