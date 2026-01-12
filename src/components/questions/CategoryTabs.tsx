@@ -32,24 +32,26 @@ export function CategoryTabs({ value, counts, onChange }: CategoryTabsProps) {
       onValueChange={(v) => onChange(v as CategoryFilterKey)}
       data-testid="category-tabs"
     >
-      {/* Mobile: horizontal scroll with full labels, Desktop: grid layout */}
-      <TabsList
-        aria-label="Filter questions by category"
-        className="grid w-full grid-cols-4 sm:grid-cols-4 overflow-x-auto sm:overflow-visible"
-      >
-        {CATEGORY_FILTER_KEYS.map((key) => (
-          <TabsTrigger
-            key={key}
-            value={key}
-            data-testid={`category-tab-${key}`}
-            className="min-h-12 flex-1 whitespace-nowrap px-3 sm:px-4"
-          >
-            {/* Show full labels on all screen sizes for better UX */}
-            <span>{CATEGORY_FILTER_CONFIG[key].label}</span>
-            <span className="ml-1">({counts[key]})</span>
-          </TabsTrigger>
-        ))}
-      </TabsList>
+      {/* Mobile: horizontal scroll wrapper, Desktop: no scroll needed */}
+      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
+        <TabsList
+          aria-label="Filter questions by category"
+          className="inline-flex h-auto w-max items-center gap-1 sm:grid sm:w-full sm:grid-cols-4 sm:gap-0"
+        >
+          {CATEGORY_FILTER_KEYS.map((key) => (
+            <TabsTrigger
+              key={key}
+              value={key}
+              data-testid={`category-tab-${key}`}
+              className="min-h-12 shrink-0 whitespace-nowrap px-4 sm:flex-1 sm:px-4"
+            >
+              {/* Show full labels on all screen sizes for better UX */}
+              <span>{CATEGORY_FILTER_CONFIG[key].label}</span>
+              <span className="ml-1">({counts[key]})</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
     </Tabs>
   );
 }

@@ -169,13 +169,13 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
   }, [statusFilter, categoryFilter, searchQuery, counts.all, handleShowAll]);
 
   return (
-    <main
+    <div
       data-testid="questions-page"
-      className="min-h-screen bg-background px-4 py-6"
+      className="container py-6"
     >
-      <div className="mx-auto max-w-2xl">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+      <div className="mx-auto max-w-4xl">
+        {/* Header - stacked on mobile, inline on desktop */}
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-semibold text-foreground">
             {showArchived ? 'Archived Questions' : 'Strategic Questions'}
           </h1>
@@ -183,7 +183,6 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                size="sm"
                 onClick={toggleArchived}
                 data-testid="view-archived-button"
                 className="text-muted-foreground"
@@ -192,14 +191,12 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
                 {showArchived ? 'Active' : 'Archived'}
               </Button>
               {!showArchived && (
-                <button
-                  type="button"
+                <Button
                   onClick={handleNewQuestion}
                   data-testid="new-question-button"
-                  className="min-h-12 rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
                   New Question
-                </button>
+                </Button>
               )}
             </div>
           )}
@@ -264,6 +261,6 @@ export function QuestionsPageClient({ userId }: QuestionsPageClientProps) {
           />
         ))}
       </div>
-    </main>
+    </div>
   );
 }

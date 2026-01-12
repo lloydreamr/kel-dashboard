@@ -90,8 +90,7 @@ describe('CategoryTabs', () => {
     // Verify tabs have whitespace-nowrap for horizontal scroll support
     expect(distributionTab).toHaveClass('whitespace-nowrap');
 
-    // Verify tablist has overflow-x-auto for horizontal scrolling on mobile
-    const tabList = screen.getByRole('tablist');
-    expect(tabList).toHaveClass('overflow-x-auto');
+    // Verify tabs have shrink-0 to prevent compression in flex container
+    expect(distributionTab).toHaveClass('shrink-0');
   });
 });
