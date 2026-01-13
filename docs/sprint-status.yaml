@@ -67,7 +67,7 @@ development_status:
   15-1-document-embeddings-infrastructure: done
   15-2-ai-chat-api-endpoint: backlog
   15-3-ask-ai-chat-interface: backlog
-  15-4-suggested-questions: backlog
+  15-4-suggested-questions: done
   15-5-chat-export-and-share: backlog
   epic-15-retrospective: optional
 
