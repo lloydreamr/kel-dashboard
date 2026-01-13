@@ -75,9 +75,9 @@ development_status:
   # Epic 16: AI-Powered Opportunities (5 stories)
   # AI analyzes knowledge base to surface market opportunities
   # ===========================================
-  epic-16: backlog
-  16-1-opportunities-data-model: backlog
-  16-2-ai-opportunity-generation-job: backlog
+  epic-16: in-progress
+  16-1-opportunities-data-model: done  # Database schema exists
+  16-2-ai-opportunity-generation-job: review  # Implementation complete, ready for code review
   16-3-opportunities-dashboard: backlog
   16-4-opportunity-detail-view: backlog
   16-5-manual-opportunity-refresh: backlog

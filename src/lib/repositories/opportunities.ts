@@ -2,14 +2,26 @@
  * Opportunities Repository
  *
  * All database operations for AI-identified market opportunities.
- * Uses browser client for client-side operations.
+ * Uses browser client for client-side operations by default.
+ * For server-side operations (API routes), pass a server client via options.
  * RLS ensures only authenticated Maho/Kel users can access.
  */
+
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { createClient } from '@/lib/supabase/client';
 import { mapPostgrestError, RepositoryError, RepositoryErrorCode } from './base';
 
 import type { Database, Json } from '@/types/database';
+
+/**
+ * Options for repository operations
+ * Pass a custom Supabase client for server-side operations
+ */
+export interface OpportunitiesRepoOptions {
+  /** Custom Supabase client (use server client in API routes) */
+  client?: SupabaseClient<Database>;
+}
 
 // Type aliases from generated types
 type Opportunity = Database['public']['Tables']['opportunities']['Row'];
@@ -203,11 +215,16 @@ export const opportunitiesRepo = {
    * Bulk create opportunities (for AI batch generation in Story 16-2)
    *
    * @param inputs - Array of opportunity data
+   * @param options - Optional configuration including custom Supabase client
    * @returns Array of created opportunities
    * @throws RepositoryError on database errors
    */
-  createBatch: async (inputs: OpportunityInput[]): Promise<Opportunity[]> => {
-    const supabase = createClient();
+  createBatch: async (
+    inputs: OpportunityInput[],
+    options?: OpportunitiesRepoOptions
+  ): Promise<Opportunity[]> => {
+    // Use provided client or fall back to browser client
+    const supabase = options?.client ?? createClient();
     const insertData: OpportunityInsert[] = inputs.map(input => ({
       title: input.title,
       description: input.description ?? null,
@@ -230,10 +247,12 @@ export const opportunitiesRepo = {
   /**
    * Delete all opportunities (for regeneration in Story 16-5)
    *
+   * @param options - Optional configuration including custom Supabase client
    * @throws RepositoryError on database errors
    */
-  deleteAll: async (): Promise<void> => {
-    const supabase = createClient();
+  deleteAll: async (options?: OpportunitiesRepoOptions): Promise<void> => {
+    // Use provided client or fall back to browser client
+    const supabase = options?.client ?? createClient();
     // Delete where id != impossible UUID to match all rows
     const { error } = await supabase
       .from('opportunities')
