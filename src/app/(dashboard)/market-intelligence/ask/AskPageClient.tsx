@@ -8,18 +8,18 @@
  *
  * Story 15.3: Ask AI Chat Interface
  * Story 15.4: Suggested Questions - expanded questions, direct submit
+ * Story 15.5: Chat Export and Share - copy and new conversation features
  */
 
-import { useChat, type UIMessage } from '@ai-sdk/react';
+import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { MessageCircle } from 'lucide-react';
 import { useEffect, useRef, useState, useMemo, type FormEvent, type ChangeEvent } from 'react';
 import { toast } from 'sonner';
 
-import { ChatInput, ChatMessage, TypingIndicator, SuggestedQuestions } from '@/components/chat';
+import { ChatHeader, ChatInput, ChatMessage, TypingIndicator, SuggestedQuestions } from '@/components/chat';
+import { extractSourcesFromMessage, formatConversationForClipboard } from '@/lib/ai/formatConversation';
 import { useChatStore } from '@/stores/chat';
-
-import type { ChatSource, ChatResponseMetadata } from '@/lib/ai/types';
 
 /**
  * Suggested questions for empty state (Story 15.4 AC 1, 2)
@@ -34,35 +34,17 @@ const SUGGESTED_QUESTIONS = [
   'What product gaps exist in the Philippine snack market?',
 ];
 
-/**
- * Extract sources from message parts
- *
- * The 15.2 API sends sources via data-metadata custom parts:
- * { type: 'data-metadata', data: { sources: [...], confidence: '...' } }
- */
-function extractSourcesFromMessage(message: UIMessage): ChatSource[] {
-  if (!message.parts) return [];
-
-  for (const part of message.parts) {
-    // Look for data-metadata part which contains sources
-    // AI SDK stores custom data parts with type starting with 'data-'
-    if (part.type.startsWith('data-')) {
-      const dataPartWithPayload = part as { type: string; data?: ChatResponseMetadata };
-      if (dataPartWithPayload.data?.sources) {
-        return dataPartWithPayload.data.sources;
-      }
-    }
-  }
-
-  return [];
-}
-
 export function AskPageClient() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState('');
 
   // Get stored messages for session persistence (AC 5)
-  const { messages: storedMessages, setMessages: setStoredMessages } = useChatStore();
+  // Story 15.5: Include clearMessages for new conversation feature
+  const {
+    messages: storedMessages,
+    setMessages: setStoredMessages,
+    clearMessages,
+  } = useChatStore();
 
   // Create transport with custom API endpoint and request preparation
   const transport = useMemo(() => new DefaultChatTransport({
@@ -141,6 +123,23 @@ export function AskPageClient() {
     await sendMessage({ text: question });
   };
 
+  // Story 15.5: Copy conversation to clipboard (AC 1, 2)
+  const handleCopyConversation = async () => {
+    const formattedText = formatConversationForClipboard(messages);
+    try {
+      await navigator.clipboard.writeText(formattedText);
+      toast.success('Copied!');
+    } catch {
+      toast.error('Failed to copy');
+    }
+  };
+
+  // Story 15.5: Start new conversation (AC 3, 4, 5)
+  const handleNewConversation = () => {
+    clearMessages();
+    setStoredMessages([]); // Critical: Force sync empty state to store (validation report issue #2)
+  };
+
   // Show error state
   if (error && messages.length === 0) {
     return (
@@ -152,6 +151,14 @@ export function AskPageClient() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-var(--header-height))]">
+      {/* Story 15.5: Chat header with copy and new conversation actions */}
+      <ChatHeader
+        onCopy={handleCopyConversation}
+        onNewConversation={handleNewConversation}
+        showActions={messages.length > 0}
+        showClearConfirm={messages.length > 2}
+      />
+
       {/* Messages area with aria-live for screen reader announcements */}
       <div
         className="flex-1 overflow-y-auto p-4 space-y-4"

@@ -17,10 +17,14 @@ import type { UIMessage } from '@ai-sdk/react';
 /**
  * Extended chat message with optional metadata
  * Extends AI SDK UIMessage type with source and confidence info
+ *
+ * Story 15.5: Added createdAt for export formatting
  */
 export interface ChatMessage extends UIMessage {
   /** Optional confidence level from AI response */
   confidence?: 'High' | 'Medium' | 'Low';
+  /** Message creation timestamp (may be undefined for older messages) */
+  createdAt?: Date;
 }
 
 interface ChatState {
