@@ -2,15 +2,29 @@
  * Embeddings Repository
  *
  * All database operations for document embeddings (RAG infrastructure).
- * Uses browser client for search operations.
+ * Uses browser client for search operations by default.
+ * For server-side operations (API routes), pass a server client via options.
  * Service role client should be used for bulk operations (see scripts/).
  *
  * RLS ensures only authenticated users can access embedding data.
  */
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+
 import { createClient } from '@/lib/supabase/client';
 
 import { mapPostgrestError } from './base';
+
+import type { Database } from '@/types/database';
+
+/**
+ * Options for repository operations
+ * Pass a custom Supabase client for server-side operations
+ */
+export interface EmbeddingsRepoOptions {
+  /** Custom Supabase client (use server client in API routes) */
+  client?: SupabaseClient<Database>;
+}
 
 /**
  * Valid document types for embeddings
@@ -102,6 +116,7 @@ export const embeddingsRepo = {
    * @param matchThreshold - Minimum similarity score (0-1, default 0.7)
    * @param matchCount - Maximum results to return (default 10)
    * @param filterType - Optional filter by document type
+   * @param options - Optional configuration including custom Supabase client
    * @returns Array of search results ordered by similarity
    * @throws RepositoryError on database errors
    */
@@ -109,9 +124,11 @@ export const embeddingsRepo = {
     queryEmbedding: number[],
     matchThreshold = 0.7,
     matchCount = 10,
-    filterType?: DocumentType
+    filterType?: DocumentType,
+    options?: EmbeddingsRepoOptions
   ): Promise<SearchResult[]> => {
-    const supabase = createClient();
+    // Use provided client or fall back to browser client
+    const supabase = options?.client ?? createClient();
     const { data, error } = await supabase.rpc('match_embeddings', {
       query_embedding: toVectorString(queryEmbedding),
       match_threshold: matchThreshold,

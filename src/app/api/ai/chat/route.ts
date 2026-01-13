@@ -22,18 +22,19 @@ import {
 import { generateQueryEmbedding } from '@/lib/embeddings/openai';
 import { env } from '@/lib/env';
 import { embeddingsRepo } from '@/lib/repositories/embeddings';
+import { createClient } from '@/lib/supabase/server';
 
 import type { ChatRequest, ChatResponseMetadata } from '@/lib/ai/types';
 
 /**
  * Number of similar chunks to retrieve from knowledge base
  */
-const SIMILARITY_SEARCH_LIMIT = 5;
+const MATCH_COUNT = 10;
 
 /**
- * Minimum similarity threshold for including results
+ * Minimum similarity threshold for including results (0-1)
  */
-const SIMILARITY_THRESHOLD = 0.5;
+const MATCH_THRESHOLD = 0.7;
 
 /**
  * Maximum retries for Anthropic API calls (handles rate limits)
@@ -45,6 +46,35 @@ const MAX_RETRIES = 3;
  * Request timeout in milliseconds (30 seconds)
  */
 const REQUEST_TIMEOUT_MS = 30000;
+
+/**
+ * Sanitize user input to prevent prompt injection
+ *
+ * Removes:
+ * - Control characters (except newlines/tabs)
+ * - Excessive whitespace
+ * - Common prompt injection patterns
+ *
+ * @param input - Raw user input
+ * @returns Sanitized input safe for LLM
+ */
+function sanitizeQuestion(input: string): string {
+  return input
+    // Remove control characters except newlines and tabs
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+    // Collapse multiple newlines to max 2
+    .replace(/\n{3,}/g, '\n\n')
+    // Collapse multiple spaces to single space
+    .replace(/ {2,}/g, ' ')
+    // Remove common prompt injection patterns (instructions to ignore/override)
+    .replace(/ignore (all )?(previous|above|prior) (instructions?|prompts?|context)/gi, '')
+    .replace(/disregard (all )?(previous|above|prior)/gi, '')
+    .replace(/you are now/gi, '')
+    .replace(/new instructions?:/gi, '')
+    .replace(/system prompt:/gi, '')
+    .trim();
+}
 
 /**
  * POST /api/ai/chat
@@ -99,14 +129,20 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
+    // Step 0: Create server client and sanitize input
+    const supabase = await createClient();
+    const sanitizedQuestion = sanitizeQuestion(question);
+
     // Step 1: Generate query embedding
-    const queryEmbedding = await generateQueryEmbedding(question);
+    const queryEmbedding = await generateQueryEmbedding(sanitizedQuestion);
 
     // Step 2: Search for relevant document chunks
     const searchResults = await embeddingsRepo.search(
       queryEmbedding,
-      SIMILARITY_SEARCH_LIMIT,
-      SIMILARITY_THRESHOLD
+      MATCH_THRESHOLD,
+      MATCH_COUNT,
+      undefined,
+      { client: supabase }
     );
 
     // Step 3: Extract sources and calculate confidence
@@ -144,14 +180,22 @@ export async function POST(request: Request): Promise<Response> {
         const result = streamText({
           model: anthropic('claude-sonnet-4-20250514'),
           system: systemPrompt,
-          messages: [{ role: 'user', content: question }],
+          messages: [{ role: 'user', content: sanitizedQuestion }],
           maxOutputTokens: 1024,
           maxRetries: MAX_RETRIES, // Exponential backoff for rate limits
           abortSignal: AbortSignal.timeout(REQUEST_TIMEOUT_MS), // Request timeout
         });
 
-        // Merge the text stream (sendStart: false since we already sent it)
-        writer.merge(result.toUIMessageStream({ sendStart: false }));
+        // Merge the text stream with confidence metadata on finish
+        writer.merge(result.toUIMessageStream({
+          sendStart: false,
+          messageMetadata: ({ part }) => {
+            if (part.type === 'finish') {
+              return { confidence };
+            }
+            return undefined;
+          },
+        }));
       },
     });
 
