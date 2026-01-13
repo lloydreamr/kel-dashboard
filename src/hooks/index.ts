@@ -26,3 +26,6 @@ export {
   useUpdateMilestoneNote,
   useDeleteMilestoneNote,
 } from './milestones';
+
+// Opportunity hooks
+export { useOpportunities, useFilteredOpportunities } from './opportunities';

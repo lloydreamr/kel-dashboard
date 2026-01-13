@@ -82,6 +82,19 @@ export type {
 } from './researchDoc';
 export { RESEARCH_CATEGORY_LABELS } from './researchDoc';
 
+// Re-export opportunity domain types
+export type {
+  OpportunityCategoryFilterKey,
+  OpportunityStatusFilterKey,
+} from './opportunity';
+export {
+  getConfidenceLevel,
+  CATEGORY_LABELS as OPPORTUNITY_CATEGORY_LABELS,
+  CATEGORY_COLORS as OPPORTUNITY_CATEGORY_COLORS,
+  STATUS_LABELS as OPPORTUNITY_STATUS_LABELS,
+  CONFIDENCE_COLORS,
+} from './opportunity';
+
 import type { Profile } from './database';
 
 /** User roles in the application - derived from database schema */
