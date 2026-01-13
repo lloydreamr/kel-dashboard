@@ -80,6 +80,13 @@ export const queryKeys = {
       ['embeddings', 'document', type, id] as const,
     count: (type?: string) => ['embeddings', 'count', type] as const,
   },
+  opportunities: {
+    all: ['opportunities'] as const,
+    pending: ['opportunities', 'status', 'new'] as const,
+    byId: (id: string) => ['opportunities', id] as const,
+    byStatus: (status: string) => ['opportunities', 'status', status] as const,
+    byCategory: (category: string) => ['opportunities', 'category', category] as const,
+  },
 } as const;
 
 export type QueryKeys = typeof queryKeys;

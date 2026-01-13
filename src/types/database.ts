@@ -514,6 +514,48 @@ export type Database = {
         }
         Relationships: []
       }
+      opportunities: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          category: string
+          confidence_score: number
+          supporting_evidence: Json
+          status: string
+          generated_at: string
+          reviewed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          category: string
+          confidence_score: number
+          supporting_evidence?: Json
+          status?: string
+          generated_at?: string
+          reviewed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          category?: string
+          confidence_score?: number
+          supporting_evidence?: Json
+          status?: string
+          generated_at?: string
+          reviewed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trends: {
         Row: {
           category: string | null

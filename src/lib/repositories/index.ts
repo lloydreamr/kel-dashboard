@@ -23,6 +23,7 @@ export { entityConnectionsRepo } from './entityConnections';
 export { consumersRepo } from './consumers';
 export { trendsRepo } from './trends';
 export { embeddingsRepo } from './embeddings';
+export { opportunitiesRepo } from './opportunities';
 
 // Error handling utilities
 export {
@@ -51,3 +52,10 @@ export type { EntityConnection, EntityType } from './entityConnections';
 export type { Consumer } from './consumers';
 export type { Trend } from './trends';
 export type { DocumentType, EmbeddingChunk, SearchResult } from './embeddings';
+export type {
+  Opportunity,
+  OpportunityCategory,
+  OpportunityStatus,
+  OpportunityInput,
+  SupportingEvidence,
+} from './opportunities';
