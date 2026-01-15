@@ -21,6 +21,7 @@ vi.mock('sonner', () => ({
 vi.mock('@/lib/repositories', () => ({
   pitchDraftsRepo: {
     create: vi.fn(),
+    delete: vi.fn(),
   },
   pitchSectionsRepo: {
     createBatch: vi.fn(),
@@ -254,6 +255,7 @@ describe('useCreatePitchWithTemplate', () => {
       vi.mocked(pitchSectionsRepo.createBatch).mockRejectedValue(
         new Error('Section creation failed')
       );
+      vi.mocked(pitchDraftsRepo.delete).mockResolvedValue(undefined as never);
 
       const { result } = renderHook(() => useCreatePitchWithTemplate(), {
         wrapper: createWrapper(),
@@ -269,6 +271,72 @@ describe('useCreatePitchWithTemplate', () => {
       expect(toast.error).toHaveBeenCalledWith('Failed to create pitch', {
         description: 'Section creation failed',
       });
+    });
+
+    it('rolls back draft when section creation fails', async () => {
+      const mockDraft = {
+        id: 'd1',
+        title: 'Rollback Test',
+        status: 'draft',
+        template_type: 'mid_size',
+      };
+
+      vi.mocked(pitchDraftsRepo.create).mockResolvedValue(mockDraft as never);
+      vi.mocked(pitchSectionsRepo.createBatch).mockRejectedValue(
+        new Error('Section creation failed')
+      );
+      vi.mocked(pitchDraftsRepo.delete).mockResolvedValue(undefined as never);
+
+      const { result } = renderHook(() => useCreatePitchWithTemplate(), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.mutate({ title: 'Rollback Test', template_type: 'mid_size' });
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+
+      // Verify rollback was attempted
+      expect(pitchDraftsRepo.delete).toHaveBeenCalledWith('d1');
+    });
+
+    it('preserves original error even if rollback fails', async () => {
+      const mockDraft = {
+        id: 'd1',
+        title: 'Rollback Failure Test',
+        status: 'draft',
+        template_type: 'mid_size',
+      };
+
+      vi.mocked(pitchDraftsRepo.create).mockResolvedValue(mockDraft as never);
+      vi.mocked(pitchSectionsRepo.createBatch).mockRejectedValue(
+        new Error('Section creation failed')
+      );
+      vi.mocked(pitchDraftsRepo.delete).mockRejectedValue(
+        new Error('Delete also failed')
+      );
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const { result } = renderHook(() => useCreatePitchWithTemplate(), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.mutate({ title: 'Rollback Failure Test', template_type: 'mid_size' });
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+
+      // Original error should be preserved, not the rollback error
+      expect(result.current.error?.message).toBe('Section creation failed');
+      // Rollback failure should be logged
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to rollback draft after section creation error'
+      );
+
+      consoleErrorSpy.mockRestore();
     });
   });
 

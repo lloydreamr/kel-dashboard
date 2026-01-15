@@ -68,16 +68,28 @@ export function useCreatePitchWithTemplate() {
 
       let sections: PitchSection[] = [];
       if (templateSections.length > 0) {
-        sections = await pitchSectionsRepo.createBatch(
-          draft.id,
-          templateSections.map((section) => ({
-            section_type: section.type,
-            content: section.placeholder,
-            ai_generated: false,
-            user_edited: false,
-            confidence_score: null,
-          }))
-        );
+        try {
+          sections = await pitchSectionsRepo.createBatch(
+            draft.id,
+            templateSections.map((section) => ({
+              section_type: section.type,
+              content: section.placeholder,
+              ai_generated: false,
+              user_edited: false,
+              confidence_score: null,
+            }))
+          );
+        } catch (sectionError) {
+          // Rollback: Delete the orphan draft if section creation fails
+          // This prevents partial state where draft exists without expected sections
+          try {
+            await pitchDraftsRepo.delete(draft.id);
+          } catch {
+            // Log but don't mask the original error
+            console.error('Failed to rollback draft after section creation error');
+          }
+          throw sectionError;
+        }
       }
 
       return { draft, sections };

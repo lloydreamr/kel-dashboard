@@ -240,17 +240,19 @@ test.describe('Pitch Templates - Template Filtering (AC2)', () => {
     // Count initial drafts
     const initialCount = await draftCards.count();
 
-    // Click custom filter
-    await mahoPage.getByTestId('filter-custom').click();
-    await mahoPage.waitForTimeout(300);
+    // Click custom filter and wait for active state
+    const customButton = mahoPage.getByTestId('filter-custom');
+    await customButton.click();
+    await expect(customButton).toHaveClass(/bg-secondary/);
 
     // Count should be <= initial (filtering applied)
     const customCount = await draftCards.count();
     expect(customCount).toBeLessThanOrEqual(initialCount);
 
-    // Click "All" to reset
-    await mahoPage.getByTestId('filter-all').click();
-    await mahoPage.waitForTimeout(300);
+    // Click "All" to reset and wait for active state
+    const allButton = mahoPage.getByTestId('filter-all');
+    await allButton.click();
+    await expect(allButton).toHaveClass(/bg-secondary/);
 
     // Count should be back to initial
     const allCount = await draftCards.count();
@@ -304,8 +306,9 @@ test.describe('Pitch Templates - Template Filtering (AC2)', () => {
     const filters = ['filter-mid_size', 'filter-regional', 'filter-wofex_booth', 'filter-custom'];
 
     for (const filter of filters) {
-      await mahoPage.getByTestId(filter).click();
-      await mahoPage.waitForTimeout(300);
+      const filterButton = mahoPage.getByTestId(filter);
+      await filterButton.click();
+      await expect(filterButton).toHaveClass(/bg-secondary/);
 
       const filteredCount = await draftCards.count();
 
@@ -317,11 +320,8 @@ test.describe('Pitch Templates - Template Filtering (AC2)', () => {
         await expect(emptyMessage).toBeVisible();
         await expect(clearButton).toBeVisible();
 
-        // Click clear filter
+        // Click clear filter and wait for All to be active
         await clearButton.click();
-        await mahoPage.waitForTimeout(300);
-
-        // Filter should reset to All
         await expect(mahoPage.getByTestId('filter-all')).toHaveClass(/bg-secondary/);
         break;
       }
@@ -364,8 +364,9 @@ test.describe('Pitch Templates - Template Badge Display (AC3)', () => {
     }
 
     // Filter to mid-size to find a template pitch
-    await mahoPage.getByTestId('filter-mid_size').click();
-    await mahoPage.waitForTimeout(300);
+    const midSizeButton = mahoPage.getByTestId('filter-mid_size');
+    await midSizeButton.click();
+    await expect(midSizeButton).toHaveClass(/bg-secondary/);
 
     const midSizeCards = await draftCards.count();
     if (midSizeCards > 0) {
@@ -375,8 +376,9 @@ test.describe('Pitch Templates - Template Badge Display (AC3)', () => {
     }
 
     // Check regional
-    await mahoPage.getByTestId('filter-regional').click();
-    await mahoPage.waitForTimeout(300);
+    const regionalButton = mahoPage.getByTestId('filter-regional');
+    await regionalButton.click();
+    await expect(regionalButton).toHaveClass(/bg-secondary/);
 
     const regionalCards = await draftCards.count();
     if (regionalCards > 0) {
@@ -385,8 +387,9 @@ test.describe('Pitch Templates - Template Badge Display (AC3)', () => {
     }
 
     // Check WOFEX
-    await mahoPage.getByTestId('filter-wofex_booth').click();
-    await mahoPage.waitForTimeout(300);
+    const wofexButton = mahoPage.getByTestId('filter-wofex_booth');
+    await wofexButton.click();
+    await expect(wofexButton).toHaveClass(/bg-secondary/);
 
     const wofexCards = await draftCards.count();
     if (wofexCards > 0) {
@@ -412,8 +415,9 @@ test.describe('Pitch Templates - Template Badge Display (AC3)', () => {
     }
 
     // Filter to custom
-    await mahoPage.getByTestId('filter-custom').click();
-    await mahoPage.waitForTimeout(300);
+    const customButton = mahoPage.getByTestId('filter-custom');
+    await customButton.click();
+    await expect(customButton).toHaveClass(/bg-secondary/);
 
     const customCards = await draftCards.count();
     if (customCards > 0) {
