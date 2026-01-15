@@ -66,6 +66,8 @@ describe('Sidebar', () => {
       expect(screen.getByTestId('nav-link-questions')).toBeInTheDocument();
       expect(screen.getByTestId('nav-link-visualization')).toBeInTheDocument();
       expect(screen.getByTestId('nav-link-progress')).toBeInTheDocument();
+      // Story 17.3: Market Intelligence nav link enabled
+      expect(screen.getByTestId('nav-link-market-intelligence')).toBeInTheDocument();
     });
 
     it('renders link labels', () => {
@@ -77,6 +79,8 @@ describe('Sidebar', () => {
       expect(screen.getByText('Questions')).toBeInTheDocument();
       expect(screen.getByText('Visualization')).toBeInTheDocument();
       expect(screen.getByText('Progress')).toBeInTheDocument();
+      // Story 17.3: Market Intelligence nav link label
+      expect(screen.getByText('Market Intel')).toBeInTheDocument();
     });
   });
 
@@ -134,17 +138,24 @@ describe('Sidebar', () => {
         'href',
         '/'
       );
+      // Story 17.4: Direct link to MI questions
       expect(screen.getByTestId('nav-link-questions')).toHaveAttribute(
         'href',
-        '/questions'
+        '/market-intelligence/questions'
       );
+      // Story 17.3: Direct link to MI visualization
       expect(screen.getByTestId('nav-link-visualization')).toHaveAttribute(
         'href',
-        '/visualization'
+        '/market-intelligence/visualization'
       );
       expect(screen.getByTestId('nav-link-progress')).toHaveAttribute(
         'href',
         '/progress'
+      );
+      // Story 17.3: Market Intelligence nav link href
+      expect(screen.getByTestId('nav-link-market-intelligence')).toHaveAttribute(
+        'href',
+        '/market-intelligence'
       );
     });
   });

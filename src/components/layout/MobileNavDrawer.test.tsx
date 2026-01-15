@@ -101,6 +101,10 @@ describe('MobileNavDrawer', () => {
         screen.getByTestId('mobile-nav-link-visualization')
       ).toBeInTheDocument();
       expect(screen.getByTestId('mobile-nav-link-progress')).toBeInTheDocument();
+      // Story 17.3: Market Intelligence nav link enabled
+      expect(
+        screen.getByTestId('mobile-nav-link-market-intelligence')
+      ).toBeInTheDocument();
     });
 
     it('renders user section', () => {
@@ -214,17 +218,23 @@ describe('MobileNavDrawer', () => {
         'href',
         '/'
       );
+      // Story 17.4: Direct link to MI questions
       expect(screen.getByTestId('mobile-nav-link-questions')).toHaveAttribute(
         'href',
-        '/questions'
+        '/market-intelligence/questions'
       );
+      // Story 17.3: Direct link to MI visualization
       expect(
         screen.getByTestId('mobile-nav-link-visualization')
-      ).toHaveAttribute('href', '/visualization');
+      ).toHaveAttribute('href', '/market-intelligence/visualization');
       expect(screen.getByTestId('mobile-nav-link-progress')).toHaveAttribute(
         'href',
         '/progress'
       );
+      // Story 17.3: Market Intelligence nav link href
+      expect(
+        screen.getByTestId('mobile-nav-link-market-intelligence')
+      ).toHaveAttribute('href', '/market-intelligence');
     });
 
     it('close button has aria-label', () => {

@@ -74,28 +74,40 @@ describe('useKeyboardShortcuts', () => {
       expect(mockPush).toHaveBeenCalledWith('/');
     });
 
+    // Story 17.4: Questions now at /market-intelligence/questions
     it('navigates to questions on "2" key', () => {
       renderHook(() => useKeyboardShortcuts({ enabled: true }));
 
       dispatchKeydown('2');
 
-      expect(mockPush).toHaveBeenCalledWith('/questions');
+      expect(mockPush).toHaveBeenCalledWith('/market-intelligence/questions');
     });
 
-    it('navigates to visualization on "3" key', () => {
+    // Story 17.3: Reordered - Progress is now key 3
+    it('navigates to progress on "3" key', () => {
       renderHook(() => useKeyboardShortcuts({ enabled: true }));
 
       dispatchKeydown('3');
 
-      expect(mockPush).toHaveBeenCalledWith('/visualization');
+      expect(mockPush).toHaveBeenCalledWith('/progress');
     });
 
-    it('navigates to progress on "4" key', () => {
+    // Story 17.3: Market Intel is now key 4
+    it('navigates to market intelligence on "4" key', () => {
       renderHook(() => useKeyboardShortcuts({ enabled: true }));
 
       dispatchKeydown('4');
 
-      expect(mockPush).toHaveBeenCalledWith('/progress');
+      expect(mockPush).toHaveBeenCalledWith('/market-intelligence');
+    });
+
+    // Story 17.3: Visualization is now key 5
+    it('navigates to visualization on "5" key', () => {
+      renderHook(() => useKeyboardShortcuts({ enabled: true }));
+
+      dispatchKeydown('5');
+
+      expect(mockPush).toHaveBeenCalledWith('/market-intelligence/visualization');
     });
   });
 
@@ -258,6 +270,7 @@ describe('keyboardShortcuts configuration', () => {
     expect(keys).toContain('2');
     expect(keys).toContain('3');
     expect(keys).toContain('4');
+    expect(keys).toContain('5');
     expect(keys).toContain('Esc');
   });
 

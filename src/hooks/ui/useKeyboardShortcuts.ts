@@ -78,7 +78,8 @@ export function useKeyboardShortcuts({
         case '1':
         case '2':
         case '3':
-        case '4': {
+        case '4':
+        case '5': {
           const index = parseInt(event.key, 10) - 1;
           if (navLinks[index]) {
             event.preventDefault();
@@ -111,7 +112,8 @@ export const keyboardShortcuts = [
   { key: '?', description: 'Show keyboard shortcuts', category: 'Help' },
   { key: '1', description: 'Go to Dashboard', category: 'Navigation' },
   { key: '2', description: 'Go to Questions', category: 'Navigation' },
-  { key: '3', description: 'Go to Visualization', category: 'Navigation' },
-  { key: '4', description: 'Go to Progress', category: 'Navigation' },
+  { key: '3', description: 'Go to Progress', category: 'Navigation' },
+  { key: '4', description: 'Go to Market Intel', category: 'Navigation' },
+  { key: '5', description: 'Go to Visualization', category: 'Navigation' },
   { key: 'Esc', description: 'Close dialog/overlay', category: 'General' },
 ] as const;
