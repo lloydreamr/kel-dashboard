@@ -87,6 +87,24 @@ export const queryKeys = {
     byStatus: (status: string) => ['opportunities', 'status', status] as const,
     byCategory: (category: string) => ['opportunities', 'category', category] as const,
   },
+  marketIntelligence: {
+    dashboardStats: ['marketIntelligence', 'dashboardStats'] as const,
+    globalSearch: (query: string) =>
+      ['marketIntelligence', 'globalSearch', query] as const,
+  },
+  pitchDrafts: {
+    all: ['pitchDrafts'] as const,
+    byId: (id: string) => ['pitchDrafts', id] as const,
+    byStatus: (status: string) => ['pitchDrafts', 'status', status] as const,
+    withSections: (id: string) => ['pitchDrafts', id, 'withSections'] as const,
+  },
+  pitchSections: {
+    all: ['pitchSections'] as const,
+    byDraft: (draftId: string) => ['pitchSections', 'draft', draftId] as const,
+    byId: (id: string) => ['pitchSections', id] as const,
+    byType: (draftId: string, type: string) =>
+      ['pitchSections', 'draft', draftId, 'type', type] as const,
+  },
 } as const;
 
 export type QueryKeys = typeof queryKeys;

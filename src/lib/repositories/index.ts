@@ -24,6 +24,9 @@ export { consumersRepo } from './consumers';
 export { trendsRepo } from './trends';
 export { embeddingsRepo } from './embeddings';
 export { opportunitiesRepo } from './opportunities';
+export { globalSearchRepo } from './globalSearch';
+export { pitchDraftsRepo } from './pitchDrafts';
+export { pitchSectionsRepo, pitchSectionSourcesRepo } from './pitchSections';
 
 // Error handling utilities
 export {
@@ -59,3 +62,22 @@ export type {
   OpportunityInput,
   SupportingEvidence,
 } from './opportunities';
+export type { GlobalSearchResult, GlobalSearchResults } from './globalSearch';
+export type {
+  PitchDraft,
+  PitchDraftStatus,
+  PitchTemplateType,
+  CreatePitchDraftInput,
+  UpdatePitchDraftInput,
+  PitchDraftWithSections,
+} from './pitchDrafts';
+export type {
+  PitchSection,
+  PitchSectionSource,
+  PitchSectionType,
+  PitchSourceType,
+  CreatePitchSectionInput,
+  UpdatePitchSectionInput,
+  CreatePitchSectionSourceInput,
+  PitchSectionWithSources,
+} from './pitchSections';

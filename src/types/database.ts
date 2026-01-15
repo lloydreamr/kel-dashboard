@@ -556,6 +556,115 @@ export type Database = {
         }
         Relationships: []
       }
+      pitch_drafts: {
+        Row: {
+          id: string
+          title: string
+          template_type: string | null
+          status: string
+          exported_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          template_type?: string | null
+          status?: string
+          exported_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          template_type?: string | null
+          status?: string
+          exported_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pitch_section_sources: {
+        Row: {
+          id: string
+          section_id: string
+          source_type: string
+          source_id: string
+          relevance_score: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          section_id: string
+          source_type: string
+          source_id: string
+          relevance_score?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          section_id?: string
+          source_type?: string
+          source_id?: string
+          relevance_score?: number | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pitch_section_sources_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "pitch_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pitch_sections: {
+        Row: {
+          id: string
+          pitch_draft_id: string
+          section_type: string
+          content: string
+          ai_generated: boolean
+          user_edited: boolean
+          confidence_score: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          pitch_draft_id: string
+          section_type: string
+          content: string
+          ai_generated?: boolean
+          user_edited?: boolean
+          confidence_score?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          pitch_draft_id?: string
+          section_type?: string
+          content?: string
+          ai_generated?: boolean
+          user_edited?: boolean
+          confidence_score?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pitch_sections_pitch_draft_id_fkey"
+            columns: ["pitch_draft_id"]
+            isOneToOne: false
+            referencedRelation: "pitch_drafts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trends: {
         Row: {
           category: string | null
@@ -800,4 +909,18 @@ export type EvidenceUpdate = TablesUpdate<'evidence'>;
 // Decision types
 export type Decision = Tables<'decisions'>;
 export type DecisionInsert = TablesInsert<'decisions'>;
-export type DecisionUpdate = TablesUpdate<'decisions'>
+export type DecisionUpdate = TablesUpdate<'decisions'>;
+
+// Pitch draft types
+export type PitchDraft = Tables<'pitch_drafts'>;
+export type PitchDraftInsert = TablesInsert<'pitch_drafts'>;
+export type PitchDraftUpdate = TablesUpdate<'pitch_drafts'>;
+
+// Pitch section types
+export type PitchSection = Tables<'pitch_sections'>;
+export type PitchSectionInsert = TablesInsert<'pitch_sections'>;
+export type PitchSectionUpdate = TablesUpdate<'pitch_sections'>;
+
+// Pitch section source types
+export type PitchSectionSource = Tables<'pitch_section_sources'>;
+export type PitchSectionSourceInsert = TablesInsert<'pitch_section_sources'>;
