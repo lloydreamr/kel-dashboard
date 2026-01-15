@@ -300,6 +300,45 @@ export const pitchSectionsRepo = {
   },
 
   /**
+   * Create multiple pitch sections at once (batch create).
+   * Used for template-based pitch creation with pre-defined sections.
+   *
+   * @param pitchDraftId - Pitch draft ID to create sections for
+   * @param sections - Array of section data (without pitch_draft_id)
+   * @returns Array of created pitch sections
+   * @throws RepositoryError on validation or database errors
+   */
+  createBatch: async (
+    pitchDraftId: string,
+    sections: Array<Omit<CreatePitchSectionInput, 'pitch_draft_id'>>
+  ): Promise<PitchSection[]> => {
+    if (sections.length === 0) {
+      return [];
+    }
+
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('pitch_sections')
+      .insert(
+        sections.map((section) => ({
+          pitch_draft_id: pitchDraftId,
+          section_type: section.section_type,
+          content: section.content,
+          ai_generated: section.ai_generated ?? false, // Template sections aren't AI-generated yet
+          user_edited: section.user_edited ?? false,
+          confidence_score: section.confidence_score ?? null,
+        }))
+      )
+      .select();
+
+    if (error) {
+      throw mapPostgrestError(error);
+    }
+
+    return data ?? [];
+  },
+
+  /**
    * Create or update a section (upsert by draft + type)
    * Used when regenerating content for an existing section type
    *

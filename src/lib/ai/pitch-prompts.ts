@@ -8,7 +8,7 @@
  */
 
 import type { PitchSectionType } from '@/types/pitch';
-import type { PitchGenerationContext } from './pitch-types';
+import type { PitchGenerationContext, TemplatePromptContext } from './pitch-types';
 
 // ============================================================================
 // Section-Specific Prompts
@@ -161,20 +161,65 @@ const SECTION_PROMPTS: Record<PitchSectionType, string> = {
 };
 
 /**
+ * Tone descriptions for prompt injection
+ *
+ * Story 18-4: Templates specify tone, which modifies the style instructions.
+ */
+const TONE_INSTRUCTIONS: Record<NonNullable<TemplatePromptContext['tone']>, string> = {
+  formal: 'Use professional, data-driven language suitable for formal business presentations.',
+  conversational: 'Use friendly, relationship-focused language that builds rapport.',
+  energetic: 'Use dynamic, punchy language that generates excitement and interest.',
+};
+
+/**
  * Build the pitch generation prompt with context
  *
  * Injects the knowledge base context into the appropriate template.
+ * Story 18-4: When templateContext is provided, injects the template's
+ * prompt modifier and adjusts tone for different distributor types.
  *
  * @param sectionType - Type of section to generate
  * @param context - PitchGenerationContext with formatted entities
+ * @param templateContext - Optional template-specific instructions
  * @returns Complete prompt ready for generateObject()
  */
 export function buildPitchPrompt(
   sectionType: PitchSectionType,
-  context: PitchGenerationContext
+  context: PitchGenerationContext,
+  templateContext?: TemplatePromptContext
 ): string {
   const template = SECTION_PROMPTS[sectionType];
-  return template.replace('{context}', context.formattedContext);
+  let prompt = template.replace('{context}', context.formattedContext);
+
+  // Story 18-4: Inject template-specific instructions if provided
+  if (templateContext) {
+    const additions: string[] = [];
+
+    // Add tone instruction if specified
+    if (templateContext.tone) {
+      additions.push(`\nTONE: ${TONE_INSTRUCTIONS[templateContext.tone]}`);
+    }
+
+    // Add template-specific prompt modifier
+    if (templateContext.promptModifier) {
+      additions.push(`\nTEMPLATE GUIDANCE:\n${templateContext.promptModifier}`);
+    }
+
+    // Insert before the KNOWLEDGE BASE CONTEXT section
+    if (additions.length > 0) {
+      const contextMarker = 'KNOWLEDGE BASE CONTEXT:';
+      const insertPoint = prompt.indexOf(contextMarker);
+      if (insertPoint !== -1) {
+        prompt =
+          prompt.slice(0, insertPoint) +
+          additions.join('\n') +
+          '\n\n' +
+          prompt.slice(insertPoint);
+      }
+    }
+  }
+
+  return prompt;
 }
 
 /**

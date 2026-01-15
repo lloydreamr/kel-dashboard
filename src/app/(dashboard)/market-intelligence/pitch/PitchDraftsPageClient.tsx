@@ -9,8 +9,6 @@
  * Story 18-1: AI-Assisted Pitch Content Generation
  */
 
-import { useState } from 'react';
-import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Plus,
@@ -20,8 +18,15 @@ import {
   MoreHorizontal,
   Trash2,
   Edit2,
+  Filter,
 } from 'lucide-react';
+import Link from 'next/link';
+import { useState, useMemo } from 'react';
 
+import { MiBreadcrumb } from '@/components/market-intelligence';
+import { cn } from '@/lib/utils';
+import { TemplateOptionCard } from '@/components/pitch/TemplateOptionCard';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -30,13 +35,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -45,28 +43,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { MiBreadcrumb } from '@/components/market-intelligence';
+import { RadioGroup } from '@/components/ui/radio-group';
 import {
   usePitchDrafts,
-  useCreatePitchDraft,
+  useCreatePitchWithTemplate,
   useDeletePitchDraft,
 } from '@/hooks/pitch';
-import {
-  TEMPLATE_TYPE_LABELS,
-  PITCH_TEMPLATE_TYPES,
-} from '@/types/pitch';
+import { ALL_TEMPLATES } from '@/lib/pitch';
+import { TEMPLATE_TYPE_LABELS, PITCH_AI_SECTION_TYPES } from '@/types/pitch';
 
-import type { PitchDraft } from '@/types/database';
-import type { PitchTemplateType, PitchDraftStatus } from '@/types/pitch';
+import type { PitchTemplateType, PitchDraftStatus, PitchDraftWithSectionCount } from '@/types/pitch';
+
+/** Total number of AI-generatable sections */
+const TOTAL_SECTIONS = PITCH_AI_SECTION_TYPES.length;
 
 /**
  * Status badge colors
@@ -93,20 +90,27 @@ function PitchDraftCard({
   draft,
   onDelete,
 }: {
-  draft: PitchDraft;
+  draft: PitchDraftWithSectionCount;
   onDelete: (id: string) => void;
 }) {
   const status = draft.status as PitchDraftStatus;
   const templateType = draft.template_type as PitchTemplateType;
+  const sectionCount = draft.section_count;
+  const isEmpty = sectionCount === 0;
 
   return (
-    <Card className="hover:shadow-md transition-shadow" data-testid="pitch-draft-card">
+    <Card
+      className={`hover:shadow-md transition-shadow ${isEmpty ? 'opacity-75' : ''}`}
+      data-testid="pitch-draft-card"
+    >
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="space-y-1 flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <CardTitle className="text-base truncate">{draft.title}</CardTitle>
+              <FileText className={`h-4 w-4 flex-shrink-0 ${isEmpty ? 'text-muted-foreground/50' : 'text-muted-foreground'}`} />
+              <CardTitle className={`text-base truncate ${isEmpty ? 'text-muted-foreground' : ''}`}>
+                {draft.title}
+              </CardTitle>
             </div>
             {templateType && (
               <CardDescription className="text-xs">
@@ -149,12 +153,33 @@ function PitchDraftCard({
       </CardHeader>
       <CardContent className="pt-2">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            Updated {formatDistanceToNow(new Date(draft.updated_at), { addSuffix: true })}
-          </p>
+          <div className="flex items-center gap-3">
+            {/* Section progress indicator */}
+            <div className="flex items-center gap-1.5">
+              <div className="flex gap-0.5">
+                {Array.from({ length: TOTAL_SECTIONS }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-2 h-2 rounded-full ${
+                      i < sectionCount
+                        ? 'bg-primary'
+                        : 'bg-muted-foreground/20'
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className={`text-xs ${isEmpty ? 'text-muted-foreground/60' : 'text-muted-foreground'}`}>
+                {sectionCount}/{TOTAL_SECTIONS}
+              </span>
+            </div>
+            <span className="text-muted-foreground/30">•</span>
+            <p className="text-xs text-muted-foreground">
+              {formatDistanceToNow(new Date(draft.updated_at), { addSuffix: true })}
+            </p>
+          </div>
           <Button variant="ghost" size="sm" asChild>
             <Link href={`/market-intelligence/pitch/${draft.id}`}>
-              Open
+              {isEmpty ? 'Start' : 'Open'}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
           </Button>
@@ -176,11 +201,11 @@ function CreatePitchDialog({
 }) {
   const [title, setTitle] = useState('');
   const [templateType, setTemplateType] = useState<PitchTemplateType>(null);
-  const createDraft = useCreatePitchDraft();
+  const createPitch = useCreatePitchWithTemplate();
 
   const handleCreate = () => {
     if (!title.trim()) return;
-    createDraft.mutate(
+    createPitch.mutate(
       { title: title.trim(), template_type: templateType },
       {
         onSuccess: () => {
@@ -194,7 +219,7 @@ function CreatePitchDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create Pitch Draft</DialogTitle>
           <DialogDescription>
@@ -212,24 +237,30 @@ function CreatePitchDialog({
               data-testid="pitch-title-input"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="template">Template (optional)</Label>
-            <Select
+          <div className="space-y-3">
+            <Label>Template</Label>
+            <RadioGroup
               value={templateType ?? 'none'}
               onValueChange={(v) => setTemplateType(v === 'none' ? null : v as NonNullable<PitchTemplateType>)}
+              className="grid gap-3"
+              data-testid="pitch-template-select"
             >
-              <SelectTrigger id="template" data-testid="pitch-template-select">
-                <SelectValue placeholder="Select a template" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No template</SelectItem>
-                {PITCH_TEMPLATE_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {TEMPLATE_TYPE_LABELS[type]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {/* Custom option */}
+              <TemplateOptionCard
+                template={null}
+                selected={templateType === null}
+                value="none"
+              />
+              {/* Template options */}
+              {ALL_TEMPLATES.map((template) => (
+                <TemplateOptionCard
+                  key={template.id}
+                  template={template}
+                  selected={templateType === template.id}
+                  value={template.id}
+                />
+              ))}
+            </RadioGroup>
           </div>
         </div>
         <DialogFooter>
@@ -238,10 +269,10 @@ function CreatePitchDialog({
           </Button>
           <Button
             onClick={handleCreate}
-            disabled={!title.trim() || createDraft.isPending}
+            disabled={!title.trim() || createPitch.isPending}
             data-testid="create-pitch-submit"
           >
-            {createDraft.isPending ? 'Creating...' : 'Create Pitch'}
+            {createPitch.isPending ? 'Creating...' : 'Create Pitch'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -250,13 +281,38 @@ function CreatePitchDialog({
 }
 
 /**
+ * Template filter value type
+ * 'all' shows everything, 'custom' shows null templates, others filter by template
+ */
+type TemplateFilterValue = 'all' | 'custom' | NonNullable<PitchTemplateType>;
+
+/**
+ * Filter labels for display
+ */
+const FILTER_LABELS: Record<TemplateFilterValue, string> = {
+  all: 'All',
+  custom: 'Custom',
+  mid_size: 'Mid-Size',
+  regional: 'Regional',
+  wofex_booth: 'WOFEX',
+};
+
+/**
  * Main pitch drafts page client
  */
 export function PitchDraftsPageClient() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [templateFilter, setTemplateFilter] = useState<TemplateFilterValue>('all');
   const { data: drafts, isLoading, error } = usePitchDrafts();
   const deleteDraft = useDeletePitchDraft();
+
+  // Filter drafts by template type
+  const filteredDrafts = drafts?.filter((draft) => {
+    if (templateFilter === 'all') return true;
+    if (templateFilter === 'custom') return draft.template_type === null;
+    return draft.template_type === templateFilter;
+  });
 
   const handleDeleteConfirm = () => {
     if (deleteId) {
@@ -314,6 +370,30 @@ export function PitchDraftsPageClient() {
         </Button>
       </div>
 
+      {/* Template filter */}
+      {drafts && drafts.length > 0 && (
+        <div className="flex items-center gap-2 mb-4" data-testid="template-filter">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <div className="flex gap-1">
+            {(Object.keys(FILTER_LABELS) as TemplateFilterValue[]).map((key) => (
+              <Button
+                key={key}
+                variant={templateFilter === key ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setTemplateFilter(key)}
+                className={cn(
+                  'text-sm h-8',
+                  templateFilter === key && 'bg-secondary'
+                )}
+                data-testid={`filter-${key}`}
+              >
+                {FILTER_LABELS[key]}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {drafts?.length === 0 ? (
         <Card className="mt-8">
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -331,9 +411,25 @@ export function PitchDraftsPageClient() {
             </Button>
           </CardContent>
         </Card>
+      ) : filteredDrafts?.length === 0 ? (
+        <Card className="mt-4">
+          <CardContent className="flex flex-col items-center justify-center py-8">
+            <p className="text-muted-foreground text-center">
+              No drafts match the selected filter.
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2"
+              onClick={() => setTemplateFilter('all')}
+            >
+              Clear filter
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {drafts?.map((draft) => (
+          {filteredDrafts?.map((draft) => (
             <PitchDraftCard
               key={draft.id}
               draft={draft}

@@ -133,6 +133,34 @@ export interface PitchGenerationContext {
 }
 
 // ============================================================================
+// Template Context Types (Story 18-4)
+// ============================================================================
+
+/**
+ * Custom context weights for template-aware generation
+ *
+ * Used to override default section weights based on template configuration.
+ */
+export interface ContextWeightOverrides {
+  companies?: number;
+  products?: number;
+  consumers?: number;
+  trends?: number;
+}
+
+/**
+ * Template context for prompt building
+ *
+ * Carries template-specific instructions for AI generation.
+ */
+export interface TemplatePromptContext {
+  /** Additional prompt instructions from template (appended to section prompt) */
+  promptModifier?: string;
+  /** Tone to use in generation (affects language style) */
+  tone?: 'formal' | 'conversational' | 'energetic';
+}
+
+// ============================================================================
 // Source Resolution Types
 // ============================================================================
 

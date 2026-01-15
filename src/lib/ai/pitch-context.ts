@@ -7,7 +7,7 @@
  * Story 18-1: AI-Assisted Pitch Content Generation
  */
 
-import type { PitchGenerationContext } from './pitch-types';
+import type { PitchGenerationContext, ContextWeightOverrides } from './pitch-types';
 import type { PitchSectionType } from '@/types/pitch';
 import type { Database } from '@/types/database';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -232,6 +232,16 @@ function formatResearchDoc(doc: ResearchDoc): string {
  * Build formatted context from entities with section-specific weighting
  *
  * Allocates token budget based on section type priorities.
+ * When customWeights are provided (from template), they override defaults.
+ *
+ * @param sectionType - Type of section being generated
+ * @param companies - Company entities
+ * @param products - Product entities
+ * @param consumers - Consumer entities
+ * @param trends - Trend entities
+ * @param research - Research document entities
+ * @param tokenBudget - Maximum tokens to use
+ * @param customWeights - Optional template weights to override defaults
  */
 function buildWeightedContext(
   sectionType: PitchSectionType,
@@ -240,9 +250,28 @@ function buildWeightedContext(
   consumers: Consumer[],
   trends: Trend[],
   research: ResearchDoc[],
-  tokenBudget: number
+  tokenBudget: number,
+  customWeights?: ContextWeightOverrides
 ): { context: string; wasTruncated: boolean } {
-  const weights = SECTION_ENTITY_WEIGHTS[sectionType];
+  // Use custom weights if provided, otherwise fall back to section defaults
+  const defaultWeights = SECTION_ENTITY_WEIGHTS[sectionType];
+  const weights = customWeights
+    ? {
+        companies: customWeights.companies ?? defaultWeights.companies,
+        products: customWeights.products ?? defaultWeights.products,
+        consumers: customWeights.consumers ?? defaultWeights.consumers,
+        trends: customWeights.trends ?? defaultWeights.trends,
+        // Research weight is whatever remains to sum to 1.0
+        research: Math.max(
+          0,
+          1 -
+            (customWeights.companies ?? defaultWeights.companies) -
+            (customWeights.products ?? defaultWeights.products) -
+            (customWeights.consumers ?? defaultWeights.consumers) -
+            (customWeights.trends ?? defaultWeights.trends)
+        ),
+      }
+    : defaultWeights;
   const charBudget = tokenBudget * CHARS_PER_TOKEN;
 
   // Calculate character budgets per entity type
@@ -323,9 +352,14 @@ function buildWeightedContext(
  * Uses smaller token budget than opportunity generation since pitch
  * sections are focused, not broad analysis.
  *
+ * Story 18-4: When customWeights are provided (from template), they override
+ * the default section-based weights, allowing templates to tune context
+ * composition for different distributor types.
+ *
  * @param client - Supabase client (server client for API routes)
  * @param sectionType - Type of pitch section being generated
  * @param focusIds - Optional entity IDs to prioritize (from user selection)
+ * @param customWeights - Optional template weights to override defaults
  * @returns PitchGenerationContext with formatted entities and metadata
  */
 export async function aggregatePitchContext(
@@ -336,7 +370,8 @@ export async function aggregatePitchContext(
     product_ids?: string[];
     consumer_ids?: string[];
     trend_ids?: string[];
-  }
+  },
+  customWeights?: ContextWeightOverrides
 ): Promise<PitchGenerationContext> {
   // Build queries - prioritize focus IDs if provided
   const companiesQuery = client.from('companies').select('*').order('name');
@@ -400,6 +435,7 @@ export async function aggregatePitchContext(
   }
 
   // Build weighted context for the section type
+  // Story 18-4: customWeights from template override default section weights
   const { context: formattedContext, wasTruncated } = buildWeightedContext(
     sectionType,
     companies,
@@ -407,7 +443,8 @@ export async function aggregatePitchContext(
     consumers,
     trends,
     research,
-    PITCH_CONTEXT_TOKEN_BUDGET
+    PITCH_CONTEXT_TOKEN_BUDGET,
+    customWeights
   );
 
   return {

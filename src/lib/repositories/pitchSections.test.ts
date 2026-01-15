@@ -250,6 +250,93 @@ describe('pitchSectionsRepo', () => {
       await expect(pitchSectionsRepo.delete('s1')).rejects.toThrow();
     });
   });
+
+  describe('createBatch', () => {
+    it('creates multiple sections at once', async () => {
+      const sections = [
+        { section_type: 'market_opportunity' as const, content: 'Market content' },
+        { section_type: 'competitive_positioning' as const, content: 'Competitive content' },
+        { section_type: 'trend_alignment' as const, content: 'Trend content' },
+      ];
+      const createdSections = sections.map((s, i) => ({
+        id: `s${i}`,
+        pitch_draft_id: 'd1',
+        ...s,
+        ai_generated: false,
+        user_edited: false,
+        confidence_score: null,
+      }));
+
+      mockSelect.mockResolvedValueOnce({ data: createdSections, error: null });
+
+      const result = await pitchSectionsRepo.createBatch('d1', sections);
+
+      expect(result).toEqual(createdSections);
+      expect(result).toHaveLength(3);
+    });
+
+    it('returns empty array when no sections provided', async () => {
+      const result = await pitchSectionsRepo.createBatch('d1', []);
+
+      expect(result).toEqual([]);
+      expect(mockInsert).not.toHaveBeenCalled();
+    });
+
+    it('sets ai_generated to false by default for template sections', async () => {
+      const sections = [
+        { section_type: 'market_opportunity' as const, content: 'Content' },
+      ];
+      const createdSection = {
+        id: 's1',
+        pitch_draft_id: 'd1',
+        section_type: 'market_opportunity',
+        content: 'Content',
+        ai_generated: false,
+        user_edited: false,
+        confidence_score: null,
+      };
+
+      mockSelect.mockResolvedValueOnce({ data: [createdSection], error: null });
+
+      const result = await pitchSectionsRepo.createBatch('d1', sections);
+
+      expect(result[0].ai_generated).toBe(false);
+    });
+
+    it('preserves provided ai_generated value', async () => {
+      const sections = [
+        { section_type: 'market_opportunity' as const, content: 'AI Content', ai_generated: true },
+      ];
+      const createdSection = {
+        id: 's1',
+        pitch_draft_id: 'd1',
+        section_type: 'market_opportunity',
+        content: 'AI Content',
+        ai_generated: true,
+        user_edited: false,
+        confidence_score: null,
+      };
+
+      mockSelect.mockResolvedValueOnce({ data: [createdSection], error: null });
+
+      const result = await pitchSectionsRepo.createBatch('d1', sections);
+
+      expect(result[0].ai_generated).toBe(true);
+    });
+
+    it('throws on database error', async () => {
+      const sections = [
+        { section_type: 'market_opportunity' as const, content: 'Content' },
+      ];
+
+      mockSelect.mockResolvedValueOnce({
+        data: null,
+        error: { code: '23503', message: 'Foreign key violation' },
+      });
+
+      await expect(pitchSectionsRepo.createBatch('invalid', sections)).rejects.toThrow();
+    });
+  });
 });
 
 describe('pitchSectionSourcesRepo', () => {

@@ -20,6 +20,11 @@ import { z } from 'zod';
 import { aggregatePitchContext, hasKnowledgeBaseEntities, resolveSourceNames } from '@/lib/ai/pitch-context';
 import { buildPitchPrompt, NO_CONTEXT_PITCH_PROMPT } from '@/lib/ai/pitch-prompts';
 import { env } from '@/lib/env';
+import {
+  getSectionContextWeights,
+  getSectionPromptModifier,
+  getTemplateTone,
+} from '@/lib/pitch/templates';
 import { createClient } from '@/lib/supabase/server';
 
 import type {
@@ -27,8 +32,9 @@ import type {
   GeneratePitchContentResponse,
   GeneratePitchContentErrorResponse,
   AIGeneratedPitchContent,
+  TemplatePromptContext,
 } from '@/lib/ai/pitch-types';
-import type { PitchSectionType, PitchSourceType } from '@/types/pitch';
+import type { PitchSectionType, PitchSourceType, PitchTemplateType } from '@/types/pitch';
 
 /**
  * Maximum retries for Anthropic API calls (handles rate limits)
@@ -196,9 +202,10 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     // Verify pitch draft exists and user has access (RLS handles this)
+    // Story 18-4: Fetch template_type to apply template-specific generation
     const { data: pitchDraft, error: draftError } = await supabase
       .from('pitch_drafts')
-      .select('id, status')
+      .select('id, status, template_type')
       .eq('id', body.pitch_draft_id)
       .single();
 
@@ -213,6 +220,9 @@ export async function POST(request: Request): Promise<Response> {
         { status: 404, headers: { 'Content-Type': 'application/json' } }
       );
     }
+
+    // Story 18-4: Get template type for context weighting and prompt modification
+    const templateType = pitchDraft.template_type as PitchTemplateType;
 
     // Check if knowledge base has entities
     const hasEntities = await hasKnowledgeBaseEntities(supabase);
@@ -233,16 +243,26 @@ export async function POST(request: Request): Promise<Response> {
       console.log(`[Pitch Generation] Section: ${body.section_type}, Draft: ${body.pitch_draft_id}`);
     }
 
-    // Aggregate context with section-specific weighting
+    // Story 18-4: Get template-specific context weights
+    const templateWeights = getSectionContextWeights(templateType, body.section_type);
+
+    // Aggregate context with section-specific weighting (template-aware)
     const context = await aggregatePitchContext(
       supabase,
       body.section_type,
-      body.context
+      body.context,
+      templateWeights
     );
 
-    // Build the generation prompt
+    // Story 18-4: Build template context for prompt modification
+    const templatePromptContext: TemplatePromptContext = {
+      promptModifier: getSectionPromptModifier(templateType, body.section_type),
+      tone: getTemplateTone(templateType),
+    };
+
+    // Build the generation prompt (template-aware)
     const prompt = context.formattedContext
-      ? buildPitchPrompt(body.section_type, context)
+      ? buildPitchPrompt(body.section_type, context, templatePromptContext)
       : NO_CONTEXT_PITCH_PROMPT;
 
     // Create Anthropic client

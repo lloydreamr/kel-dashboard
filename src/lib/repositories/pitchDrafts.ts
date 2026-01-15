@@ -17,6 +17,7 @@ import type {
   CreatePitchDraftInput,
   UpdatePitchDraftInput,
   PitchDraftWithSections,
+  PitchDraftWithSectionCount,
   PitchSectionType,
   PitchSourceType,
 } from '@/types/pitch';
@@ -44,6 +45,42 @@ export const pitchDraftsRepo = {
     }
 
     return data ?? [];
+  },
+
+  /**
+   * Get all pitch drafts with section counts
+   * Returns drafts with count of AI-generatable sections (for progress indicator)
+   *
+   * @returns Array of pitch drafts with section counts
+   * @throws RepositoryError on database errors
+   */
+  getAllWithCounts: async (): Promise<PitchDraftWithSectionCount[]> => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('pitch_drafts')
+      .select(
+        `
+        *,
+        pitch_sections(count)
+      `
+      )
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw mapPostgrestError(error);
+    }
+
+    // Transform to include section_count
+    return (data ?? []).map((draft) => ({
+      id: draft.id,
+      title: draft.title,
+      template_type: draft.template_type as PitchTemplateType,
+      status: draft.status as PitchDraftStatus,
+      exported_at: draft.exported_at,
+      created_at: draft.created_at,
+      updated_at: draft.updated_at,
+      section_count: (draft.pitch_sections as { count: number }[])?.[0]?.count ?? 0,
+    }));
   },
 
   /**
@@ -332,4 +369,5 @@ export type {
   CreatePitchDraftInput,
   UpdatePitchDraftInput,
   PitchDraftWithSections,
+  PitchDraftWithSectionCount,
 };

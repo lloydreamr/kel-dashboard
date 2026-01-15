@@ -19,6 +19,12 @@ export {
   useDeletePitchDraft,
 } from './usePitchDraftMutations';
 
+// Template-based creation (Story 18-4)
+export {
+  useCreatePitchWithTemplate,
+  type CreatePitchWithTemplateResult,
+} from './useCreatePitchWithTemplate';
+
 // Mutation hooks - sections
 export {
   useUpdatePitchSection,

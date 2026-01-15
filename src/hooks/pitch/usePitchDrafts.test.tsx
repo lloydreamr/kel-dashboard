@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // Mock repository
 vi.mock('@/lib/repositories', () => ({
   pitchDraftsRepo: {
-    getAll: vi.fn(),
+    getAllWithCounts: vi.fn(),
   },
 }));
 
@@ -32,12 +32,12 @@ describe('usePitchDrafts', () => {
     vi.clearAllMocks();
   });
 
-  it('fetches all pitch drafts', async () => {
+  it('fetches all pitch drafts with section counts', async () => {
     const mockDrafts = [
-      { id: 'd1', title: 'Draft 1', status: 'draft' },
-      { id: 'd2', title: 'Draft 2', status: 'ready' },
+      { id: 'd1', title: 'Draft 1', status: 'draft', section_count: 0 },
+      { id: 'd2', title: 'Draft 2', status: 'ready', section_count: 2 },
     ];
-    vi.mocked(pitchDraftsRepo.getAll).mockResolvedValueOnce(mockDrafts as never);
+    vi.mocked(pitchDraftsRepo.getAllWithCounts).mockResolvedValueOnce(mockDrafts as never);
 
     const { result } = renderHook(() => usePitchDrafts(), {
       wrapper: createWrapper(),
@@ -50,11 +50,11 @@ describe('usePitchDrafts', () => {
     });
 
     expect(result.current.data).toEqual(mockDrafts);
-    expect(pitchDraftsRepo.getAll).toHaveBeenCalled();
+    expect(pitchDraftsRepo.getAllWithCounts).toHaveBeenCalled();
   });
 
   it('returns empty array when no drafts', async () => {
-    vi.mocked(pitchDraftsRepo.getAll).mockResolvedValueOnce([]);
+    vi.mocked(pitchDraftsRepo.getAllWithCounts).mockResolvedValueOnce([]);
 
     const { result } = renderHook(() => usePitchDrafts(), {
       wrapper: createWrapper(),
@@ -68,7 +68,7 @@ describe('usePitchDrafts', () => {
   });
 
   it('handles errors', async () => {
-    vi.mocked(pitchDraftsRepo.getAll).mockRejectedValueOnce(
+    vi.mocked(pitchDraftsRepo.getAllWithCounts).mockRejectedValueOnce(
       new Error('Database error')
     );
 

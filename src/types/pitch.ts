@@ -265,6 +265,21 @@ export interface PitchDraftWithSections {
   sections: PitchSectionWithSources[];
 }
 
+/**
+ * Pitch draft with section count for list display.
+ * Used to show progress indicators (e.g., "0/3 sections").
+ */
+export interface PitchDraftWithSectionCount {
+  id: string;
+  title: string;
+  template_type: PitchTemplateType;
+  status: PitchDraftStatus;
+  exported_at: string | null;
+  created_at: string;
+  updated_at: string;
+  section_count: number;
+}
+
 // ============================================================================
 // AI Generation Types
 // ============================================================================
