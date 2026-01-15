@@ -250,13 +250,17 @@ test.describe('Pitch - Market Gaps Section (AC2)', () => {
     const hasOpportunities = await opportunityCard.isVisible({ timeout: 3000 }).catch(() => false);
 
     if (hasOpportunities) {
-      // Check for supporting evidence section
-      const evidenceSection = opportunityCard.locator('[data-testid="supporting-evidence-list"]');
-      const hasEvidence = await evidenceSection.isVisible({ timeout: 2000 }).catch(() => false);
+      // Opportunity card should contain expected structure
+      // Check for category badge (Market Gap)
+      const categoryBadge = opportunityCard.locator('text=/Market Gap/i');
+      const hasCategoryBadge = await categoryBadge.isVisible({ timeout: 2000 }).catch(() => false);
 
-      // Evidence section should be present (may be empty)
-      // or at least the container should exist
-      expect(true).toBeTruthy(); // Test passes if we get here
+      // Check for supporting evidence section (may be empty but container should exist)
+      const evidenceContainer = opportunityCard.locator('.border-t'); // Evidence section has border-t class
+      const hasEvidenceContainer = await evidenceContainer.isVisible({ timeout: 2000 }).catch(() => false);
+
+      // At least one of these structural elements should be present
+      expect(hasCategoryBadge || hasEvidenceContainer).toBeTruthy();
     }
   });
 
@@ -423,8 +427,15 @@ test.describe('Pitch - Data Refresh Behavior (AC3)', () => {
     // Click refresh - button should show spinning icon
     await refreshButton.click();
 
-    // The button should be disabled while fetching
-    // (This may happen too fast to catch, but we verify the button exists)
-    expect(true).toBeTruthy();
+    // Verify button is still in the DOM and section remains visible after refresh
+    // (The disabled state and animation may happen too fast to catch reliably in E2E)
+    await mahoPage.waitForTimeout(500);
+
+    // Button should still be enabled after refresh completes
+    await expect(refreshButton).toBeEnabled({ timeout: 5000 });
+
+    // Section should still be visible (no errors during refresh)
+    const section = mahoPage.getByTestId('pitch-section-competitive_landscape');
+    await expect(section).toBeVisible();
   });
 });
