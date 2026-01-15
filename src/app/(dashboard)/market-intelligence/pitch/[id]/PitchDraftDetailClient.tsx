@@ -7,11 +7,14 @@
  * Core UI for AI-assisted content generation.
  *
  * Story 18-1: AI-Assisted Pitch Content Generation
+ * Story 18-3: Export with AI Summary
  */
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Settings, FileDown } from 'lucide-react';
+
+import { useCompetitorData } from '@/hooks/competitors';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +38,9 @@ import {
   PitchSectionCard,
   PitchSectionEmptyState,
   GenerateAllSectionsButton,
+  CompetitiveLandscapeSection,
+  MarketGapsSection,
+  PitchExportPreviewDialog,
 } from '@/components/pitch';
 import {
   usePitchDraft,
@@ -78,6 +84,7 @@ export function PitchDraftDetailClient({ pitchDraftId }: PitchDraftDetailClientP
   const router = useRouter();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   const { data: draft, isLoading: draftLoading, error: draftError } = usePitchDraft(pitchDraftId);
   const { data: sections, isLoading: sectionsLoading } = usePitchSections(pitchDraftId, {
@@ -85,6 +92,11 @@ export function PitchDraftDetailClient({ pitchDraftId }: PitchDraftDetailClientP
   });
   const updateDraft = useUpdatePitchDraft();
   const updateStatus = useUpdatePitchDraftStatus();
+
+  // Competitor data for PDF export
+  const { data: competitors } = useCompetitorData();
+  const kelPosition = competitors?.find((c) => c.is_kel_position) ?? null;
+  const competitorData = competitors?.filter((c) => !c.is_kel_position) ?? [];
 
   const isLoading = draftLoading || sectionsLoading;
 
@@ -246,9 +258,9 @@ export function PitchDraftDetailClient({ pitchDraftId }: PitchDraftDetailClientP
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled>
+              <DropdownMenuItem onClick={() => setIsExportDialogOpen(true)}>
                 <FileDown className="h-4 w-4 mr-2" />
-                Export PDF (coming soon)
+                Export PDF
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -258,6 +270,15 @@ export function PitchDraftDetailClient({ pitchDraftId }: PitchDraftDetailClientP
       {/* Pitch Sections */}
       <div className="space-y-6">
         {PITCH_SECTION_TYPES.map((sectionType) => {
+          // Dynamic data sections (Story 18-2) - show live data via dedicated components
+          if (sectionType === 'competitive_landscape') {
+            return <CompetitiveLandscapeSection key={sectionType} />;
+          }
+          if (sectionType === 'market_gaps') {
+            return <MarketGapsSection key={sectionType} />;
+          }
+
+          // AI-generated text sections - show stored content or empty state
           const section = sectionMap.get(sectionType);
           return section ? (
             <PitchSectionCard
@@ -274,6 +295,17 @@ export function PitchDraftDetailClient({ pitchDraftId }: PitchDraftDetailClientP
           );
         })}
       </div>
+
+      {/* Export Preview Dialog */}
+      <PitchExportPreviewDialog
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
+        pitchDraftId={pitchDraftId}
+        pitchTitle={draft.title}
+        sections={(sections as PitchSectionWithSources[]) ?? []}
+        competitorData={competitorData}
+        kelPosition={kelPosition}
+      />
     </main>
   );
 }

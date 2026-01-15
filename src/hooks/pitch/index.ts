@@ -31,3 +31,6 @@ export {
   getGenerationState,
   type GenerationState,
 } from './useGeneratePitchContent';
+
+// AI summary generation (Story 18-3)
+export { useGeneratePitchSummary } from './useGeneratePitchSummary';
