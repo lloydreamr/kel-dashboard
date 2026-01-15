@@ -15,7 +15,14 @@ const PUBLIC_ROUTES = [
   '/auth/callback',
   '/auth/confirm',
   '/api/test/mock-login',
-  '/manifest.webmanifest', // PWA manifest must be publicly accessible
+];
+
+/**
+ * Static public routes that skip auth entirely (no session check needed).
+ * These routes don't need user context and shouldn't trigger auth validation.
+ */
+const STATIC_PUBLIC_ROUTES = [
+  '/manifest.webmanifest', // PWA manifest - no auth needed
 ];
 
 /**
@@ -25,6 +32,13 @@ function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
+}
+
+/**
+ * Check if a path is a static public route (skips auth entirely).
+ */
+function isStaticPublicRoute(pathname: string): boolean {
+  return STATIC_PUBLIC_ROUTES.includes(pathname);
 }
 
 /**
@@ -83,6 +97,12 @@ function getTestSessionUser(request: NextRequest): { email: string } | null {
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Skip auth entirely for static public routes (e.g., PWA manifest)
+  // These don't need session validation and shouldn't trigger auth errors
+  if (isStaticPublicRoute(pathname)) {
+    return NextResponse.next();
+  }
 
   // Check for test session first (only in PLAYWRIGHT_TEST_MODE)
   const testUser = getTestSessionUser(request);
