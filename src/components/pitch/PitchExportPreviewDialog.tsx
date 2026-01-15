@@ -9,8 +9,8 @@
  * Story 18-3: Export with AI Summary
  */
 
-import { useEffect, useRef } from 'react';
-import { FileDown, RefreshCw, AlertCircle } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { FileDown, RefreshCw, AlertCircle, Check } from 'lucide-react';
 
 import {
   Dialog,
@@ -20,9 +20,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 import { PitchPdfExportContent } from './PitchPdfExportContent';
-import { useGeneratePitchSummary } from '@/hooks/pitch';
+import { useGeneratePitchSummary, useUpdatePitchDraftStatus } from '@/hooks/pitch';
 import { usePdfExport } from '@/hooks/visualization/usePdfExport';
 
 import type { PitchSectionWithSources } from '@/types/pitch';
@@ -77,17 +79,26 @@ export function PitchExportPreviewDialog({
   marketGaps = [],
 }: PitchExportPreviewDialogProps) {
   const pdfContentRef = useRef<HTMLDivElement>(null);
+  const [editedSummary, setEditedSummary] = useState<string | null>(null);
+  const [isEditingSummary, setIsEditingSummary] = useState(false);
+
   const generateSummary = useGeneratePitchSummary();
+  const updateStatus = useUpdatePitchDraftStatus();
   const { exportToPdf, isGenerating: isPdfGenerating } = usePdfExport();
 
   // Generate summary when dialog opens
   useEffect(() => {
     if (open) {
+      setEditedSummary(null);
+      setIsEditingSummary(false);
       generateSummary.mutate({ pitchDraftId });
     }
     // Only trigger on open change, not on other dependency changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, pitchDraftId]);
+
+  // The summary to display/export - use edited version if set
+  const displaySummary = editedSummary ?? generateSummary.data?.summary ?? '';
 
   const handleRetry = () => {
     generateSummary.reset();
@@ -101,9 +112,24 @@ export function PitchExportPreviewDialog({
 
     try {
       await exportToPdf(pdfContentRef.current, filename);
+      // Update status to 'exported' after successful export
+      updateStatus.mutate({ id: pitchDraftId, status: 'exported' });
+      toast.success('PDF exported successfully', {
+        description: `Saved as ${filename}`,
+      });
+      onOpenChange(false);
     } catch {
       // Error is handled by usePdfExport hook
     }
+  };
+
+  const handleSummaryEdit = () => {
+    setEditedSummary(displaySummary);
+    setIsEditingSummary(true);
+  };
+
+  const handleSummarySave = () => {
+    setIsEditingSummary(false);
   };
 
   const isLoading = generateSummary.isPending;
@@ -149,12 +175,54 @@ export function PitchExportPreviewDialog({
         {/* Preview Content */}
         {hasSummary && (
           <>
+            {/* Editable Summary Section */}
+            <div className="border rounded-lg p-4 bg-blue-50/50" data-testid="summary-edit-section">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-sm">Executive Summary</h3>
+                {isEditingSummary ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSummarySave}
+                    className="h-8"
+                    data-testid="save-summary-button"
+                  >
+                    <Check className="h-4 w-4 mr-1" />
+                    Done
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSummaryEdit}
+                    className="h-8"
+                    data-testid="edit-summary-button"
+                  >
+                    Edit
+                  </Button>
+                )}
+              </div>
+              {isEditingSummary ? (
+                <Textarea
+                  value={editedSummary ?? ''}
+                  onChange={(e) => setEditedSummary(e.target.value)}
+                  className="min-h-[80px] bg-white"
+                  placeholder="Edit your executive summary..."
+                  data-testid="summary-textarea"
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground" data-testid="summary-display">
+                  {displaySummary}
+                </p>
+              )}
+            </div>
+
             <div className="flex-1 overflow-auto border rounded-lg bg-muted/50 p-2">
               {/* Visible preview - scaled down */}
               <div className="transform scale-[0.5] origin-top-left w-[200%]">
                 <PitchPdfExportContent
                   title={pitchTitle}
-                  summary={generateSummary.data.summary}
+                  summary={displaySummary}
                   sections={sections}
                   competitorData={competitorData}
                   kelPosition={kelPosition}
@@ -171,7 +239,7 @@ export function PitchExportPreviewDialog({
             >
               <PitchPdfExportContent
                 title={pitchTitle}
-                summary={generateSummary.data.summary}
+                summary={displaySummary}
                 sections={sections}
                 competitorData={competitorData}
                 kelPosition={kelPosition}

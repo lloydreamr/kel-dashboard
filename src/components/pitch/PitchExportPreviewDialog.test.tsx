@@ -15,6 +15,7 @@ import type { PitchSectionWithSources } from '@/types/pitch';
 // Mock the hooks
 vi.mock('@/hooks/pitch', () => ({
   useGeneratePitchSummary: vi.fn(),
+  useUpdatePitchDraftStatus: vi.fn(),
 }));
 
 vi.mock('@/hooks/visualization/usePdfExport', () => ({
@@ -34,7 +35,7 @@ vi.mock('recharts', () => ({
   Cell: () => null,
 }));
 
-import { useGeneratePitchSummary } from '@/hooks/pitch';
+import { useGeneratePitchSummary, useUpdatePitchDraftStatus } from '@/hooks/pitch';
 import { usePdfExport } from '@/hooks/visualization/usePdfExport';
 
 const createWrapper = () => {
@@ -88,6 +89,11 @@ describe('PitchExportPreviewDialog', () => {
       exportToPdf: mockExportToPdf,
       isGenerating: false,
       error: null,
+    });
+
+    (useUpdatePitchDraftStatus as Mock).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
     });
   });
 
@@ -193,9 +199,9 @@ describe('PitchExportPreviewDialog', () => {
     // Two elements: visible preview and hidden export target
     const pdfContents = screen.getAllByTestId('pitch-pdf-export-content');
     expect(pdfContents).toHaveLength(2);
-    // Summary text appears in both copies
+    // Summary text appears in: editable section, visible preview, and hidden export target
     const summaryTexts = screen.getAllByText('This is an AI-generated executive summary.');
-    expect(summaryTexts).toHaveLength(2);
+    expect(summaryTexts).toHaveLength(3);
   });
 
   it('shows error state when summary generation fails', () => {

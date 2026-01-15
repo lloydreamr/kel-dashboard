@@ -307,6 +307,129 @@ function inferTrendStatus(content: string): 'emerging' | 'growing' | 'mature' | 
   return 'growing';
 }
 
+/**
+ * Infer company category from content and company name
+ * Valid categories: 'local_major', 'multinational', 'importer', 'niche'
+ */
+function inferCompanyCategory(
+  content: string,
+  companyName: string
+): 'local_major' | 'multinational' | 'importer' | 'niche' {
+  const lowerContent = content.toLowerCase();
+  const lowerName = companyName.toLowerCase();
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PRIORITY 1: Known Filipino companies (check FIRST to avoid false positives)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const filipinoCompanyKeywords = [
+    'urc', 'universal robina', 'robina',
+    'monde nissin', 'nissin',
+    'oishi', 'liwayway',
+    'rebisco', 'republic biscuit',
+    'leslie', 'leslie corporation',
+    'granny goose',  // Filipino brand owned by Liwayway
+    'efc', 'ecossential',
+    'jbc', 'j.b.c.',
+    'nutri-asia', 'nutriasia',
+    'del monte philippines',  // Local subsidiary, operates as local major
+    'san miguel', 'smb',
+    'century pacific', 'century tuna',
+    'mega global', 'mega sardines'
+  ];
+
+  for (const keyword of filipinoCompanyKeywords) {
+    if (lowerName.includes(keyword)) {
+      return 'local_major';
+    }
+  }
+
+  // Check for explicit Filipino company indicators in content
+  if (
+    (lowerContent.includes('filipino') && lowerContent.includes('company')) ||
+    (lowerContent.includes('philippine') && lowerContent.includes('conglomerate')) ||
+    lowerContent.includes('founded in the philippines') ||
+    lowerContent.includes('headquartered in the philippines') ||
+    lowerContent.includes('manila-based') ||
+    lowerContent.includes('pasig-based') ||
+    lowerContent.includes('makati-based')
+  ) {
+    return 'local_major';
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PRIORITY 2: Known importer/distributor companies
+  // ═══════════════════════════════════════════════════════════════════════════
+  const importerKeywords = [
+    'irvins', 'irvin\'s', 'tong garden', 'jack n jill imports',
+    'snack exchange'
+  ];
+
+  for (const keyword of importerKeywords) {
+    if (lowerName.includes(keyword)) {
+      return 'importer';
+    }
+  }
+
+  // Check content for importer indicators (company is primarily an importer)
+  if (
+    lowerContent.includes('exclusive importer') ||
+    lowerContent.includes('imports and distributes') ||
+    lowerContent.includes('distribution partner for foreign') ||
+    (lowerContent.includes('singapore-based') && lowerContent.includes('philippines market'))
+  ) {
+    return 'importer';
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PRIORITY 3: Known multinational companies (global HQs outside Philippines)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const multinationalKeywords = [
+    'calbee', 'pepsico', 'frito-lay', 'frito lay', 'lay\'s', 'lays',
+    'pringles', 'kellanova', 'kellogg', 'nestlé', 'nestle', 'mondelez',
+    'kraft', 'unilever', 'procter', 'p&g', 'mars', 'general mills',
+    'conagra', 'campbell', 'heinz', 'danone'
+  ];
+
+  // Check if company name matches known multinationals
+  for (const keyword of multinationalKeywords) {
+    if (lowerName.includes(keyword)) {
+      return 'multinational';
+    }
+  }
+
+  // Check content for explicit multinational indicators (company itself, not market context)
+  if (
+    lowerContent.includes('headquartered in the united states') ||
+    lowerContent.includes('headquartered in japan') ||
+    lowerContent.includes('headquartered in europe') ||
+    lowerContent.includes('global snack giant') ||
+    lowerContent.includes('multinational corporation')
+  ) {
+    return 'multinational';
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PRIORITY 4: Niche/artisan indicators
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (
+    lowerContent.includes('artisan') ||
+    lowerContent.includes('craft snack') ||
+    lowerContent.includes('small batch') ||
+    lowerContent.includes('cottage industry') ||
+    lowerContent.includes('niche market') ||
+    lowerContent.includes('specialty snack') ||
+    lowerContent.includes('premium artisan') ||
+    lowerContent.includes('small-scale production')
+  ) {
+    return 'niche';
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DEFAULT: Assume local_major for unmatched Philippine market companies
+  // ═══════════════════════════════════════════════════════════════════════════
+  return 'local_major';
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Import Statistics
 // ─────────────────────────────────────────────────────────────────────────────
@@ -548,9 +671,12 @@ async function importCompany(filePath: string): Promise<void> {
     }
   }
 
+  // Infer company category from content and name
+  const category = inferCompanyCategory(content, name);
+
   const companyData: CompaniesInsert = {
     name,
-    category: 'local_major', // Default, can be refined later
+    category,
     revenue_estimate: revenue,
     market_share: marketShare,
     strengths: strengths && strengths.length > 0 ? strengths : null,

@@ -7,6 +7,7 @@
  * Fetches company data and renders the detail view.
  */
 
+import Markdown from 'react-markdown';
 import { Suspense } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -89,29 +90,33 @@ export function CompanyDetailClient({ id }: CompanyDetailClientProps) {
         badgeVariant={getCategoryVariant(company.category)}
       />
 
-      {/* Market Position */}
-      <DetailSection title="Market Position" defaultExpanded>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <dt className="text-sm font-medium text-muted-foreground">
-              Market Share
-            </dt>
-            <dd className="mt-1 text-lg font-semibold">
-              {formatMarketShare(company.market_share)}
-            </dd>
+      {/* Market Position - only show if we have data */}
+      {(company.market_share != null || company.revenue_estimate) && (
+        <DetailSection title="Market Position" defaultExpanded>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {company.market_share != null && (
+              <div>
+                <dt className="text-sm font-medium text-muted-foreground">
+                  Market Share
+                </dt>
+                <dd className="mt-1 text-lg font-semibold">
+                  {formatMarketShare(company.market_share)}
+                </dd>
+              </div>
+            )}
+            {company.revenue_estimate && (
+              <div>
+                <dt className="text-sm font-medium text-muted-foreground">
+                  Revenue Estimate
+                </dt>
+                <dd className="mt-1 text-lg font-semibold">
+                  {company.revenue_estimate}
+                </dd>
+              </div>
+            )}
           </div>
-          {company.revenue_estimate && (
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">
-                Revenue Estimate
-              </dt>
-              <dd className="mt-1 text-lg font-semibold">
-                {company.revenue_estimate}
-              </dd>
-            </div>
-          )}
-        </div>
-      </DetailSection>
+        </DetailSection>
+      )}
 
       {/* Products */}
       {company.products && company.products.length > 0 && (
@@ -158,6 +163,15 @@ export function CompanyDetailClient({ id }: CompanyDetailClientProps) {
               </li>
             ))}
           </ul>
+        </DetailSection>
+      )}
+
+      {/* Full Profile Content (Markdown) */}
+      {company.raw_content && (
+        <DetailSection title="Full Profile">
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            <Markdown>{company.raw_content}</Markdown>
+          </div>
         </DetailSection>
       )}
 

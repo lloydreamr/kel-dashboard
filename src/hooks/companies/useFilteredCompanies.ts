@@ -44,26 +44,27 @@ export function useFilteredCompanies(
       };
     }
 
-    // Build counts first (always from full dataset, before filtering)
-    const counts: Record<CategoryFilterKey, number> = {
-      all: allCompanies.length,
-      local_major: allCompanies.filter((c) => c.category === 'local_major').length,
-      multinational: allCompanies.filter((c) => c.category === 'multinational').length,
-      importer: allCompanies.filter((c) => c.category === 'importer').length,
-      niche: allCompanies.filter((c) => c.category === 'niche').length,
-    };
-
-    // Filter by category
-    let filtered =
-      category === 'all'
-        ? allCompanies
-        : allCompanies.filter((c) => c.category === category);
-
-    // Filter by search query (case-insensitive)
+    // Apply search filter first (search applies across all categories)
+    let searchFiltered = allCompanies;
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((c) => c.name.toLowerCase().includes(query));
+      searchFiltered = allCompanies.filter((c) => c.name.toLowerCase().includes(query));
     }
+
+    // Build counts from search-filtered results (so counts reflect search matches per category)
+    const counts: Record<CategoryFilterKey, number> = {
+      all: searchFiltered.length,
+      local_major: searchFiltered.filter((c) => c.category === 'local_major').length,
+      multinational: searchFiltered.filter((c) => c.category === 'multinational').length,
+      importer: searchFiltered.filter((c) => c.category === 'importer').length,
+      niche: searchFiltered.filter((c) => c.category === 'niche').length,
+    };
+
+    // Then apply category filter
+    const filtered =
+      category === 'all'
+        ? searchFiltered
+        : searchFiltered.filter((c) => c.category === category);
 
     return { companies: filtered, counts };
   }, [allCompanies, category, searchQuery]);

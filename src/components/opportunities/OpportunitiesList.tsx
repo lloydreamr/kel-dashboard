@@ -19,6 +19,8 @@ interface OpportunitiesListProps {
   isLoading: boolean;
   error: Error | null;
   onRetry?: () => void;
+  /** Total opportunities count (before filtering) - used for empty state context */
+  totalCount?: number;
 }
 
 export function OpportunitiesList({
@@ -26,6 +28,7 @@ export function OpportunitiesList({
   isLoading,
   error,
   onRetry,
+  totalCount = 0,
 }: OpportunitiesListProps) {
   if (isLoading) {
     return (
@@ -45,7 +48,7 @@ export function OpportunitiesList({
   }
 
   if (opportunities.length === 0) {
-    return <EmptyOpportunities />;
+    return <EmptyOpportunities totalCount={totalCount} />;
   }
 
   return (
