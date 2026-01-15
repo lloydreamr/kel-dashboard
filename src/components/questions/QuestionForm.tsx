@@ -92,7 +92,7 @@ export function QuestionForm({ userId, onCancel, onSuccess }: QuestionFormProps)
           autoFocus
           placeholder="What strategic question needs answering?"
           data-testid="question-title-input"
-          className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+          className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         {errors.title && (
           <p className="text-sm text-destructive" role="alert">
@@ -115,7 +115,7 @@ export function QuestionForm({ userId, onCancel, onSuccess }: QuestionFormProps)
           rows={3}
           placeholder="Add context or details about this question..."
           data-testid="question-description-input"
-          className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+          className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>
 

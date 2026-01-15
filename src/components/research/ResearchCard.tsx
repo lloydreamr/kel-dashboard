@@ -46,7 +46,8 @@ export function ResearchCard({ doc }: ResearchCardProps) {
     <div
       role="button"
       tabIndex={0}
-      className="border border-border rounded-lg p-4 cursor-pointer bg-surface hover:bg-muted/50 transition-colors min-h-[48px] focus:outline-none focus:ring-2 focus:ring-primary"
+      aria-label={`Open research: ${doc.title}`}
+      className="border border-border rounded-lg p-4 cursor-pointer bg-surface hover:bg-muted/50 transition-colors min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       data-testid="research-card"

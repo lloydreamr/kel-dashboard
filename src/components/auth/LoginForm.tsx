@@ -134,7 +134,7 @@ export function LoginForm({ defaultEmail = '', errorFromUrl }: LoginFormProps) {
             autoComplete="email"
             placeholder="you@example.com"
             data-testid="login-email-input"
-            className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+            className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
           {errors.email && (
             <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -166,7 +166,7 @@ export function LoginForm({ defaultEmail = '', errorFromUrl }: LoginFormProps) {
                 autoComplete="current-password"
                 placeholder="••••••••"
                 data-testid="login-password-input"
-                className="w-full rounded-md border border-border bg-surface px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+                className="w-full rounded-md border border-border bg-surface px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
               <button
                 type="button"

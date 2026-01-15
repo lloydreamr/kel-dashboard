@@ -131,7 +131,7 @@ export function ApproveButton({
       className="min-h-12 px-6 py-2 rounded-lg bg-success text-success-foreground font-medium
         hover:bg-success/90 active:scale-[0.98] transition-all
         disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
-        focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2"
     >
       {isPending ? (
         <span className="flex items-center gap-2">

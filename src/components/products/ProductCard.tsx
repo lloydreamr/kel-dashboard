@@ -41,7 +41,7 @@ export function ProductCard({ product }: ProductCardProps) {
       className={cn(
         'border rounded-lg p-4 cursor-pointer',
         'hover:bg-accent/50 transition-colors',
-        'min-h-[48px] focus:outline-none focus:ring-2 focus:ring-primary'
+        'min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
       )}
       onClick={handleClick}
       onKeyDown={handleKeyDown}

@@ -12,6 +12,9 @@ export function ChatSkeleton() {
   return (
     <div
       data-testid="chat-skeleton"
+      role="status"
+      aria-busy="true"
+      aria-label="Loading chat"
       className="flex flex-col h-[calc(100vh-var(--header-height))] animate-pulse"
     >
       {/* Messages area skeleton */}

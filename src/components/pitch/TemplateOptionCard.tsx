@@ -109,7 +109,7 @@ export function TemplateOptionCard({
             selected ? 'border-primary bg-primary' : 'border-muted-foreground/30'
           )}
         >
-          {selected && <div className="h-2 w-2 rounded-full bg-white" />}
+          {selected && <div className="h-2 w-2 rounded-full bg-primary-foreground" />}
         </div>
       </div>
 
@@ -127,7 +127,7 @@ export function TemplateOptionCard({
               variant="secondary"
               className="text-[10px] px-1.5 py-0.5"
             >
-              <FileText className="h-2.5 w-2.5 mr-1" />
+              <FileText className="h-2.5 w-2.5 mr-1" aria-hidden="true" />
               {SECTION_TYPE_LABELS[section.type]}
             </Badge>
           ))}

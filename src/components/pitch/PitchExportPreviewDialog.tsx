@@ -176,7 +176,7 @@ export function PitchExportPreviewDialog({
         {hasSummary && (
           <>
             {/* Editable Summary Section */}
-            <div className="border rounded-lg p-4 bg-blue-50/50" data-testid="summary-edit-section">
+            <div className="border rounded-lg p-4 bg-muted/30" data-testid="summary-edit-section">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-semibold text-sm">Executive Summary</h3>
                 {isEditingSummary ? (
@@ -206,7 +206,7 @@ export function PitchExportPreviewDialog({
                 <Textarea
                   value={editedSummary ?? ''}
                   onChange={(e) => setEditedSummary(e.target.value)}
-                  className="min-h-[80px] bg-white"
+                  className="min-h-[80px] bg-background"
                   placeholder="Edit your executive summary..."
                   data-testid="summary-textarea"
                 />

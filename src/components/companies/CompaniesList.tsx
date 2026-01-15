@@ -9,6 +9,7 @@
 
 import { Building2 } from 'lucide-react';
 
+import { EmptyState } from '@/components/empty-states';
 import { ErrorState } from '@/components/ui/error-state';
 
 import { CompaniesListSkeleton } from './CompaniesListSkeleton';
@@ -44,17 +45,11 @@ export function CompaniesList({
 
   if (companies.length === 0) {
     return (
-      <div
-        data-testid="companies-empty-state"
-        role="status"
-        aria-label="No companies found"
-        className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center"
-      >
-        <Building2 className="mx-auto h-8 w-8 text-muted-foreground" />
-        <p className="mt-2 text-muted-foreground">
-          No companies found matching your criteria.
-        </p>
-      </div>
+      <EmptyState
+        icon={Building2}
+        message="No companies found matching your criteria."
+        testId="companies-empty-state"
+      />
     );
   }
 

@@ -22,7 +22,13 @@ function ResearchCardSkeleton() {
 
 export function ResearchListSkeleton() {
   return (
-    <div data-testid="research-list-skeleton" className="space-y-3">
+    <div
+      data-testid="research-list-skeleton"
+      role="status"
+      aria-busy="true"
+      aria-label="Loading research documents"
+      className="space-y-3"
+    >
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <ResearchCardSkeleton key={i} />
       ))}

@@ -8,6 +8,8 @@
  */
 
 import Markdown from 'react-markdown';
+import rehypeHighlight from 'rehype-highlight';
+import remarkGfm from 'remark-gfm';
 import { Suspense } from 'react';
 
 import {
@@ -85,7 +87,9 @@ export function ResearchDetailClient({ id }: ResearchDetailClientProps) {
       {/* Summary */}
       {doc.summary && (
         <DetailSection title="Summary" defaultExpanded>
-          <p className="text-sm text-foreground leading-relaxed">{doc.summary}</p>
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>{doc.summary}</Markdown>
+          </div>
         </DetailSection>
       )}
 
@@ -93,7 +97,7 @@ export function ResearchDetailClient({ id }: ResearchDetailClientProps) {
       {doc.content && (
         <DetailSection title="Content">
           <div className="prose prose-sm dark:prose-invert max-w-none">
-            <Markdown>{doc.content}</Markdown>
+            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>{doc.content}</Markdown>
           </div>
         </DetailSection>
       )}

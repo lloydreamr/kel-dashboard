@@ -10,6 +10,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { useOnlineStatus } from './useOnlineStatus';
 
+// Mock FEATURES
+const mockOfflineRead = vi.fn();
+const mockOfflineMode = vi.fn();
+vi.mock('@/lib/features', () => ({
+  FEATURES: {
+    get OFFLINE_READ() { return mockOfflineRead(); },
+    get OFFLINE_MODE() { return mockOfflineMode(); },
+  },
+}));
+
 describe('useOnlineStatus', () => {
   const originalNavigatorOnLine = navigator.onLine;
   let onlineEventListeners: Array<() => void> = [];
@@ -19,6 +29,10 @@ describe('useOnlineStatus', () => {
     vi.useFakeTimers();
     onlineEventListeners = [];
     offlineEventListeners = [];
+
+    // Enable feature flags by default for most tests
+    mockOfflineRead.mockReturnValue(true);
+    mockOfflineMode.mockReturnValue(false);
 
     // Mock addEventListener to capture listeners
     vi.spyOn(window, 'addEventListener').mockImplementation((event, handler) => {
@@ -199,6 +213,86 @@ describe('useOnlineStatus', () => {
 
       expect(result.current).toHaveProperty('isOnline');
       expect(typeof result.current.isOnline).toBe('boolean');
+    });
+  });
+
+  describe('feature flag guard (Story 8.5 Task 1.5)', () => {
+    it('does not add event listeners when both feature flags are disabled', () => {
+      mockOfflineRead.mockReturnValue(false);
+      mockOfflineMode.mockReturnValue(false);
+
+      Object.defineProperty(navigator, 'onLine', {
+        value: true,
+        configurable: true,
+      });
+
+      renderHook(() => useOnlineStatus());
+
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      // Should not have registered any listeners
+      expect(onlineEventListeners).toHaveLength(0);
+      expect(offlineEventListeners).toHaveLength(0);
+    });
+
+    it('adds event listeners when OFFLINE_READ is enabled', () => {
+      mockOfflineRead.mockReturnValue(true);
+      mockOfflineMode.mockReturnValue(false);
+
+      Object.defineProperty(navigator, 'onLine', {
+        value: true,
+        configurable: true,
+      });
+
+      renderHook(() => useOnlineStatus());
+
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      expect(window.addEventListener).toHaveBeenCalledWith('online', expect.any(Function));
+      expect(window.addEventListener).toHaveBeenCalledWith('offline', expect.any(Function));
+    });
+
+    it('adds event listeners when OFFLINE_MODE is enabled', () => {
+      mockOfflineRead.mockReturnValue(false);
+      mockOfflineMode.mockReturnValue(true);
+
+      Object.defineProperty(navigator, 'onLine', {
+        value: true,
+        configurable: true,
+      });
+
+      renderHook(() => useOnlineStatus());
+
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      expect(window.addEventListener).toHaveBeenCalledWith('online', expect.any(Function));
+      expect(window.addEventListener).toHaveBeenCalledWith('offline', expect.any(Function));
+    });
+
+    it('returns true (online) when both feature flags are disabled', () => {
+      mockOfflineRead.mockReturnValue(false);
+      mockOfflineMode.mockReturnValue(false);
+
+      // Even if browser is offline
+      Object.defineProperty(navigator, 'onLine', {
+        value: false,
+        configurable: true,
+      });
+
+      const { result } = renderHook(() => useOnlineStatus());
+
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      // Should stay true (SSR default) since hook doesn't check navigator.onLine
+      expect(result.current.isOnline).toBe(true);
     });
   });
 });

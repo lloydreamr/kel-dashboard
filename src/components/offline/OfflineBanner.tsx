@@ -4,11 +4,11 @@
  * OfflineBanner Component
  *
  * Displays a persistent warning banner when the user is offline.
+ * Shows pending action count when OFFLINE_MODE is enabled.
  * Shows a brief "Back online" message when reconnected before auto-dismissing.
- * Respects the OFFLINE_READ feature flag - hidden when flag is disabled.
  *
- * Story 10.3: Offline Read-Only Mode (Task 3)
- * Story 10.4: Offline Detection & Sync Indicator (Task 4 - AC#4)
+ * Created: Story 10.3 (Offline Read-Only Mode) - basic offline banner
+ * Enhanced: Story 8.5 (Offline Banner Component) - added queue count, syncing state, test IDs
  *
  * @example
  * ```tsx
@@ -19,44 +19,74 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { Wifi, WifiOff } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { Loader2, Wifi, WifiOff } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 import { useOnlineStatus } from '@/hooks/offline';
 import { ANIMATION } from '@/lib/constants/animations';
 import { FEATURES } from '@/lib/features';
+import { getCount } from '@/lib/offline';
 import { cn } from '@/lib/utils';
 
 export interface OfflineBannerProps {
   /** Optional className for custom styling */
   className?: string;
-  /** Auto-dismiss delay in milliseconds for reconnection message (default: 2000) */
-  reconnectDismissDelay?: number;
+  /** Auto-dismiss delay in milliseconds for success message (default: 3000 per AC3) */
+  successDismissDelay?: number;
 }
 
-/** Banner state: offline (yellow), reconnecting (green), or hidden */
-type BannerState = 'offline' | 'reconnecting' | 'hidden';
+/**
+ * Banner state machine:
+ * - offline: Yellow banner, shows pending actions count
+ * - syncing: Yellow banner with spinner, shows "Syncing..." (AC3)
+ * - online: Green banner, shows "✓ Back online" briefly (AC3)
+ * - hidden: No banner shown
+ */
+type BannerState = 'offline' | 'syncing' | 'online' | 'hidden';
 
 /**
- * OfflineBanner - Persistent offline status indicator with reconnection feedback.
+ * OfflineBanner - Persistent offline status indicator with queue count and sync feedback.
  *
- * Shows a yellow warning banner when offline and OFFLINE_READ is enabled.
- * Shows a green "Back online" message briefly when reconnected (AC#4).
- * Uses slide animation for smooth enter/exit.
- * Auto-dismisses when back online.
+ * Per Story 8.5 Acceptance Criteria:
+ * - AC1: Appears when offline detected (via navigator.onLine/events)
+ * - AC2: Shows amber/orange banner with message and queue count
+ * - AC3: Shows "Syncing..." with progress, then "✓ Back online" for ~3s
+ * - AC4: Hidden when online with no pending actions
+ * - AC5: All elements have data-testid attributes
  *
- * Per AC#5: Uses bg-yellow-100 text-yellow-800 styling when offline
- * Per AC#4: Uses bg-green-100 text-green-800 styling when reconnected
- * Per AC#6: Only shows when FEATURES.OFFLINE_READ is true
+ * Feature flags:
+ * - OFFLINE_READ: Shows basic offline message (read-only mode)
+ * - OFFLINE_MODE: Shows queue count from IndexedDB (full offline mode)
  */
 export function OfflineBanner({
   className,
-  reconnectDismissDelay = 2000,
+  successDismissDelay = 3000,
 }: OfflineBannerProps) {
   const { isOnline } = useOnlineStatus();
   const [bannerState, setBannerState] = useState<BannerState>('hidden');
+  const [pendingCount, setPendingCount] = useState<number>(0);
   const wasOfflineRef = useRef(false);
   const dismissTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Fetch pending action count from IndexedDB queue
+  const refreshPendingCount = useCallback(async () => {
+    if (!FEATURES.OFFLINE_MODE) {
+      setPendingCount(0);
+      return;
+    }
+    const count = await getCount();
+    setPendingCount(count);
+  }, []);
+
+  // Refresh pending count when offline or periodically
+  useEffect(() => {
+    if (!isOnline && (FEATURES.OFFLINE_MODE || FEATURES.OFFLINE_READ)) {
+      refreshPendingCount();
+      // Refresh count every 5 seconds while offline
+      const interval = setInterval(refreshPendingCount, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [isOnline, refreshPendingCount]);
 
   // Track offline/online transitions
   useEffect(() => {
@@ -66,7 +96,9 @@ export function OfflineBanner({
       dismissTimeoutRef.current = null;
     }
 
-    if (!FEATURES.OFFLINE_READ) {
+    // Check if either offline feature flag is enabled
+    const offlineEnabled = FEATURES.OFFLINE_READ || FEATURES.OFFLINE_MODE;
+    if (!offlineEnabled) {
       setBannerState('hidden');
       return;
     }
@@ -77,15 +109,24 @@ export function OfflineBanner({
       wasOfflineRef.current = true;
     } else if (wasOfflineRef.current) {
       // Just came back online after being offline
-      setBannerState('reconnecting');
+      // Per AC3: Show "Syncing..." state first
+      setBannerState('syncing');
 
-      // Auto-dismiss after delay
+      // TODO: Integrate with useSyncStatus hook when Story 8.3 sync engine is enabled
+      // Currently simulating sync completion after 1 second as a placeholder.
+      // When OFFLINE_MODE is fully enabled with the sync engine, replace this
+      // timeout with actual sync status monitoring from useSyncStatus().
       dismissTimeoutRef.current = setTimeout(() => {
-        setBannerState('hidden');
-        wasOfflineRef.current = false;
-      }, reconnectDismissDelay);
+        setBannerState('online');
+
+        // Auto-dismiss success message after delay (AC3: ~3 seconds)
+        dismissTimeoutRef.current = setTimeout(() => {
+          setBannerState('hidden');
+          wasOfflineRef.current = false;
+        }, successDismissDelay);
+      }, 1000);
     } else {
-      // Online and was never offline
+      // Online and was never offline (AC4)
       setBannerState('hidden');
     }
 
@@ -94,28 +135,60 @@ export function OfflineBanner({
         clearTimeout(dismissTimeoutRef.current);
       }
     };
-  }, [isOnline, reconnectDismissDelay]);
+  }, [isOnline, successDismissDelay]);
 
   const shouldShow = bannerState !== 'hidden';
-  const isReconnecting = bannerState === 'reconnecting';
+  const isSyncing = bannerState === 'syncing';
+  const isOnlineSuccess = bannerState === 'online';
 
-  const bannerClasses = isReconnecting
+  // Per AC2: Amber/orange background for offline, green for success
+  const bannerClasses = isOnlineSuccess
     ? 'bg-green-100 text-green-800'
-    : 'bg-yellow-100 text-yellow-800';
+    : 'bg-amber-100 text-amber-800';
 
-  const Icon = isReconnecting ? Wifi : WifiOff;
-  const message = isReconnecting
-    ? 'Back online – syncing...'
-    : "You're offline - viewing cached data";
+  // Select appropriate icon
+  const renderIcon = () => {
+    if (isSyncing) {
+      return (
+        <Loader2
+          data-testid="offline-banner-syncing"
+          className="h-4 w-4 animate-spin"
+          aria-hidden="true"
+        />
+      );
+    }
+    if (isOnlineSuccess) {
+      return <Wifi className="h-4 w-4" aria-hidden="true" />;
+    }
+    return <WifiOff className="h-4 w-4" aria-hidden="true" />;
+  };
 
-  // Per AC#4: Use offline-banner-reconnected when reconnecting
-  const testId = isReconnecting ? 'offline-banner-reconnected' : 'offline-banner';
+  // Build message based on state (AC2, AC3)
+  const renderMessage = () => {
+    if (isSyncing) {
+      return 'Syncing...';
+    }
+    if (isOnlineSuccess) {
+      return '✓ Back online';
+    }
+    // Per AC2: Show queue count when OFFLINE_MODE is enabled
+    return "You're offline. Actions will sync when connected.";
+  };
+
+  // Per AC2: Show pending count when offline and OFFLINE_MODE enabled
+  const showQueueCount = bannerState === 'offline' && FEATURES.OFFLINE_MODE && pendingCount > 0;
+
+  // Per AC5: Test IDs for all interactive elements
+  const getTestId = () => {
+    if (isOnlineSuccess) return 'offline-banner-online';
+    return 'offline-banner';
+  };
 
   return (
     <AnimatePresence mode="wait">
       {shouldShow && (
         <motion.div
-          data-testid={testId}
+          data-testid={getTestId()}
           role="alert"
           aria-live="polite"
           initial={{ opacity: 0, y: -20 }}
@@ -124,12 +197,22 @@ export function OfflineBanner({
           transition={ANIMATION.slideIn}
           className={cn(
             bannerClasses,
-            'px-4 py-3 flex items-center justify-center gap-2',
+            'px-4 py-3 flex items-center justify-center gap-2 min-h-[48px]',
             className
           )}
         >
-          <Icon className="h-4 w-4" aria-hidden="true" />
-          <span className="text-sm font-medium">{message}</span>
+          {renderIcon()}
+          <span data-testid="offline-banner-message" className="text-sm font-medium">
+            {renderMessage()}
+          </span>
+          {showQueueCount && (
+            <span
+              data-testid="offline-banner-queue-count"
+              className="text-sm font-medium ml-1"
+            >
+              {pendingCount} pending {pendingCount === 1 ? 'action' : 'actions'}
+            </span>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

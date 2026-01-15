@@ -14,6 +14,8 @@
 
 import { useState, useEffect } from 'react';
 
+import { FEATURES } from '@/lib/features';
+
 export interface UseOnlineStatusResult {
   /**
    * True when browser is online, false when offline.
@@ -36,6 +38,12 @@ export function useOnlineStatus(): UseOnlineStatusResult {
   const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
+    // Feature flag guard per Story 8.5 Task 1.5
+    // Skip event listeners when offline features are disabled
+    if (!FEATURES.OFFLINE_READ && !FEATURES.OFFLINE_MODE) {
+      return;
+    }
+
     // Client-side only: read actual online status
     setIsOnline(navigator.onLine);
 

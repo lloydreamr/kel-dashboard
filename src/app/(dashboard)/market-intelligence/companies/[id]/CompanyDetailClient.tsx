@@ -8,6 +8,8 @@
  */
 
 import Markdown from 'react-markdown';
+import rehypeHighlight from 'rehype-highlight';
+import remarkGfm from 'remark-gfm';
 import { Suspense } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -170,7 +172,7 @@ export function CompanyDetailClient({ id }: CompanyDetailClientProps) {
       {company.raw_content && (
         <DetailSection title="Full Profile">
           <div className="prose prose-sm dark:prose-invert max-w-none">
-            <Markdown>{company.raw_content}</Markdown>
+            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>{company.raw_content}</Markdown>
           </div>
         </DetailSection>
       )}

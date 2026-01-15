@@ -6,8 +6,9 @@
  *
  * @example
  * ```typescript
- * import { startSync, stopSync, getSyncStatus } from '@/lib/sync';
- * import type { SyncEngineState, SyncEngineStatus } from '@/lib/sync';
+ * import { startSync, stopSync, getSyncStatus, clearConflictAndResume } from '@/lib/sync';
+ * import { detectConflict, resolveConflict } from '@/lib/sync';
+ * import type { SyncEngineState, SyncEngineStatus, ConflictData, ConflictResolution } from '@/lib/sync';
  *
  * // Start sync when online
  * await startSync(queryClient);
@@ -18,25 +19,38 @@
  *   showSyncingIndicator();
  * }
  *
+ * // Handle conflicts
+ * if (status.currentConflict) {
+ *   await resolveConflict(status.currentConflict, 'keep-server', profileId);
+ *   clearConflictAndResume(queryClient);
+ * }
+ *
  * // Stop sync before logout
  * stopSync();
  * ```
  *
  * @see Story 8.3: Sync Engine
+ * @see Story 8.4: Conflict Detection & Resolution
  */
 
 // Engine functions
-export { getSyncStatus, startSync, stopSync } from './engine';
+export { clearConflictAndResume, getSyncStatus, startSync, stopSync } from './engine';
+
+// Conflict functions
+export { detectConflict, resolveConflict } from './conflicts';
 
 // Types
 export type {
+  ConflictConfig,
+  ConflictData,
+  ConflictResolution,
   SyncConfig,
   SyncEngineState,
   SyncEngineStatus,
   SyncResult,
 } from './types';
 
-export { SYNC_CONFIG } from './types';
+export { CONFLICT_CONFIG, SYNC_CONFIG } from './types';
 
 // Hook for auto-sync on online
 export { useSyncOnline } from './useSyncOnline';

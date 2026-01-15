@@ -112,7 +112,7 @@ export function ResetPasswordForm({ errorFromUrl }: ResetPasswordFormProps) {
               autoComplete="new-password"
               placeholder="Enter new password"
               data-testid="reset-password-input"
-              className="w-full rounded-md border border-border bg-surface px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+              className="w-full rounded-md border border-border bg-surface px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
             <button
               type="button"
@@ -148,7 +148,7 @@ export function ResetPasswordForm({ errorFromUrl }: ResetPasswordFormProps) {
               autoComplete="new-password"
               placeholder="Confirm new password"
               data-testid="reset-password-confirm-input"
-              className="w-full rounded-md border border-border bg-surface px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+              className="w-full rounded-md border border-border bg-surface px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
             <button
               type="button"

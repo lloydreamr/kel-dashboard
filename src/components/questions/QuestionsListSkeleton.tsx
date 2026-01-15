@@ -24,7 +24,13 @@ function CategorySkeleton() {
 
 export function QuestionsListSkeleton() {
   return (
-    <div data-testid="questions-list-skeleton" className="space-y-6">
+    <div
+      data-testid="questions-list-skeleton"
+      role="status"
+      aria-busy="true"
+      aria-label="Loading questions"
+      className="space-y-6"
+    >
       {QUESTION_CATEGORIES.map((category) => (
         <CategorySkeleton key={category} />
       ))}

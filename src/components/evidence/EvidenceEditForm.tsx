@@ -77,7 +77,7 @@ export function EvidenceEditForm({
           type="text"
           autoFocus
           data-testid="evidence-edit-title-input"
-          className="w-full rounded-md border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+          className="w-full rounded-md border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         {errors.title && (
           <p className="text-sm text-destructive" role="alert">
@@ -99,7 +99,7 @@ export function EvidenceEditForm({
           id="edit-evidence-url"
           type="url"
           data-testid="evidence-edit-url-input"
-          className="w-full rounded-md border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+          className="w-full rounded-md border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         {errors.url && (
           <p className="text-sm text-destructive" role="alert">
@@ -123,7 +123,7 @@ export function EvidenceEditForm({
           type="text"
           placeholder="#section-name"
           data-testid="evidence-edit-anchor-input"
-          className="w-full rounded-md border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+          className="w-full rounded-md border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         {errors.section_anchor && (
           <p className="text-sm text-destructive" role="alert">
@@ -146,7 +146,7 @@ export function EvidenceEditForm({
           rows={3}
           placeholder="What does this source prove?"
           data-testid="evidence-edit-excerpt-input"
-          className="w-full rounded-md border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+          className="w-full rounded-md border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         {errors.excerpt && (
           <p className="text-sm text-destructive" role="alert">

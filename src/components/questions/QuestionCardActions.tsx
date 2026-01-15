@@ -104,7 +104,7 @@ export function QuestionCardActions({
               e.stopPropagation();
               onClick?.(e);
             }}
-            className="p-2 rounded-md hover:bg-muted min-h-12 min-w-12 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="p-2 rounded-md hover:bg-muted min-h-12 min-w-12 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             data-testid="question-card-menu-trigger"
             aria-label="Question actions"
           >

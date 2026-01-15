@@ -47,6 +47,8 @@ export function ChatMessage({ message, sources = [], className }: ChatMessagePro
   return (
     <div
       data-testid={`chat-message-${message.role}`}
+      role="article"
+      aria-label={isUser ? 'Your message' : 'Assistant response'}
       className={cn('flex', isUser ? 'justify-end' : 'justify-start', className)}
     >
       <div

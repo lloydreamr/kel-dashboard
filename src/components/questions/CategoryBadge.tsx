@@ -74,7 +74,7 @@ export function CategoryBadge({
       <DropdownMenuTrigger asChild disabled={isPending}>
         <button
           data-testid="category-badge"
-          className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-2 text-xs font-medium text-muted-foreground capitalize hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 min-h-12 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-2 text-xs font-medium text-muted-foreground capitalize hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-12 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? 'Updating...' : category}
           <ChevronDown className="h-3 w-3" />

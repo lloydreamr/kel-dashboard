@@ -79,7 +79,7 @@ function CardHeader({
         }
       }}
       aria-expanded={isExpanded}
-      className="w-full text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-t-lg min-h-12 p-4 cursor-pointer"
+      className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-t-lg min-h-12 p-4 cursor-pointer"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">

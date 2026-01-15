@@ -38,6 +38,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
       data-testid="question-card"
       role="button"
       tabIndex={0}
+      aria-label={`Open question: ${question.title}`}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -45,7 +46,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
           handleCardClick();
         }
       }}
-      className="block min-h-12 rounded-lg border border-border bg-surface p-3 sm:p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+      className="block min-h-12 rounded-lg border border-border bg-surface p-3 sm:p-4 hover:bg-muted/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       {/* Mobile: stacked layout, Desktop: side-by-side */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">

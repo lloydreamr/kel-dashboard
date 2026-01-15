@@ -5,19 +5,18 @@
  * Every list should have a corresponding empty state.
  *
  * @example
- * import { EmptyQueue } from '@/components/empty-states';
- * {items.length === 0 ? <EmptyQueue /> : <ItemList items={items} />}
+ * import { EmptyState } from '@/components/empty-states';
+ * import { FileText } from 'lucide-react';
+ *
+ * {items.length === 0 ? (
+ *   <EmptyState
+ *     icon={FileText}
+ *     message="No items found"
+ *     testId="items-empty-state"
+ *   />
+ * ) : (
+ *   <ItemList items={items} />
+ * )}
  */
 
-/** Base props for all empty state components */
-export type EmptyStateProps = {
-  /** Title text */
-  title?: string;
-  /** Description text */
-  description?: string;
-  /** Optional action button */
-  action?: React.ReactNode;
-};
-
-// Empty state components will be added here as features are implemented
-// Example: export { EmptyQueue } from './EmptyQueue';
+export { EmptyState } from './EmptyState';

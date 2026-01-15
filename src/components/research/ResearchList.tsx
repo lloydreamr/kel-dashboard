@@ -9,6 +9,7 @@
 
 import { FileText } from 'lucide-react';
 
+import { EmptyState } from '@/components/empty-states';
 import { ErrorState } from '@/components/ui/error-state';
 
 import { ResearchCard } from './ResearchCard';
@@ -44,17 +45,11 @@ export function ResearchList({
 
   if (docs.length === 0) {
     return (
-      <div
-        data-testid="research-empty-state"
-        role="status"
-        aria-label="No research documents found"
-        className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center"
-      >
-        <FileText className="mx-auto h-8 w-8 text-muted-foreground" />
-        <p className="mt-2 text-muted-foreground">
-          No research documents found in this category.
-        </p>
-      </div>
+      <EmptyState
+        icon={FileText}
+        message="No research documents found in this category."
+        testId="research-empty-state"
+      />
     );
   }
 

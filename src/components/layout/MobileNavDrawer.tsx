@@ -81,7 +81,7 @@ export function MobileNavDrawer({ userEmail }: MobileNavDrawerProps) {
             exit={{ opacity: 0 }}
             transition={ANIMATION.fade}
             onClick={close}
-            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            className="fixed inset-0 bg-black/80 z-40 md:hidden"
             aria-hidden="true"
           />
 

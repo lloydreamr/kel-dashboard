@@ -21,7 +21,13 @@ function CompanyCardSkeleton() {
 
 export function CompaniesListSkeleton() {
   return (
-    <div data-testid="companies-list-skeleton" className="space-y-3">
+    <div
+      data-testid="companies-list-skeleton"
+      role="status"
+      aria-busy="true"
+      aria-label="Loading companies"
+      className="space-y-3"
+    >
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <CompanyCardSkeleton key={i} />
       ))}

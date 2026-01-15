@@ -30,7 +30,13 @@ function ProductCardSkeleton() {
 
 export function ProductsListSkeleton() {
   return (
-    <div data-testid="products-list-skeleton" className="space-y-3">
+    <div
+      data-testid="products-list-skeleton"
+      role="status"
+      aria-busy="true"
+      aria-label="Loading products"
+      className="space-y-3"
+    >
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <ProductCardSkeleton key={i} />
       ))}

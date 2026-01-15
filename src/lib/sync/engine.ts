@@ -7,10 +7,12 @@
  * - Updates action status throughout sync process
  * - Triggers TanStack Query cache invalidation on success
  * - Handles max retry limit (marks as failed after 3 attempts)
+ * - Pauses sync when conflicts detected, waits for resolution
  *
  * Uses globalThis pattern for HMR safety (like db.ts from Story 8.2).
  *
  * @see Story 8.3: Sync Engine - Task 4
+ * @see Story 8.4: Conflict Detection integration
  */
 
 import { FEATURES } from '@/lib/features';
@@ -39,6 +41,7 @@ const globalForSync = globalThis as unknown as {
 const INITIAL_STATE: SyncEngineState = {
   status: 'idle',
   currentAction: null,
+  currentConflict: null,
   lastSyncAt: null,
   pendingCount: 0,
   failedCount: 0,
@@ -146,7 +149,7 @@ async function processQueue(queryClient: QueryClient): Promise<void> {
     }
 
     // Process the action
-    const result = await processAction(action);
+    const { result, conflict } = await processAction(action);
 
     if (result === 'success') {
       // Action synced successfully
@@ -157,6 +160,25 @@ async function processQueue(queryClient: QueryClient): Promise<void> {
 
       // Invalidate cache
       await invalidateCache(queryClient, action.payload.questionId);
+    } else if (result === 'conflict') {
+      // Conflict detected - pause sync and wait for user resolution
+      // Mark action back to pending (it's not failed, just waiting)
+      if (action.id !== undefined) {
+        await updateStatus(action.id, 'pending', action.retryCount, 'Conflict detected');
+      }
+
+      setState({
+        status: 'paused',
+        currentAction: null,
+        currentConflict: conflict,
+      });
+
+      console.log(
+        `[sync/engine] Sync paused due to conflict for question ${action.payload.questionId}`
+      );
+
+      await updateCounts();
+      return; // Exit loop, wait for conflict resolution
     } else if (result === 'retry') {
       // Network error - check retry limit
       const newRetryCount = action.retryCount + 1;
@@ -302,4 +324,31 @@ export function stopSync(): void {
  */
 export function getSyncStatus(): SyncEngineState {
   return { ...state };
+}
+
+/**
+ * Clears the current conflict and resumes sync.
+ * Called after conflict resolution (user made a choice or timeout).
+ *
+ * @param queryClient - TanStack Query client for cache invalidation
+ *
+ * @example
+ * ```typescript
+ * import { clearConflictAndResume } from '@/lib/sync';
+ *
+ * // After resolving conflict:
+ * await resolveConflict(conflict, 'keep-server', profileId);
+ * clearConflictAndResume(queryClient);
+ * ```
+ *
+ * @see Story 8.4: AC3 - User Resolution Options
+ */
+export function clearConflictAndResume(queryClient: QueryClient): void {
+  // Clear conflict state
+  setState({ currentConflict: null });
+
+  // Resume sync (will pick up from queue)
+  startSync(queryClient);
+
+  console.log('[sync/engine] Conflict cleared, resuming sync');
 }

@@ -74,7 +74,7 @@ export function RecommendationForm({
           id="recommendation"
           data-testid="recommendation-text"
           rows={3}
-          className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           placeholder="What do you recommend?"
         />
         {errors.recommendation && (
@@ -97,7 +97,7 @@ export function RecommendationForm({
           id="rationale"
           data-testid="recommendation-rationale"
           rows={2}
-          className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           placeholder="Why do you recommend this?"
         />
       </div>

@@ -4,6 +4,7 @@
  * Internal module - not exported from barrel.
  *
  * @see Story 8.3: Sync Engine - Task 3
+ * @see Story 8.4: Conflict Detection integration
  */
 
 import { decisionsRepo } from '@/lib/repositories/decisions';
@@ -11,8 +12,10 @@ import { profilesRepo } from '@/lib/repositories/profiles';
 import { questionsRepo } from '@/lib/repositories/questions';
 import { DECISION_TYPES } from '@/types/decision';
 
+import { detectConflict } from './conflicts';
+
 import type { OfflineAction } from '@/lib/offline/types';
-import type { SyncResult } from './types';
+import type { ConflictData, SyncResult } from './types';
 
 /**
  * Maps offline action types to database decision types.
@@ -33,29 +36,47 @@ const ACTION_TO_QUESTION_STATUS = {
 } as const;
 
 /**
+ * Result of processing an action, including conflict data if detected.
+ *
+ * @see Story 8.4: Added conflict field
+ */
+export interface ProcessActionResult {
+  /** The sync result type */
+  result: SyncResult;
+  /** Conflict data if result is 'conflict', null otherwise */
+  conflict: ConflictData | null;
+}
+
+/**
  * Processes a single offline action by calling the appropriate repository methods.
  *
  * This replicates the behavior of useApproveDecision mutation:
  * 1. Get current user profile (for created_by)
- * 2. Create decision via decisionsRepo.create()
- * 3. Update question status via questionsRepo.updateStatus()
+ * 2. Check for conflicts (server updated since offline action created)
+ * 3. Create decision via decisionsRepo.create()
+ * 4. Update question status via questionsRepo.updateStatus()
  *
  * @param action - The offline action to process
- * @returns SyncResult indicating success, retry, or failed
+ * @returns ProcessActionResult with SyncResult and optional ConflictData
  *
  * @example
  * ```typescript
- * const result = await processAction(action);
+ * const { result, conflict } = await processAction(action);
  * if (result === 'success') {
  *   // Action synced, invalidate cache
+ * } else if (result === 'conflict') {
+ *   // Show conflict dialog to user
+ *   setState({ currentConflict: conflict });
  * } else if (result === 'retry') {
  *   // Network error, schedule retry with backoff
  * } else {
  *   // Permanent failure, mark as failed
  * }
  * ```
+ *
+ * @see Story 8.4: AC6 - Integration with Sync Engine
  */
-export async function processAction(action: OfflineAction): Promise<SyncResult> {
+export async function processAction(action: OfflineAction): Promise<ProcessActionResult> {
   try {
     // Step 1: Get current user profile
     const profile = await profilesRepo.getCurrent();
@@ -63,10 +84,19 @@ export async function processAction(action: OfflineAction): Promise<SyncResult> 
       // No authenticated user - retry in case of temporary auth issue
       // (token refresh, session renewal). Max retries will eventually fail it.
       console.warn('[sync/processor] No authenticated user, will retry');
-      return 'retry';
+      return { result: 'retry', conflict: null };
     }
 
-    // Step 2: Create decision record
+    // Step 2: Check for conflict before proceeding
+    const conflict = await detectConflict(action);
+    if (conflict) {
+      console.log(
+        `[sync/processor] Conflict detected for question ${action.payload.questionId}, pausing sync`
+      );
+      return { result: 'conflict', conflict };
+    }
+
+    // Step 3: Create decision record
     await decisionsRepo.create({
       question_id: action.payload.questionId,
       decision_type: ACTION_TO_DECISION_TYPE[action.action],
@@ -76,23 +106,23 @@ export async function processAction(action: OfflineAction): Promise<SyncResult> 
       created_by: profile.id,
     });
 
-    // Step 3: Update question status
+    // Step 4: Update question status
     await questionsRepo.updateStatus(
       action.payload.questionId,
       ACTION_TO_QUESTION_STATUS[action.action]
     );
 
-    return 'success';
+    return { result: 'success', conflict: null };
   } catch (error) {
     // Classify error as retryable or permanent
     if (isNetworkError(error)) {
       console.warn('[sync/processor] Network error, will retry:', error);
-      return 'retry';
+      return { result: 'retry', conflict: null };
     }
 
     // Validation errors, not found, auth errors are permanent
     console.error('[sync/processor] Permanent error:', error);
-    return 'failed';
+    return { result: 'failed', conflict: null };
   }
 }
 

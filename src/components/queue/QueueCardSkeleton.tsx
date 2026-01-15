@@ -9,7 +9,10 @@ export function QueueCardSkeleton() {
   return (
     <div
       data-testid="queue-card-skeleton"
-      className="rounded-lg border border-border bg-surface p-4"
+      role="status"
+      aria-busy="true"
+      aria-label="Loading queue card"
+      className="rounded-lg border border-border bg-surface p-4 animate-pulse"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0 space-y-2">
@@ -30,7 +33,13 @@ export function QueueCardSkeleton() {
  */
 export function QueueLoadingSkeleton() {
   return (
-    <div data-testid="queue-loading-skeleton" className="space-y-3">
+    <div
+      data-testid="queue-loading-skeleton"
+      role="status"
+      aria-busy="true"
+      aria-label="Loading queue"
+      className="space-y-3"
+    >
       <QueueCardSkeleton />
       <QueueCardSkeleton />
       <QueueCardSkeleton />

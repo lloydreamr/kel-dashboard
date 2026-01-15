@@ -74,6 +74,7 @@ export function CompetitorForm({ mode, defaultValues, onSuccess, onCancel }: Com
           id="name"
           data-testid="competitor-name-input"
           placeholder="Competitor name"
+          error={!!form.formState.errors.name}
           {...form.register('name')}
           className="min-h-12"
         />

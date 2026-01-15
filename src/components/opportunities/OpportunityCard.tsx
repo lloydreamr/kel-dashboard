@@ -54,7 +54,7 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
       onKeyDown={handleKeyDown}
       data-testid="opportunity-card"
       aria-label={`View ${opportunity.title} opportunity`}
-      className="p-4 rounded-lg border border-border bg-card hover:bg-accent transition-colors min-h-[48px] cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
+      className="p-4 rounded-lg border border-border bg-card hover:bg-accent transition-colors min-h-[48px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       {/* Category Badge */}
       <span
