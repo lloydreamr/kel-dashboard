@@ -14,6 +14,7 @@ import {
   CategoryFilterChips,
   StatusFilterChips,
   OpportunitiesList,
+  RefreshOpportunitiesButton,
 } from '@/components/opportunities';
 import { useFilteredOpportunities } from '@/hooks/opportunities';
 import {
@@ -98,10 +99,15 @@ export function OpportunitiesPageClient() {
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-foreground">Opportunities</h1>
-          <p className="mt-1 text-muted-foreground">
-            AI-generated market opportunities and insights
-          </p>
+          <div className="flex justify-between items-start gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground">Opportunities</h1>
+              <p className="mt-1 text-muted-foreground">
+                AI-generated market opportunities and insights
+              </p>
+            </div>
+            <RefreshOpportunitiesButton />
+          </div>
         </div>
 
         {/* Category Filter */}
@@ -128,6 +134,7 @@ export function OpportunitiesPageClient() {
           isLoading={isLoading}
           error={error}
           onRetry={refetch}
+          totalCount={counts.all}
         />
       </div>
     </div>
