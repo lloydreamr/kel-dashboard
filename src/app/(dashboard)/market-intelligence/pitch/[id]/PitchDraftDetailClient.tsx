@@ -11,6 +11,7 @@
  */
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Settings, FileDown } from 'lucide-react';
 
@@ -150,10 +151,7 @@ export function PitchDraftDetailClient({ pitchDraftId }: PitchDraftDetailClientP
   if (isLoading) {
     return (
       <main className="container mx-auto px-4 py-6 max-w-4xl">
-        <MiBreadcrumb
-          items={[{ label: 'Pitch Drafts', href: '/market-intelligence/pitch' }]}
-          current="Loading..."
-        />
+        <MiBreadcrumb current="Pitch Drafts" />
         <div className="animate-pulse space-y-6 mt-6">
           {/* Header skeleton */}
           <div className="flex items-center justify-between">
@@ -189,10 +187,7 @@ export function PitchDraftDetailClient({ pitchDraftId }: PitchDraftDetailClientP
   if (draftError || !draft) {
     return (
       <main className="container mx-auto px-4 py-6 max-w-4xl">
-        <MiBreadcrumb
-          items={[{ label: 'Pitch Drafts', href: '/market-intelligence/pitch' }]}
-          current="Error"
-        />
+        <MiBreadcrumb current="Pitch Drafts" />
         <div className="mt-8 rounded-lg border bg-card p-8 text-center">
           <p className="text-destructive mb-4">
             Failed to load pitch draft. It may have been deleted.
@@ -210,10 +205,20 @@ export function PitchDraftDetailClient({ pitchDraftId }: PitchDraftDetailClientP
 
   return (
     <main className="container mx-auto px-4 py-6 max-w-4xl" data-testid="pitch-draft-detail">
-      <MiBreadcrumb
-        items={[{ label: 'Pitch Drafts', href: '/market-intelligence/pitch' }]}
-        current={draft.title}
-      />
+      <MiBreadcrumb current="Pitch Drafts" />
+
+      {/* Back button */}
+      <Button
+        variant="ghost"
+        asChild
+        className="min-h-[48px] min-w-[48px] -ml-2 gap-2 mb-4"
+        data-testid="pitch-detail-back-button"
+      >
+        <Link href="/market-intelligence/pitch">
+          <ArrowLeft className="h-4 w-4" />
+          <span className="sr-only md:not-sr-only">Back to Pitch Drafts</span>
+        </Link>
+      </Button>
 
       {/* Header */}
       <div className="flex flex-col gap-4 mt-6 mb-8 sm:flex-row sm:items-center sm:justify-between">
