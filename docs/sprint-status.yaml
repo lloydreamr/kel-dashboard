@@ -79,7 +79,7 @@ development_status:
   16-1-opportunities-data-model: done  # Database schema exists
   16-2-ai-opportunity-generation-job: review  # Implementation complete, ready for code review
   16-3-opportunities-dashboard: backlog
-  16-4-opportunity-detail-view: backlog
+  16-4-opportunity-detail-view: done  # Completed 2026-01-14
   16-5-manual-opportunity-refresh: backlog
   epic-16-retrospective: optional
 
@@ -87,20 +87,20 @@ development_status:
   # Epic 17: Dashboard & Integration (4 stories)
   # Unified landing page and integration with existing features
   # ===========================================
-  epic-17: backlog
-  17-1-market-intelligence-landing-dashboard: backlog
-  17-2-global-search-knowledge-base: backlog
-  17-3-existing-visualization-integration: backlog
-  17-4-questions-page-integration: backlog
+  epic-17: in-progress
+  17-1-market-intelligence-landing-dashboard: done  # Completed 2026-01-14
+  17-2-global-search-knowledge-base: review  # Implementation complete 2026-01-14, ready for code review
+  17-3-existing-visualization-integration: review  # Implementation complete 2026-01-14, ready for code review
+  17-4-questions-page-integration: done  # Completed 2026-01-14 (MVP Phase 1)
   epic-17-retrospective: optional
 
   # ===========================================
   # Epic 18: Pitch Builder Enhancement (4 stories)
   # AI-assisted pitch content generation from knowledge base
   # ===========================================
-  epic-18: backlog
-  18-1-ai-assisted-pitch-content: backlog
-  18-2-dynamic-data-integration-pitch: backlog
+  epic-18: in-progress
+  18-1-ai-assisted-pitch-content: done  # Completed 2026-01-15
+  18-2-dynamic-data-integration-pitch: review  # Implementation complete 2026-01-15, ready for code review
   18-3-export-with-ai-summary: backlog
   18-4-pitch-template-library: backlog
   epic-18-retrospective: optional
