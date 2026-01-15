@@ -13,3 +13,9 @@ export type { OfflineBannerProps } from './OfflineBanner';
 
 export { SyncIndicator } from './SyncIndicator';
 export type { SyncIndicatorProps } from './SyncIndicator';
+
+export { OfflineSyncIndicator } from './OfflineSyncIndicator';
+export type {
+  OfflineSyncIndicatorProps,
+  OfflineSyncStatus,
+} from './OfflineSyncIndicator';

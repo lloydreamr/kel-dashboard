@@ -29,3 +29,10 @@ export { useManualRefresh } from './useManualRefresh';
 export type { UseManualRefreshResult } from './useManualRefresh';
 
 export { useSyncOnQuerySuccess } from './useSyncOnQuerySuccess';
+
+export {
+  useItemSyncStatus,
+  dispatchQueueChangeEvent,
+  QUEUE_CHANGE_EVENT,
+} from './useItemSyncStatus';
+export type { UseItemSyncStatusResult } from './useItemSyncStatus';

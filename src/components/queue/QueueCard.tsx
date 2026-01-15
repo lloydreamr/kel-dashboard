@@ -20,11 +20,16 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useState } from 'react';
 
+import { OfflineSyncIndicator } from '@/components/offline';
 import { CategoryBadge } from '@/components/questions/CategoryBadge';
 import { EvidenceCountBadge } from '@/components/questions/EvidenceCountBadge';
+import { ConflictDialog } from '@/components/sync/ConflictDialog';
 import { useEvidenceCount } from '@/hooks/evidence';
+import { useItemSyncStatus } from '@/hooks/offline';
 import { useSyncIndicator } from '@/hooks/queue';
+import { useConflictResolution } from '@/hooks/sync';
 import { ANIMATION } from '@/lib/constants/animations';
+import { FEATURES } from '@/lib/features';
 
 import { ApprovalCelebration } from './ApprovalCelebration';
 import { ApproveButton } from './ApproveButton';
@@ -58,6 +63,8 @@ function CardHeader({
   syncStatus,
   syncTrigger,
   onSyncRetry,
+  offlineSyncStatus,
+  onConflictClick,
 }: {
   question: Question;
   isExpanded: boolean;
@@ -65,6 +72,8 @@ function CardHeader({
   syncStatus: SyncStatus;
   syncTrigger: number;
   onSyncRetry?: () => void;
+  offlineSyncStatus: import('@/components/offline').OfflineSyncStatus | null;
+  onConflictClick?: () => void;
 }) {
   return (
     <div
@@ -111,6 +120,13 @@ function CardHeader({
             trigger={syncTrigger}
             onRetry={onSyncRetry}
           />
+          {/* Offline sync status indicator - Story 8.6 */}
+          {offlineSyncStatus && (
+            <OfflineSyncIndicator
+              status={offlineSyncStatus}
+              onConflictClick={onConflictClick}
+            />
+          )}
           {/* Collapse/expand indicator */}
           <motion.span
             animate={{ rotate: isExpanded ? 180 : 0 }}
@@ -269,6 +285,21 @@ export function QueueCard({
   // Convert sync state to indicator props
   const { status: syncStatus, trigger: syncTrigger } = useSyncIndicator(syncState);
 
+  // Story 8.6: Offline sync status for queue items
+  const { status: offlineSyncStatus } = useItemSyncStatus(
+    FEATURES.OFFLINE_MODE ? question.id : null
+  );
+
+  // Story 8.6: Conflict resolution for offline sync conflicts
+  const {
+    conflict,
+    isResolving,
+    resolve: resolveConflict,
+  } = useConflictResolution();
+
+  // Story 8.6: Track if user tapped conflict indicator on this card
+  const [showConflictDialog, setShowConflictDialog] = useState(false);
+
   // Unified callback for sync state changes from any action button
   const handleSyncStateChange = useCallback((state: SyncState) => {
     setSyncState(state);
@@ -335,6 +366,8 @@ export function QueueCard({
         syncStatus={syncStatus}
         syncTrigger={syncTrigger}
         onSyncRetry={syncState.retryFn}
+        offlineSyncStatus={offlineSyncStatus}
+        onConflictClick={() => setShowConflictDialog(true)}
       />
 
       <AnimatePresence>
@@ -369,6 +402,18 @@ export function QueueCard({
         onSuccess={handleConstraintSuccess}
         onSyncStateChange={handleSyncStateChange}
       />
+
+      {/* Story 8.6: Conflict dialog for offline sync conflicts */}
+      {FEATURES.OFFLINE_MODE && showConflictDialog && conflict?.questionId === question.id && (
+        <ConflictDialog
+          conflict={conflict}
+          isResolving={isResolving}
+          onResolve={(resolution) => {
+            resolveConflict(resolution);
+            setShowConflictDialog(false);
+          }}
+        />
+      )}
     </motion.div>
   );
 }
