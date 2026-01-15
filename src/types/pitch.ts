@@ -95,16 +95,32 @@ export interface UpdatePitchDraftInput {
  * - market_opportunity: Market opportunity statement
  * - competitive_positioning: Competitive positioning section
  * - trend_alignment: Trend alignment section
+ * - competitive_landscape: Interactive scatter chart showing competitive positioning (Story 18-2)
+ * - market_gaps: AI-identified market opportunities with supporting evidence (Story 18-2)
  */
 export type PitchSectionType =
   | 'market_opportunity'
   | 'competitive_positioning'
-  | 'trend_alignment';
+  | 'trend_alignment'
+  | 'competitive_landscape'
+  | 'market_gaps';
 
 /**
  * Array of all valid pitch section types for validation.
  */
 export const PITCH_SECTION_TYPES: PitchSectionType[] = [
+  'market_opportunity',
+  'competitive_positioning',
+  'trend_alignment',
+  'competitive_landscape',
+  'market_gaps',
+];
+
+/**
+ * Section types that support AI content generation.
+ * Excludes dynamic data sections (competitive_landscape, market_gaps) which display live data.
+ */
+export const PITCH_AI_SECTION_TYPES: PitchSectionType[] = [
   'market_opportunity',
   'competitive_positioning',
   'trend_alignment',
@@ -117,6 +133,8 @@ export const SECTION_TYPE_LABELS: Record<PitchSectionType, string> = {
   market_opportunity: 'Market Opportunity',
   competitive_positioning: 'Competitive Positioning',
   trend_alignment: 'Trend Alignment',
+  competitive_landscape: 'Competitive Landscape',
+  market_gaps: 'Market Gaps',
 };
 
 /**
@@ -129,6 +147,10 @@ export const SECTION_TYPE_DESCRIPTIONS: Record<PitchSectionType, string> = {
     'How Kel products differentiate from existing offerings',
   trend_alignment:
     'Alignment with current consumer and industry trends',
+  competitive_landscape:
+    'Interactive price-quality scatter chart showing competitive positioning',
+  market_gaps:
+    'AI-identified market opportunities with supporting evidence',
 };
 
 /**

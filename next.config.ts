@@ -16,6 +16,29 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
+  // Redirect old routes to Market Intelligence section
+  async redirects() {
+    return [
+      // Story 17.3: Visualization redirect
+      {
+        source: '/visualization',
+        destination: '/market-intelligence/visualization',
+        permanent: true, // 308 status code for SEO
+      },
+      // Story 17.4: Questions redirect
+      {
+        source: '/questions',
+        destination: '/market-intelligence/questions',
+        permanent: true, // 308 status code for SEO
+      },
+      // Story 17.4: Questions detail page redirect (preserves ID param)
+      {
+        source: '/questions/:id',
+        destination: '/market-intelligence/questions/:id',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 // Note: next.config.ts requires export default (Next.js convention)

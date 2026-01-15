@@ -28,7 +28,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useGeneratePitchContent } from '@/hooks/pitch';
-import { PITCH_SECTION_TYPES } from '@/types/pitch';
+import { PITCH_AI_SECTION_TYPES } from '@/types/pitch';
 
 import type { PitchSectionType } from '@/types/pitch';
 
@@ -61,8 +61,8 @@ export function GenerateAllSectionsButton({
   const generateContent = useGeneratePitchContent();
 
   const sectionsToGenerate = skipExisting
-    ? PITCH_SECTION_TYPES.filter((type) => !existingSections.includes(type))
-    : PITCH_SECTION_TYPES;
+    ? PITCH_AI_SECTION_TYPES.filter((type) => !existingSections.includes(type))
+    : PITCH_AI_SECTION_TYPES;
 
   const generateAllSequentially = async () => {
     if (sectionsToGenerate.length === 0) {

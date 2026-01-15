@@ -356,7 +356,7 @@ export function PitchPdfExportContent({
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '12px',
               textAlign: 'center',
             }}
@@ -405,28 +405,6 @@ export function PitchPdfExportContent({
               </p>
               <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0' }}>
                 Kel Position
-              </p>
-            </div>
-            <div
-              style={{
-                padding: '12px',
-                backgroundColor: '#ffffff',
-                borderRadius: '6px',
-                border: '1px solid #e5e7eb',
-              }}
-            >
-              <p
-                style={{
-                  fontSize: '24px',
-                  fontWeight: 'bold',
-                  color: '#111827',
-                  margin: 0,
-                }}
-              >
-                4
-              </p>
-              <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0' }}>
-                Quadrants
               </p>
             </div>
           </div>

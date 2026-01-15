@@ -8,6 +8,9 @@
  * The store sync enables DashboardContent (Client Component wrapper)
  * to hide sidebar/nav when pitch mode is active.
  *
+ * Story 17.3: Updated to use Market Intelligence route
+ * Routes now point to /market-intelligence/visualization
+ *
  * @example
  * ```tsx
  * const { isPitchMode, enterPitchMode, exitPitchMode } = usePitchMode();
@@ -29,9 +32,9 @@ import { usePitchModeStore } from '@/stores/pitchMode';
 interface UsePitchModeReturn {
   /** Whether pitch mode is currently active */
   isPitchMode: boolean;
-  /** Navigate to pitch mode (`/visualization?mode=pitch`) */
+  /** Navigate to pitch mode (`/market-intelligence/visualization?mode=pitch`) */
   enterPitchMode: () => void;
-  /** Exit pitch mode (navigate to `/visualization`) */
+  /** Exit pitch mode (navigate to `/market-intelligence/visualization`) */
   exitPitchMode: () => void;
 }
 
@@ -51,15 +54,17 @@ export function usePitchMode(): UsePitchModeReturn {
   }, [isPitchMode, setIsPitchMode]);
 
   // BUG-009 Fix: Only navigate if component is still mounted (consistency with other hooks)
+  // Story 17.3: Routes updated from /visualization to /market-intelligence/visualization
   const enterPitchMode = () => {
     if (isMounted()) {
-      router.push('/visualization?mode=pitch', { scroll: false });
+      router.push('/market-intelligence/visualization?mode=pitch', { scroll: false });
     }
   };
 
+  // Story 17.3: Exit navigates to /market-intelligence/visualization (removes ?mode=pitch)
   const exitPitchMode = () => {
     if (isMounted()) {
-      router.push('/visualization', { scroll: false });
+      router.push('/market-intelligence/visualization', { scroll: false });
     }
   };
 

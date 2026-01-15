@@ -100,7 +100,7 @@ function PitchDraftCard({
   const templateType = draft.template_type as PitchTemplateType;
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow" data-testid="pitch-draft-card">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="space-y-1 flex-1 min-w-0">

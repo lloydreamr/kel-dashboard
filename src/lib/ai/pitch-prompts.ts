@@ -143,10 +143,21 @@ Generate a trend alignment statement that shows Kel riding momentum.`;
 /**
  * Section-specific prompt templates
  */
+/**
+ * Placeholder prompt for dynamic data sections
+ *
+ * These sections (competitive_landscape, market_gaps) use live data
+ * from hooks instead of AI generation, but we need prompts for type completeness.
+ */
+const DYNAMIC_SECTION_PLACEHOLDER = `This section uses live data from the database and does not require AI generation.`;
+
 const SECTION_PROMPTS: Record<PitchSectionType, string> = {
   market_opportunity: MARKET_OPPORTUNITY_PROMPT,
   competitive_positioning: COMPETITIVE_POSITIONING_PROMPT,
   trend_alignment: TREND_ALIGNMENT_PROMPT,
+  // Dynamic data sections (Story 18-2) - not used for AI generation
+  competitive_landscape: DYNAMIC_SECTION_PLACEHOLDER,
+  market_gaps: DYNAMIC_SECTION_PLACEHOLDER,
 };
 
 /**
@@ -187,6 +198,9 @@ export function getSectionLabel(sectionType: PitchSectionType): string {
     market_opportunity: 'Market Opportunity',
     competitive_positioning: 'Competitive Positioning',
     trend_alignment: 'Trend Alignment',
+    // Dynamic data sections (Story 18-2)
+    competitive_landscape: 'Competitive Landscape',
+    market_gaps: 'Market Gaps',
   };
   return labels[sectionType];
 }

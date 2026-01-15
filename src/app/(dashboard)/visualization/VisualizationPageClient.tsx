@@ -16,6 +16,7 @@ import {
   PdfExportContent,
   PitchCompetitorTable,
 } from '@/components/visualization';
+import { MiBreadcrumb } from '@/components/market-intelligence';
 import { useProfile } from '@/hooks/auth';
 import { useDeleteCompetitor, useCompetitorData } from '@/hooks/competitors';
 import { usePdfExport } from '@/hooks/visualization/usePdfExport';
@@ -23,6 +24,16 @@ import { usePitchMode } from '@/hooks/visualization/usePitchMode';
 import { usePitchModeStore } from '@/stores/pitchMode';
 
 import type { CompetitorDataPoint } from '@/types';
+
+/**
+ * Props for VisualizationPageClient
+ *
+ * @property showBreadcrumb - When true, renders MiBreadcrumb above the page title
+ *   Used when accessed via /market-intelligence/visualization route
+ */
+interface VisualizationPageClientProps {
+  showBreadcrumb?: boolean;
+}
 
 /**
  * Competitor Positioning Visualization Page Client
@@ -34,10 +45,15 @@ import type { CompetitorDataPoint } from '@/types';
  * - Supports pitch mode via URL query param (?mode=pitch)
  * - Shows clean presentation view for distributor meetings
  *
+ * Story 17.3: Market Intelligence Integration
+ * - showBreadcrumb prop enables MI context breadcrumb navigation
+ *
  * Performance: Data is prefetched in layout.tsx and hydrated via HydrationBoundary.
  * @see Story 6.8: Performance Optimization (NFR3: < 1 second render)
  */
-export function VisualizationPageClient() {
+export function VisualizationPageClient({
+  showBreadcrumb = false,
+}: VisualizationPageClientProps) {
   const { data: profile, isLoading: profileLoading, error: profileError } = useProfile();
   const isMaho = profile?.role === 'maho';
 
@@ -144,6 +160,7 @@ export function VisualizationPageClient() {
   // Pitch Mode: Clean presentation view (AC1, AC3)
   // Note: PitchModeHeader is rendered by DashboardContent (layout wrapper)
   // to avoid duplication. This page only renders the chart content.
+  // INTENTIONAL: Breadcrumb is hidden in pitch mode for clean presentation view.
   if (isPitchMode) {
     return (
       <>
@@ -188,6 +205,7 @@ export function VisualizationPageClient() {
   // Normal view with edit controls
   return (
     <div data-testid="visualization-page" className="container py-6">
+      {showBreadcrumb && <MiBreadcrumb current="Visualization" />}
       <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">Competitor Positioning</h1>
         <div className="flex flex-wrap gap-3">

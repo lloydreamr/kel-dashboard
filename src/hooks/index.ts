@@ -29,3 +29,19 @@ export {
 
 // Opportunity hooks
 export { useOpportunities, useFilteredOpportunities } from './opportunities';
+
+// Pitch hooks
+export {
+  usePitchDrafts,
+  usePitchDraft,
+  usePitchSections,
+  useCreatePitchDraft,
+  useUpdatePitchDraft,
+  useUpdatePitchDraftStatus,
+  useDeletePitchDraft,
+  useUpdatePitchSection,
+  useDeletePitchSection,
+  useGeneratePitchContent,
+  getGenerationState,
+  type GenerationState,
+} from './pitch';

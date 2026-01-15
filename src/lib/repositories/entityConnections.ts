@@ -19,7 +19,7 @@ type EntityConnectionRow =
 /**
  * Entity type for type-safe connection queries
  */
-export type EntityType = 'company' | 'product' | 'research_doc';
+export type EntityType = 'company' | 'product' | 'research_doc' | 'question';
 
 /**
  * Entity connections repository - handles all relationship data queries

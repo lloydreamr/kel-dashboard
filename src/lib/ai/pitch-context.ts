@@ -63,6 +63,22 @@ const SECTION_ENTITY_WEIGHTS: Record<PitchSectionType, {
     trends: 0.4,
     research: 0.1,
   },
+  // Dynamic data sections (Story 18-2) - not used for AI generation
+  // but required for type completeness
+  competitive_landscape: {
+    companies: 0.5,
+    products: 0.3,
+    consumers: 0,
+    trends: 0.1,
+    research: 0.1,
+  },
+  market_gaps: {
+    companies: 0.2,
+    products: 0.2,
+    consumers: 0.3,
+    trends: 0.2,
+    research: 0.1,
+  },
 };
 
 /**

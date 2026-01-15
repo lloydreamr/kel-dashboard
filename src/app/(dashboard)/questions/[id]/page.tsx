@@ -62,7 +62,7 @@ export default async function QuestionDetailPage({
   // Guard: Redirect invalid IDs (like "new") to questions list
   // This prevents Supabase 400 errors from querying with non-UUID IDs
   if (!UUID_REGEX.test(id)) {
-    redirect('/questions');
+    redirect('/market-intelligence/questions');
   }
 
   // Check for test user first (only in PLAYWRIGHT_TEST_MODE)

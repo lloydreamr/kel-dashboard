@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Settings, FileDown } from 'lucide-react';
 
 import { useCompetitorData } from '@/hooks/competitors';
+import { useOpportunities } from '@/hooks/opportunities';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -97,6 +98,18 @@ export function PitchDraftDetailClient({ pitchDraftId }: PitchDraftDetailClientP
   const { data: competitors } = useCompetitorData();
   const kelPosition = competitors?.find((c) => c.is_kel_position) ?? null;
   const competitorData = competitors?.filter((c) => !c.is_kel_position) ?? [];
+
+  // Market gaps data for PDF export
+  const { data: opportunities } = useOpportunities();
+  const marketGaps = (opportunities ?? [])
+    .filter((o) => o.category === 'market_gap')
+    .slice(0, 5)
+    .map((o) => ({
+      id: o.id,
+      title: o.title,
+      description: o.description,
+      evidence: o.evidence ?? undefined,
+    }));
 
   const isLoading = draftLoading || sectionsLoading;
 
@@ -305,6 +318,7 @@ export function PitchDraftDetailClient({ pitchDraftId }: PitchDraftDetailClientP
         sections={(sections as PitchSectionWithSources[]) ?? []}
         competitorData={competitorData}
         kelPosition={kelPosition}
+        marketGaps={marketGaps}
       />
     </main>
   );

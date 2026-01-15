@@ -105,7 +105,8 @@ describe('usePitchMode', () => {
   });
 
   describe('enterPitchMode', () => {
-    it('navigates to /visualization?mode=pitch', () => {
+    // Story 17.3: Updated route to Market Intelligence
+    it('navigates to /market-intelligence/visualization?mode=pitch', () => {
       // Arrange
       const { result } = renderHook(() => usePitchMode());
 
@@ -115,7 +116,7 @@ describe('usePitchMode', () => {
       });
 
       // Assert
-      expect(mockPush).toHaveBeenCalledWith('/visualization?mode=pitch', { scroll: false });
+      expect(mockPush).toHaveBeenCalledWith('/market-intelligence/visualization?mode=pitch', { scroll: false });
     });
 
     it('preserves scroll position on navigation', () => {
@@ -136,7 +137,8 @@ describe('usePitchMode', () => {
   });
 
   describe('exitPitchMode', () => {
-    it('navigates to /visualization (without query param)', () => {
+    // Story 17.3: Updated route to Market Intelligence
+    it('navigates to /market-intelligence/visualization (without query param)', () => {
       // Arrange
       mockSearchParams.set('mode', 'pitch');
       const { result } = renderHook(() => usePitchMode());
@@ -147,7 +149,7 @@ describe('usePitchMode', () => {
       });
 
       // Assert
-      expect(mockPush).toHaveBeenCalledWith('/visualization', { scroll: false });
+      expect(mockPush).toHaveBeenCalledWith('/market-intelligence/visualization', { scroll: false });
     });
 
     it('preserves scroll position on navigation', () => {
