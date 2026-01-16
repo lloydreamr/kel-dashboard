@@ -30,7 +30,7 @@ describe('ChartLegend', () => {
 
       // Assert
       expect(screen.getByTestId('legend-kel-marker')).toBeInTheDocument();
-      expect(screen.getByText('Kel Target Position')).toBeInTheDocument();
+      expect(screen.getByText('Kel Target')).toBeInTheDocument();
     });
 
     it('hides Kel marker when hasKelPosition is false', () => {
@@ -39,7 +39,7 @@ describe('ChartLegend', () => {
 
       // Assert
       expect(screen.queryByTestId('legend-kel-marker')).not.toBeInTheDocument();
-      expect(screen.queryByText('Kel Target Position')).not.toBeInTheDocument();
+      expect(screen.queryByText('Kel Target')).not.toBeInTheDocument();
     });
   });
 

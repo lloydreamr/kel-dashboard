@@ -7,6 +7,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vitest';
 
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { ScatterChart } from '@/components/visualization/ScatterChart';
 import * as useCompetitorDataHook from '@/hooks/competitors/useCompetitorData';
 import * as useResponsiveChartHeightHook from '@/hooks/ui/useResponsiveChartHeight';
@@ -97,6 +98,17 @@ function createMockCompetitor(
     created_by: 'test-user-id',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    // Phase 1 enhancements: additional data fields
+    market_share_percent: null,
+    distribution_reach_percent: null,
+    price_min_php: null,
+    price_max_php: null,
+    primary_channels: null,
+    parent_company: null,
+    sku_count: null,
+    year_established: null,
+    strengths: null,
+    weaknesses: null,
     ...overrides,
   };
 }
@@ -113,7 +125,9 @@ function renderWithQueryClient(component: React.ReactElement) {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      {component}
+      <TooltipProvider>
+        {component}
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
@@ -1163,12 +1177,12 @@ describe('ScatterChart', () => {
       // Act
       renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
 
-      // Assert
+      // Assert - stale points use reduced fillOpacity (not color-mix in fill)
       const stalePoint = screen.getByTestId('stale-chart-point');
-      expect(stalePoint).toHaveAttribute(
-        'fill',
-        'color-mix(in srgb, var(--chart-competitor) 50%, transparent)'
-      );
+      expect(stalePoint).toHaveAttribute('fill', 'var(--chart-competitor)');
+      // Stale points have 50% reduced opacity via fillOpacity attribute
+      const fillOpacity = parseFloat(stalePoint.getAttribute('fill-opacity') || '1');
+      expect(fillOpacity).toBeLessThan(0.5); // Should be ~0.425 (0.85 * 0.5)
     });
 
     it('keeps Kel position marker with primary color (not affected by fix)', () => {
@@ -1202,10 +1216,10 @@ describe('ScatterChart', () => {
       expect(kelMarker).toHaveAttribute('fill', 'var(--primary)');
     });
 
-    it('uses valid color-mix() syntax for stale opacity (browser compatibility)', () => {
-      // This test documents the color-mix() CSS function usage
-      // Browser support: Chrome 111+, Firefox 113+, Safari 16.4+ (all 2023+)
-      // See: https://caniuse.com/mdn-css_types_color_color-mix
+    it('uses fillOpacity for stale visual styling (browser compatibility)', () => {
+      // Stale points are visually differentiated using fillOpacity attribute
+      // This avoids color-mix() which has limited browser support
+      // fillOpacity is universally supported in SVG
 
       // Arrange - create stale data point
       const staleDate = new Date();
@@ -1233,17 +1247,17 @@ describe('ScatterChart', () => {
       // Act
       renderWithQueryClient(<ScatterChart isMaho={false} onEditClick={vi.fn()} onDeleteClick={vi.fn()} />);
 
-      // Assert - verify color-mix() syntax is valid
+      // Assert - verify fillOpacity is used for stale styling
       const stalePoint = screen.getByTestId('stale-chart-point');
-      const fill = stalePoint.getAttribute('fill');
 
-      // Validate color-mix syntax structure:
-      // color-mix(in <color-space>, <color> <percentage>, <color>)
-      expect(fill).toMatch(/^color-mix\(in srgb,/); // Must start with color-mix(in srgb,
-      expect(fill).toContain('var(--chart-competitor)'); // Uses CSS variable
-      expect(fill).toContain('50%'); // Has percentage
-      expect(fill).toContain('transparent'); // Mixes with transparent
-      expect(fill).toMatch(/\)$/); // Must end with closing paren
+      // Fill uses CSS variable (unchanged)
+      expect(stalePoint).toHaveAttribute('fill', 'var(--chart-competitor)');
+
+      // Staleness is indicated via reduced fillOpacity
+      const fillOpacity = stalePoint.getAttribute('fill-opacity');
+      expect(fillOpacity).not.toBeNull();
+      const opacityValue = parseFloat(fillOpacity!);
+      expect(opacityValue).toBeLessThan(0.5); // Stale = base opacity * 0.5
     });
   });
 
