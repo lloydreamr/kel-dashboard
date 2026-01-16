@@ -110,16 +110,25 @@ export function ProximityRankingPanel({
       >
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Proximity Ranking</span>
-          {/* Threat level summary badges */}
+          {/* Threat level summary badges - muted when collapsed for ADHD-friendly design */}
+          {/* Only show counts, not full labels when collapsed to reduce visual noise */}
           <div className="flex gap-1">
             {threatCounts.critical && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700">
-                {threatCounts.critical} critical
+              <span className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+                isExpanded
+                  ? 'bg-red-100 text-red-700'
+                  : 'bg-muted text-muted-foreground'
+              }`}>
+                {threatCounts.critical} {isExpanded ? 'critical' : '🎯'}
               </span>
             )}
             {threatCounts.high && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-orange-700">
-                {threatCounts.high} high
+              <span className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+                isExpanded
+                  ? 'bg-orange-100 text-orange-700'
+                  : 'bg-muted text-muted-foreground'
+              }`}>
+                {threatCounts.high} {isExpanded ? 'high' : '⚠️'}
               </span>
             )}
           </div>

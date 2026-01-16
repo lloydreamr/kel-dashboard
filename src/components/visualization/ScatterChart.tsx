@@ -1086,9 +1086,10 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
 
         {/* Proximity Ranking Panel - shows competitors ranked by distance to Kel */}
         {/* Only show in Position view where proximity calculation is meaningful */}
-        {/* Positioned at top-left below quadrant stats to avoid blocking Budget/axis labels */}
+        {/* Positioned at bottom-right to avoid blocking quadrant labels and chart content */}
+        {/* ADHD-friendly: Uses bottom corner to minimize visual distraction from main data */}
         {!isPitchMode && hasValidDimensions && competitors && kelPositionData && !isSmallMobile && isPositionView && (
-          <div className="absolute top-14 left-2 w-52 z-10">
+          <div className="absolute bottom-16 right-2 w-52 z-10">
             <ProximityRankingPanel
               competitors={competitors}
               kelPosition={kelPositionData}
