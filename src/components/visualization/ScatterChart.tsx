@@ -16,14 +16,8 @@ import {
 } from 'recharts';
 
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { CompetitorDetailSheet } from '@/components/visualization/CompetitorDetailSheet';
 import { OpportunityScoreOverlay } from '@/components/visualization/OpportunityScoreOverlay';
-import { ProximityRankingPanel } from '@/components/visualization/ProximityRankingPanel';
 import { QuadrantStatsOverlay } from '@/components/visualization/QuadrantStatsOverlay';
 import { ScatterChartSkeleton } from '@/components/visualization/ScatterChartSkeleton';
 import { useCompetitorData } from '@/hooks/competitors';
@@ -110,32 +104,6 @@ const BUBBLE_SIZE = {
 // Z-axis domain maps market share percentage to bubble size
 const Z_AXIS_DOMAIN = [0, 100] as const;
 
-// Helper to calculate pixel position from data coordinates
-// Used for HTML click overlay positioning
-function getPixelPosition(
-  dataX: number,
-  dataY: number,
-  containerWidth: number,
-  containerHeight: number,
-  margin: typeof MOBILE_CHART_MARGIN
-): { x: number; y: number } {
-  const plotWidth = containerWidth - margin.left - margin.right;
-  const plotHeight = containerHeight - margin.top - margin.bottom;
-  const domainRange = CHART_DOMAIN.max - CHART_DOMAIN.min;
-
-  // X: left to right
-  const x = margin.left + ((dataX - CHART_DOMAIN.min) / domainRange) * plotWidth;
-  // Y: inverted (top is high, bottom is low in SVG coordinates)
-  const y = margin.top + ((CHART_DOMAIN.max - dataY) / domainRange) * plotHeight;
-
-  return { x, y };
-}
-
-// Offset radius for overlapping point click targets (in pixels)
-// When multiple points share the same position, their click overlays are spread
-// in a circle around the center to make them individually clickable
-const OVERLAP_OFFSET_RADIUS = 18;
-
 // Phase 1 Enhancement: Bubble opacity based on distribution reach
 // Higher distribution = more solid, lower = more transparent
 // Range: 0.35 (0% reach) to 1.0 (100% reach)
@@ -162,61 +130,6 @@ function getBubbleOpacity(distributionReach: number | null): number {
  */
 function isMajorPlayer(marketShare: number | null): boolean {
   return marketShare !== null && marketShare > 10;
-}
-
-/**
- * Calculate offset positions for overlapping click targets.
- * Groups points by their SVG position (within tolerance) and spreads
- * overlapping points in a radial pattern around the center.
- */
-function calculateOverlapOffsets(
-  positions: Map<string, { x: number; y: number }>,
-  tolerance: number = 5
-): Map<string, { x: number; y: number }> {
-  const offsets = new Map<string, { x: number; y: number }>();
-  const entries = Array.from(positions.entries());
-
-  // Group points by position (within tolerance)
-  const groups: { center: { x: number; y: number }; ids: string[] }[] = [];
-
-  for (const [id, pos] of entries) {
-    // Find existing group within tolerance
-    let foundGroup = groups.find(
-      (g) => Math.abs(g.center.x - pos.x) < tolerance && Math.abs(g.center.y - pos.y) < tolerance
-    );
-
-    if (foundGroup) {
-      foundGroup.ids.push(id);
-      // Update center to average
-      const allPositions = foundGroup.ids.map((gid) => positions.get(gid)!);
-      foundGroup.center = {
-        x: allPositions.reduce((sum, p) => sum + p.x, 0) / allPositions.length,
-        y: allPositions.reduce((sum, p) => sum + p.y, 0) / allPositions.length,
-      };
-    } else {
-      groups.push({ center: { x: pos.x, y: pos.y }, ids: [id] });
-    }
-  }
-
-  // Calculate offsets for each group
-  for (const group of groups) {
-    if (group.ids.length === 1) {
-      // Single point - no offset needed
-      offsets.set(group.ids[0], { x: 0, y: 0 });
-    } else {
-      // Multiple overlapping points - spread in a circle
-      const count = group.ids.length;
-      group.ids.forEach((id, index) => {
-        const angle = (2 * Math.PI * index) / count - Math.PI / 2; // Start from top
-        offsets.set(id, {
-          x: Math.cos(angle) * OVERLAP_OFFSET_RADIUS,
-          y: Math.sin(angle) * OVERLAP_OFFSET_RADIUS,
-        });
-      });
-    }
-  }
-
-  return offsets;
 }
 
 // Axis labels - abbreviated on mobile for space (default view)
@@ -282,14 +195,6 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
   const [containerSize, setContainerSize] = useState<{ width: number; height: number } | null>(null);
   const [isContainerReady, setIsContainerReady] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  // SVG positions read from Recharts after render - ensures perfect alignment
-  // Includes resizeKey to invalidate stale positions on viewport changes
-  const [svgPositions, setSvgPositions] = useState<{
-    positions: Map<string, { x: number; y: number }>;
-    resizeKey: number;
-  }>({ positions: new Map(), resizeKey: 0 });
-  // Resize counter to track viewport changes - increments on each resize
-  const resizeCounterRef = useRef(0);
 
   // Memoize chart margin to prevent unnecessary recalculations
   const chartMargin = useMemo(
@@ -318,9 +223,8 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
   // Axis label offset - smaller on mobile
   const axisLabelOffset = isMobile ? 12 : 20;
 
-  // Measure container size for overlay positioning
+  // Measure container size for ResponsiveContainer rendering
   // Re-run when competitors change to ensure we measure after chart renders
-  // Debounced to prevent reading positions during resize transitions
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -343,13 +247,8 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
     };
 
     // Debounced version for resize events - waits for resize to stabilize
-    // Immediately clears positions to prevent showing stale overlays during resize
     const debouncedUpdateSize = () => {
       clearTimeout(debounceTimer);
-      // Increment resize counter immediately to invalidate in-flight position reads
-      resizeCounterRef.current += 1;
-      // Clear positions immediately so stale overlays aren't shown during resize
-      setSvgPositions({ positions: new Map(), resizeKey: resizeCounterRef.current });
       debounceTimer = setTimeout(updateSize, 150); // Wait 150ms after last resize event
     };
 
@@ -370,130 +269,6 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, [competitors]);
-
-  // Read actual SVG positions from Recharts after render for perfect overlay alignment
-  // Recharts' internal positioning can differ from our calculations, so we read the
-  // rendered cx/cy attributes directly from the SVG path elements
-  //
-  // IMPORTANT: Position Stability Check
-  // After viewport resize, Recharts updates SVG dimensions BEFORE updating path positions.
-  // We must verify positions have STABILIZED by comparing multiple consecutive reads.
-  useEffect(() => {
-    if (!containerRef.current || !isContainerReady || !containerSize) return;
-
-    // Increment resize counter to invalidate any in-flight position reads
-    // This ensures stale positions from previous viewport are never rendered
-    resizeCounterRef.current += 1;
-    const currentResizeKey = resizeCounterRef.current;
-
-    // Clear stale positions immediately when container size changes
-    // Using the resize key ensures we know which positions are current
-    setSvgPositions({ positions: new Map(), resizeKey: currentResizeKey });
-
-    let attempts = 0;
-    const maxAttempts = 20; // Increased to handle slower renders
-    let timeoutId: NodeJS.Timeout;
-
-    // Track previous positions for stability check
-    let previousPositions: Map<string, { x: number; y: number }> | null = null;
-    let stabilityCount = 0;
-    const requiredStabilityCount = 2; // Positions must match 2 consecutive reads
-
-    const readSvgPositions = () => {
-      // Abort if another resize happened (stale read)
-      if (resizeCounterRef.current !== currentResizeKey) return;
-
-      const svg = containerRef.current?.querySelector('svg');
-      if (!svg) {
-        if (attempts < maxAttempts) {
-          attempts++;
-          timeoutId = setTimeout(readSvgPositions, 50);
-        }
-        return;
-      }
-
-      // Verify SVG dimensions match container (ensures Recharts has finished rendering)
-      const svgWidth = parseInt(svg.getAttribute('width') || '0', 10);
-      const svgHeight = parseInt(svg.getAttribute('height') || '0', 10);
-
-      // Allow tolerance for rounding differences
-      const widthMatch = Math.abs(svgWidth - containerSize.width) < 10;
-      const heightMatch = Math.abs(svgHeight - containerSize.height) < 10;
-
-      if (!widthMatch || !heightMatch) {
-        // Reset stability tracking when dimensions don't match
-        previousPositions = null;
-        stabilityCount = 0;
-        if (attempts < maxAttempts) {
-          attempts++;
-          timeoutId = setTimeout(readSvgPositions, 50);
-        }
-        return;
-      }
-
-      // Final check: abort if another resize happened during validation
-      if (resizeCounterRef.current !== currentResizeKey) return;
-
-      // Query both regular data points AND Kel position markers
-      const paths = svg.querySelectorAll('.recharts-scatter path[data-testid="chart-data-point"], .recharts-scatter path[data-testid="chart-kel-position"]');
-      const newPositions = new Map<string, { x: number; y: number }>();
-
-      paths.forEach((path) => {
-        const id = path.getAttribute('id');
-        const cx = parseFloat(path.getAttribute('cx') || '0');
-        const cy = parseFloat(path.getAttribute('cy') || '0');
-        if (id && !isNaN(cx) && !isNaN(cy)) {
-          newPositions.set(id, { x: cx, y: cy });
-        }
-      });
-
-      if (newPositions.size > 0) {
-        // STABILITY CHECK: Compare with previous read
-        // Recharts can return transitional positions during re-layout
-        // Only accept positions that are consistent across multiple reads
-        let positionsStable = false;
-
-        if (previousPositions && previousPositions.size === newPositions.size) {
-          positionsStable = true;
-          for (const [id, pos] of newPositions) {
-            const prevPos = previousPositions.get(id);
-            // Allow 1px tolerance for floating point differences
-            if (!prevPos || Math.abs(prevPos.x - pos.x) > 1 || Math.abs(prevPos.y - pos.y) > 1) {
-              positionsStable = false;
-              break;
-            }
-          }
-        }
-
-        if (positionsStable) {
-          stabilityCount++;
-        } else {
-          stabilityCount = 0;
-        }
-
-        // Store current positions for next comparison
-        previousPositions = newPositions;
-
-        // Only update state if positions have been stable for consecutive reads
-        if (stabilityCount >= requiredStabilityCount && resizeCounterRef.current === currentResizeKey) {
-          setSvgPositions({ positions: newPositions, resizeKey: currentResizeKey });
-          return; // Success - stop retrying
-        }
-      }
-
-      // Retry to verify stability
-      if (attempts < maxAttempts) {
-        attempts++;
-        timeoutId = setTimeout(readSvgPositions, 60); // Check every 60ms for stability
-      }
-    };
-
-    // Start reading after a delay to let Recharts begin rendering
-    // Longer initial delay to let Recharts settle after resize
-    timeoutId = setTimeout(readSvgPositions, 200);
-
-    return () => clearTimeout(timeoutId);
-  }, [isContainerReady, competitors, containerSize]);
 
   if (isLoading) {
     return <ScatterChartSkeleton />;
@@ -590,15 +365,21 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
     const xDefault = (xDomain[0] + xDomain[1]) / 2;
     const yDefault = (yDomain[0] + yDomain[1]) / 2;
 
+    // Bubble sizing strategy:
+    // - If market share is already shown on an axis, use uniform small bubbles (avoid redundancy)
+    // - Otherwise, bubble size encodes market share as additional information dimension
+    const marketShareOnAxis = axisConfig.xMetric === 'market_share' || axisConfig.yMetric === 'market_share';
+    const uniformBubbleSize = (BUBBLE_SIZE.MIN / BUBBLE_SIZE.MAX) * 100; // Small uniform size
+    const marketShareBubbleSize = c.market_share_percent ?? (BUBBLE_SIZE.DEFAULT / BUBBLE_SIZE.MAX) * 100;
+
     return {
       // Flexible axes: use selected metrics, with fallback for missing data
       x: xValue ?? xDefault,
       y: yValue ?? yDefault,
       // Track if this point has valid data for both axes (for visual indication)
       hasValidXY: xValue !== null && yValue !== null,
-      // Z-axis for bubble sizing: use market share if available, otherwise default
-      // This ensures all points are visible even without market data
-      z: c.market_share_percent ?? (BUBBLE_SIZE.DEFAULT / BUBBLE_SIZE.MAX) * 100,
+      // Z-axis for bubble sizing: view-aware to avoid visual redundancy
+      z: marketShareOnAxis ? uniformBubbleSize : marketShareBubbleSize,
       name: c.name,
       id: c.id,
       isKel,
@@ -733,8 +514,6 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
               data-testid="gap-indicator"
               onMouseEnter={() => setHoveredQuadrant('premium')}
               onMouseLeave={() => setHoveredQuadrant(null)}
-              onFocus={() => setHoveredQuadrant('premium')}
-              onBlur={() => setHoveredQuadrant(null)}
             />
           )}
           {isPositionView && gapQuadrants.includes('value') && (
@@ -749,8 +528,6 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
               data-testid="gap-indicator"
               onMouseEnter={() => setHoveredQuadrant('value')}
               onMouseLeave={() => setHoveredQuadrant(null)}
-              onFocus={() => setHoveredQuadrant('value')}
-              onBlur={() => setHoveredQuadrant(null)}
             />
           )}
           {isPositionView && gapQuadrants.includes('budget') && (
@@ -765,8 +542,6 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
               data-testid="gap-indicator"
               onMouseEnter={() => setHoveredQuadrant('budget')}
               onMouseLeave={() => setHoveredQuadrant(null)}
-              onFocus={() => setHoveredQuadrant('budget')}
-              onBlur={() => setHoveredQuadrant(null)}
             />
           )}
           {isPositionView && gapQuadrants.includes('low-quality') && (
@@ -781,8 +556,6 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
               data-testid="gap-indicator"
               onMouseEnter={() => setHoveredQuadrant('low-quality')}
               onMouseLeave={() => setHoveredQuadrant(null)}
-              onFocus={() => setHoveredQuadrant('low-quality')}
-              onBlur={() => setHoveredQuadrant(null)}
             />
           )}
 
@@ -966,12 +739,23 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
           >
             {competitorData.map((entry) => {
               const pointIsStale = isStale(entry.updated_at);
-              const opacity = getBubbleOpacity(entry.distributionReach);
               const majorPlayer = isMajorPlayer(entry.marketSharePercent);
 
-              // Base color with opacity for distribution reach
+              // Opacity encoding is view-aware:
+              // - Position view: Opacity encodes distribution reach (adds information)
+              // - Other views: Use solid opacity (0.85) since axis already shows the metric
+              // This prevents "outline-only" appearance when major players have strokes
+              const opacity = isPositionView
+                ? getBubbleOpacity(entry.distributionReach)
+                : 0.85;
+
               // Stale points get additional 50% transparency
               const baseOpacity = pointIsStale ? opacity * 0.5 : opacity;
+
+              // Major player stroke is only shown in Position view where it adds
+              // semantic meaning (market dominance). In other views, use solid fill only
+              // to prevent the "outline circle" appearance.
+              const showMajorStroke = isPositionView && majorPlayer;
 
               return (
                 <Cell
@@ -980,9 +764,9 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
                   data-testid={pointIsStale ? 'stale-chart-point' : 'chart-data-point'}
                   fill="var(--chart-competitor)"
                   fillOpacity={baseOpacity}
-                  stroke={majorPlayer ? 'var(--chart-competitor)' : 'none'}
-                  strokeWidth={majorPlayer ? 2 : 0}
-                  filter={majorPlayer ? 'url(#major-player-glow)' : undefined}
+                  stroke={showMajorStroke ? 'var(--chart-competitor)' : 'none'}
+                  strokeWidth={showMajorStroke ? 2 : 0}
+                  filter={showMajorStroke ? 'url(#major-player-glow)' : undefined}
                 />
               );
             })}
@@ -1084,193 +868,13 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
           />
         )}
 
-        {/* Proximity Ranking Panel - shows competitors ranked by distance to Kel */}
-        {/* Only show in Position view where proximity calculation is meaningful */}
-        {/* Positioned at bottom-right to avoid blocking quadrant labels and chart content */}
-        {/* ADHD-friendly: Uses bottom corner to minimize visual distraction from main data */}
-        {!isPitchMode && hasValidDimensions && competitors && kelPositionData && !isSmallMobile && isPositionView && (
-          <div className="absolute bottom-16 right-2 w-52 z-10">
-            <ProximityRankingPanel
-              competitors={competitors}
-              kelPosition={kelPositionData}
-              onCompetitorClick={(competitor) => {
-                // Find the position and trigger the detail sheet
-                const svgPos = svgPositions.positions.get(competitor.id);
-                if (svgPos) {
-                  setSelectedCompetitor(competitor);
-                  setPopoverAnchor({ x: svgPos.x, y: svgPos.y });
-                }
-              }}
-              maxDisplay={5}
-              defaultExpanded={false}
-            />
-          </div>
-        )}
+        {/* Proximity Ranking Panel has been moved to ChartStatsBar (Issue 1 fix)
+            The threat summary now appears in the stats bar with a click-to-expand popover,
+            providing better visibility and reducing chart overlay clutter. */}
 
-        {/* HTML Click Overlay Layer for accessible click targets (Story 6.7)
-            Provides reliable click handling for E2E tests and screen readers.
-            Uses SVG positions read from Recharts for perfect alignment.
-            Overlapping points are spread in a radial pattern for individual access.
-            Only rendered for Maho (Kel has read-only access) */}
-        {isMaho && !isPitchMode && containerSize && containerSize.width > 0 && (() => {
-          // Calculate offsets for overlapping points
-          const overlapOffsets = calculateOverlapOffsets(svgPositions.positions);
-
-          return (
-            <div
-              data-testid="chart-click-layer"
-              className="absolute inset-0 pointer-events-none"
-              aria-hidden="true"
-            >
-              {chartData.map((point) => {
-                // Only render overlays when we have confirmed SVG positions
-                // This prevents misaligned overlays during resize transitions
-                const svgPos = svgPositions.positions.get(point.id);
-                if (!svgPos) return null; // Don't render until SVG position is confirmed
-
-                const competitor = competitors?.find((c) => c.id === point.id);
-                if (!competitor) return null;
-
-                // Apply offset for overlapping points
-                const offset = overlapOffsets.get(point.id) ?? { x: 0, y: 0 };
-                const finalX = svgPos.x + offset.x;
-                const finalY = svgPos.y + offset.y;
-                const hasOffset = offset.x !== 0 || offset.y !== 0;
-
-                const pointIsStale = isStale(point.updated_at);
-                const isInComparison = selectedForComparison.includes(point.id);
-
-                return (
-                  <Tooltip key={point.id}>
-                    <TooltipTrigger asChild>
-                      <button
-                        data-testid="chart-click-overlay"
-                        data-generic-testid="chart-click-overlay"
-                        className={`chart-click-overlay absolute w-10 h-10 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-auto cursor-pointer
-                          border-2 z-10
-                          hover:border-primary/40 hover:bg-primary/15 hover:scale-110 hover:z-20
-                          focus:border-primary focus:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:z-20
-                          active:scale-95 active:z-20
-                          transition-all duration-200 ease-out
-                          ${isInComparison ? 'border-green-500 bg-green-500/20 ring-2 ring-green-500/40' : 'border-transparent'}
-                          ${point.isKel ? 'ring-1 ring-primary/30' : isInComparison ? '' : 'ring-1 ring-muted-foreground/20'}
-                          ${hasOffset ? 'ring-2 ring-offset-1' : ''}`}
-                        style={{ left: finalX, top: finalY }}
-                        aria-label={`Click to edit ${point.name}: Price ${point.x}, Quality ${point.y}${point.isKel ? ' (Kel Target)' : ''}${hasOffset ? ' (overlapping position)' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          triggerHaptic('light');
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          setPopoverAnchor({ x: rect.left + rect.width / 2, y: rect.top });
-                          setSelectedCompetitor(competitor);
-                        }}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      className="bg-popover text-popover-foreground border shadow-md min-w-[200px] max-w-[280px]"
-                    >
-                      <div className="text-left">
-                        {/* Header with name and market share badge */}
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <p className="font-medium">
-                              {point.name}
-                              {point.isKel ? ' ⭐' : ''}
-                              {isMajorPlayer(point.marketSharePercent) && !point.isKel && <span className="ml-1 text-amber-500">★</span>}
-                            </p>
-                            {point.parentCompany && (
-                              <p className="text-xs text-muted-foreground">{point.parentCompany}</p>
-                            )}
-                          </div>
-                          {point.marketSharePercent !== null && (
-                            <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${
-                              isMajorPlayer(point.marketSharePercent) ? 'bg-amber-100 text-amber-700 font-medium' : 'bg-primary/10 text-primary'
-                            }`}>
-                              {point.marketSharePercent}%
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Category and data completeness badges */}
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          {point.category && (
-                            <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
-                              {point.category}
-                            </span>
-                          )}
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                            point.dataCompleteness >= 70 ? 'bg-green-50 text-green-600' :
-                            point.dataCompleteness >= 40 ? 'bg-amber-50 text-amber-600' :
-                            'bg-red-50 text-red-600'
-                          }`}>
-                            {point.dataCompleteness}% data
-                          </span>
-                        </div>
-
-                        {/* Core metrics grid */}
-                        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                          <span>Price: {point.x}/10</span>
-                          <span>Quality: {point.y}/10</span>
-                          {point.distributionReach !== null && (
-                            <span>Reach: {point.distributionReach}%</span>
-                          )}
-                          {point.skuCount !== null && (
-                            <span>SKUs: {point.skuCount}</span>
-                          )}
-                          {point.yearsInMarket !== null && (
-                            <span>{point.yearsInMarket}y in market</span>
-                          )}
-                        </div>
-
-                        {/* Price range in PHP */}
-                        {(point.priceRange.min !== null || point.priceRange.max !== null) && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            ₱{point.priceRange.min ?? '?'} - ₱{point.priceRange.max ?? '?'}
-                          </p>
-                        )}
-
-                        {/* Distribution channels */}
-                        {point.channels && point.channels.length > 0 && (
-                          <p className="text-[10px] text-muted-foreground mt-1">
-                            📍 {point.channels.slice(0, 3).join(', ')}{point.channels.length > 3 ? '...' : ''}
-                          </p>
-                        )}
-
-                        {/* Notes preview */}
-                        {point.notes && (
-                          <p className="text-[10px] text-muted-foreground mt-2 pt-1 border-t italic line-clamp-2">
-                            &quot;{point.notes.slice(0, 60)}{point.notes.length > 60 ? '...' : ''}&quot;
-                          </p>
-                        )}
-
-                        {/* Distance to Kel / Threat Level */}
-                        {!point.isKel && point.threatLevel && point.distanceToKel !== null && (
-                          <div className="flex items-center gap-2 mt-2 pt-2 border-t">
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded border ${getThreatColorClass(point.threatLevel)}`}>
-                              {point.threatLevel === 'critical' ? '🎯' : point.threatLevel === 'high' ? '⚠️' : point.threatLevel === 'moderate' ? '👀' : '✓'} {point.threatLevel}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground">
-                              {point.distanceToKel.toFixed(1)} from Kel
-                              {point.proximityRank && ` · #${point.proximityRank}`}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Staleness warning */}
-                        {pointIsStale && (
-                          <p className="text-xs text-amber-600 mt-2 border-t pt-1">
-                            {getStalenessMessage(point.updated_at)}
-                          </p>
-                        )}
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })}
-            </div>
-          );
-        })()}
+        {/* Note: HTML click overlays removed - SVG dots are now directly clickable
+            via Recharts Scatter onClick handlers. Tooltips are provided by RechartsTooltip.
+            This eliminates overlapping click target issues with closely-positioned data points. */}
       </div>
 
       {/* Edit popover (desktop) or bottom sheet (mobile) for clicked data points */}
