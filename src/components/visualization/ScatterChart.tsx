@@ -6,8 +6,9 @@ import {
   Scatter,
   XAxis,
   YAxis,
+  ZAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   ReferenceLine,
   ReferenceArea,
@@ -15,21 +16,61 @@ import {
 } from 'recharts';
 
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { CompetitorDetailSheet } from '@/components/visualization/CompetitorDetailSheet';
+import { OpportunityScoreOverlay } from '@/components/visualization/OpportunityScoreOverlay';
+import { ProximityRankingPanel } from '@/components/visualization/ProximityRankingPanel';
+import { QuadrantStatsOverlay } from '@/components/visualization/QuadrantStatsOverlay';
 import { ScatterChartSkeleton } from '@/components/visualization/ScatterChartSkeleton';
 import { useCompetitorData } from '@/hooks/competitors';
 import { useHaptic, useResponsiveChartHeight } from '@/hooks/ui';
+import {
+  calculateDistanceToKel,
+  getThreatAssessment,
+  getThreatColorClass,
+  getProximityRank,
+} from '@/lib/utils/positioning';
 import { isStale, getStalenessMessage } from '@/lib/utils/staleness';
 
 import type { CompetitorDataPoint } from '@/types';
+import type { ThreatLevel } from '@/lib/utils/positioning';
+import type { ChartAxisConfig, ChartMetric } from './ChartAxisSelector';
+import { METRIC_CONFIGS, DEFAULT_AXIS_CONFIG } from './ChartAxisSelector';
 
 interface ChartPoint {
   x: number;
   y: number;
+  z: number; // Market share for bubble sizing (0-100, defaults to MIN_BUBBLE_SIZE for unknown)
+  hasValidXY: boolean; // Phase 3: Whether both axes have valid data (not fallback)
   name: string;
   id: string;
   isKel: boolean;
   updated_at: string;
+  // Additional data for enriched tooltips
+  marketSharePercent: number | null;
+  priceRange: { min: number | null; max: number | null };
+  parentCompany: string | null;
+  channels: string[] | null;
+  category: string | null;
+  // Distance to Kel position (for threat assessment)
+  distanceToKel: number | null;
+  threatLevel: ThreatLevel | null;
+  proximityRank: number | null;
+  // Phase 1 Enhancements: Additional data dimensions
+  distributionReach: number | null; // 0-100%, used for bubble opacity
+  skuCount: number | null;
+  yearsInMarket: number | null; // Calculated from year_established
+  notes: string | null;
+  dataCompleteness: number; // 0-100% based on filled fields
+  strengths: string[] | null;
+  weaknesses: string[] | null;
+  // Phase 3: Original scores for tooltip display (always available)
+  priceScore: number;
+  qualityScore: number;
 }
 
 interface ScatterChartProps {
@@ -40,6 +81,14 @@ interface ScatterChartProps {
   onAddClick?: () => void;
   /** When true, chart enters pitch mode (read-only, no click interactions) */
   isPitchMode?: boolean;
+  /** Optional pre-filtered competitors (overrides internal fetch when provided) */
+  competitors?: CompetitorDataPoint[];
+  /** IDs of competitors selected for comparison panel */
+  selectedForComparison?: string[];
+  /** Callback to toggle comparison selection */
+  onToggleComparison?: (id: string) => void;
+  /** Axis configuration for flexible views (Phase 3) */
+  axisConfig?: ChartAxisConfig;
 }
 
 type Quadrant = 'premium' | 'value' | 'budget' | 'low-quality';
@@ -48,6 +97,18 @@ type Quadrant = 'premium' | 'value' | 'budget' | 'low-quality';
 const MOBILE_CHART_MARGIN = { top: 12, right: 12, bottom: 40, left: 40 };
 const DESKTOP_CHART_MARGIN = { top: 20, right: 20, bottom: 60, left: 60 };
 const CHART_DOMAIN = { min: 1, max: 10 };
+
+// Bubble sizing configuration
+// Z-axis range controls min/max bubble radius in pixels
+// Market share 0% → MIN_BUBBLE_SIZE, 100% → MAX_BUBBLE_SIZE
+const BUBBLE_SIZE = {
+  MIN: 60,   // Minimum bubble area (for 0% or unknown market share)
+  MAX: 800,  // Maximum bubble area (for 100% market share)
+  DEFAULT: 100, // Default bubble area when market share is unknown
+} as const;
+
+// Z-axis domain maps market share percentage to bubble size
+const Z_AXIS_DOMAIN = [0, 100] as const;
 
 // Helper to calculate pixel position from data coordinates
 // Used for HTML click overlay positioning
@@ -70,14 +131,149 @@ function getPixelPosition(
   return { x, y };
 }
 
-// Axis labels - abbreviated on mobile for space
+// Offset radius for overlapping point click targets (in pixels)
+// When multiple points share the same position, their click overlays are spread
+// in a circle around the center to make them individually clickable
+const OVERLAP_OFFSET_RADIUS = 18;
+
+// Phase 1 Enhancement: Bubble opacity based on distribution reach
+// Higher distribution = more solid, lower = more transparent
+// Range: 0.35 (0% reach) to 1.0 (100% reach)
+const BUBBLE_OPACITY = {
+  MIN: 0.35,
+  MAX: 1.0,
+  DEFAULT: 0.65, // When distribution data is unknown
+} as const;
+
+/**
+ * Calculate bubble opacity based on distribution reach percentage.
+ * Higher distribution reach = more solid/prominent bubble.
+ * This visually communicates "reach" alongside "share" (size).
+ */
+function getBubbleOpacity(distributionReach: number | null): number {
+  if (distributionReach === null) return BUBBLE_OPACITY.DEFAULT;
+  // Linear interpolation: 0% → MIN, 100% → MAX
+  return BUBBLE_OPACITY.MIN + (distributionReach / 100) * (BUBBLE_OPACITY.MAX - BUBBLE_OPACITY.MIN);
+}
+
+/**
+ * Determine if a competitor is a "major player" (>10% market share)
+ * Major players get visual emphasis (bold stroke, subtle glow)
+ */
+function isMajorPlayer(marketShare: number | null): boolean {
+  return marketShare !== null && marketShare > 10;
+}
+
+/**
+ * Calculate offset positions for overlapping click targets.
+ * Groups points by their SVG position (within tolerance) and spreads
+ * overlapping points in a radial pattern around the center.
+ */
+function calculateOverlapOffsets(
+  positions: Map<string, { x: number; y: number }>,
+  tolerance: number = 5
+): Map<string, { x: number; y: number }> {
+  const offsets = new Map<string, { x: number; y: number }>();
+  const entries = Array.from(positions.entries());
+
+  // Group points by position (within tolerance)
+  const groups: { center: { x: number; y: number }; ids: string[] }[] = [];
+
+  for (const [id, pos] of entries) {
+    // Find existing group within tolerance
+    let foundGroup = groups.find(
+      (g) => Math.abs(g.center.x - pos.x) < tolerance && Math.abs(g.center.y - pos.y) < tolerance
+    );
+
+    if (foundGroup) {
+      foundGroup.ids.push(id);
+      // Update center to average
+      const allPositions = foundGroup.ids.map((gid) => positions.get(gid)!);
+      foundGroup.center = {
+        x: allPositions.reduce((sum, p) => sum + p.x, 0) / allPositions.length,
+        y: allPositions.reduce((sum, p) => sum + p.y, 0) / allPositions.length,
+      };
+    } else {
+      groups.push({ center: { x: pos.x, y: pos.y }, ids: [id] });
+    }
+  }
+
+  // Calculate offsets for each group
+  for (const group of groups) {
+    if (group.ids.length === 1) {
+      // Single point - no offset needed
+      offsets.set(group.ids[0], { x: 0, y: 0 });
+    } else {
+      // Multiple overlapping points - spread in a circle
+      const count = group.ids.length;
+      group.ids.forEach((id, index) => {
+        const angle = (2 * Math.PI * index) / count - Math.PI / 2; // Start from top
+        offsets.set(id, {
+          x: Math.cos(angle) * OVERLAP_OFFSET_RADIUS,
+          y: Math.sin(angle) * OVERLAP_OFFSET_RADIUS,
+        });
+      });
+    }
+  }
+
+  return offsets;
+}
+
+// Axis labels - abbreviated on mobile for space (default view)
 const AXIS_LABELS = {
   x: { mobile: 'Price', desktop: 'Price (low → high)' },
   y: { mobile: 'Quality', desktop: 'Quality (low → high)' },
 } as const;
 
-export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, isPitchMode = false }: ScatterChartProps) {
-  const { data: competitors, isLoading, error, refetch } = useCompetitorData();
+/**
+ * Get axis label based on selected metric (Phase 3: Flexible Views)
+ */
+function getAxisLabel(metric: ChartMetric, isMobile: boolean): string {
+  const config = METRIC_CONFIGS[metric];
+  if (isMobile) {
+    return config.shortLabel;
+  }
+  // Add directional hint for scores
+  if (metric === 'price_score' || metric === 'quality_score') {
+    return `${config.label} (low → high)`;
+  }
+  // Add unit for percentages
+  if (config.unit === '%') {
+    return `${config.label} (%)`;
+  }
+  return config.label;
+}
+
+/**
+ * Get metric value from competitor data point.
+ * Returns null if the metric is not available for this competitor.
+ */
+function getMetricValue(
+  competitor: CompetitorDataPoint,
+  metric: ChartMetric,
+  yearsInMarket?: number | null
+): number | null {
+  switch (metric) {
+    case 'price_score':
+      return competitor.price_score;
+    case 'quality_score':
+      return competitor.quality_score;
+    case 'market_share':
+      return competitor.market_share_percent ?? null;
+    case 'distribution_reach':
+      return competitor.distribution_reach_percent ?? null;
+    case 'sku_count':
+      return competitor.sku_count ?? null;
+    default:
+      return null;
+  }
+}
+
+export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, isPitchMode = false, competitors: externalCompetitors, selectedForComparison = [], onToggleComparison, axisConfig = DEFAULT_AXIS_CONFIG }: ScatterChartProps) {
+  const { data: fetchedCompetitors, isLoading, error, refetch } = useCompetitorData();
+
+  // Use external competitors if provided (e.g., filtered), otherwise use fetched data
+  const competitors = externalCompetitors ?? fetchedCompetitors;
   const { isMobile, isSmallMobile, chartHeight } = useResponsiveChartHeight();
   const { trigger: triggerHaptic } = useHaptic();
   const [selectedCompetitor, setSelectedCompetitor] = useState<CompetitorDataPoint | null>(null);
@@ -101,13 +297,22 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
     [isMobile]
   );
 
-  // Memoize axis labels for responsive display
+  // Memoize axis labels for responsive display (supports flexible axes)
   const axisLabels = useMemo(
     () => ({
-      x: isMobile ? AXIS_LABELS.x.mobile : AXIS_LABELS.x.desktop,
-      y: isMobile ? AXIS_LABELS.y.mobile : AXIS_LABELS.y.desktop,
+      x: getAxisLabel(axisConfig.xMetric, isMobile),
+      y: getAxisLabel(axisConfig.yMetric, isMobile),
     }),
-    [isMobile]
+    [isMobile, axisConfig.xMetric, axisConfig.yMetric]
+  );
+
+  // Memoize axis domains based on selected metrics
+  const axisDomains = useMemo(
+    () => ({
+      x: METRIC_CONFIGS[axisConfig.xMetric].domain,
+      y: METRIC_CONFIGS[axisConfig.yMetric].domain,
+    }),
+    [axisConfig.xMetric, axisConfig.yMetric]
   );
 
   // Axis label offset - smaller on mobile
@@ -346,27 +551,100 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
     );
   }
 
-  const chartData: ChartPoint[] = competitors.map((c) => ({
-    x: c.price_score,
-    y: c.quality_score,
-    name: c.name,
-    id: c.id,
-    isKel: c.is_kel_position ?? false,
-    updated_at: c.updated_at,
-  }));
+  // Find Kel position first for distance calculations
+  const kelPositionData = competitors.find((c) => c.is_kel_position) ?? null;
 
+  const chartData: ChartPoint[] = competitors.map((c) => {
+    const isKel = c.is_kel_position ?? false;
+    const distance = isKel ? null : calculateDistanceToKel(c, kelPositionData);
+    const threat = distance !== null ? getThreatAssessment(distance) : null;
+    const rank = isKel ? null : getProximityRank(c.id, competitors, kelPositionData);
+
+    // Calculate years in market from year_established
+    const currentYear = new Date().getFullYear();
+    const yearsInMarket = c.year_established ? currentYear - c.year_established : null;
+
+    // Calculate data completeness (% of key fields that are filled)
+    // Key fields: market_share, distribution_reach, price range, channels, sku_count, strengths, weaknesses
+    const keyFields = [
+      c.market_share_percent,
+      c.distribution_reach_percent,
+      c.price_min_php,
+      c.price_max_php,
+      c.primary_channels?.length,
+      c.sku_count,
+      c.strengths?.length,
+      c.weaknesses?.length,
+      c.year_established,
+      c.parent_company,
+    ];
+    const filledFields = keyFields.filter((f) => f != null && f !== 0).length;
+    const dataCompleteness = Math.round((filledFields / keyFields.length) * 100);
+
+    // Phase 3: Flexible axes - get values based on selected metrics
+    // Fall back to default position (center of domain) if metric not available
+    const xValue = getMetricValue(c, axisConfig.xMetric, yearsInMarket);
+    const yValue = getMetricValue(c, axisConfig.yMetric, yearsInMarket);
+    const xDomain = METRIC_CONFIGS[axisConfig.xMetric].domain;
+    const yDomain = METRIC_CONFIGS[axisConfig.yMetric].domain;
+    const xDefault = (xDomain[0] + xDomain[1]) / 2;
+    const yDefault = (yDomain[0] + yDomain[1]) / 2;
+
+    return {
+      // Flexible axes: use selected metrics, with fallback for missing data
+      x: xValue ?? xDefault,
+      y: yValue ?? yDefault,
+      // Track if this point has valid data for both axes (for visual indication)
+      hasValidXY: xValue !== null && yValue !== null,
+      // Z-axis for bubble sizing: use market share if available, otherwise default
+      // This ensures all points are visible even without market data
+      z: c.market_share_percent ?? (BUBBLE_SIZE.DEFAULT / BUBBLE_SIZE.MAX) * 100,
+      name: c.name,
+      id: c.id,
+      isKel,
+      updated_at: c.updated_at,
+      // Additional data for enriched tooltips and detail sheet
+      marketSharePercent: c.market_share_percent ?? null,
+      priceRange: {
+        min: c.price_min_php ?? null,
+        max: c.price_max_php ?? null,
+      },
+      parentCompany: c.parent_company ?? null,
+      channels: c.primary_channels ?? null,
+      category: c.category ?? null,
+      // Distance to Kel position
+      distanceToKel: distance,
+      threatLevel: threat?.level ?? null,
+      proximityRank: rank,
+      // Phase 1 Enhancements: Additional data dimensions
+      distributionReach: c.distribution_reach_percent ?? null,
+      skuCount: c.sku_count ?? null,
+      yearsInMarket,
+      notes: c.notes ?? null,
+      dataCompleteness,
+      strengths: c.strengths ?? null,
+      weaknesses: c.weaknesses ?? null,
+      // Store original scores for tooltip display
+      priceScore: c.price_score,
+      qualityScore: c.quality_score,
+    };
+  });
 
   const kelPosition = chartData.filter((d) => d.isKel);
   const competitorData = chartData.filter((d) => !d.isKel);
 
+  // Phase 3: Check if we're in Position view (price vs quality)
+  // Quadrant logic only applies to Position view
+  const isPositionView = axisConfig.xMetric === 'price_score' && axisConfig.yMetric === 'quality_score';
+
   // Calculate gap quadrants (0-1 data points = gap)
-  // Using 5.0 as boundary per AC1 requirement
-  const quadrantCounts = {
+  // Only applies in Position view; Using 5.0 as boundary per AC1 requirement
+  const quadrantCounts = isPositionView ? {
     premium: chartData.filter((d) => d.x > 5 && d.y > 5).length,
     value: chartData.filter((d) => d.x <= 5 && d.y > 5).length,
     budget: chartData.filter((d) => d.x <= 5 && d.y <= 5).length,
     'low-quality': chartData.filter((d) => d.x > 5 && d.y <= 5).length,
-  };
+  } : { premium: 99, value: 99, budget: 99, 'low-quality': 99 }; // Disable gaps for non-position views
 
   const gapQuadrants: Quadrant[] = (Object.entries(quadrantCounts) as [Quadrant, number][])
     .filter(([, count]) => count <= 1)
@@ -395,9 +673,10 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
         ) : (
         <ResponsiveContainer width={chartWidth} height={chartHeightPx}>
         <RechartsScatter margin={chartMargin}>
-          {/* SVG filter for Kel position glow in pitch mode */}
-          {isPitchMode && (
-            <defs>
+          {/* SVG filters for visual effects */}
+          <defs>
+            {/* Kel position glow in pitch mode */}
+            {isPitchMode && (
               <filter id="kel-glow" x="-50%" y="-50%" width="200%" height="200%">
                 <feDropShadow
                   dx="0"
@@ -407,28 +686,42 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
                   floodOpacity="0.6"
                 />
               </filter>
-            </defs>
-          )}
+            )}
+            {/* Phase 1: Major player glow (>10% market share) */}
+            <filter id="major-player-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow
+                dx="0"
+                dy="0"
+                stdDeviation="2"
+                floodColor="var(--chart-competitor)"
+                floodOpacity="0.4"
+              />
+            </filter>
+          </defs>
           <CartesianGrid strokeDasharray="3 3" />
 
-          {/* Quadrant divider lines at 5,5 per AC1 */}
-          <ReferenceLine
-            x={5}
-            stroke="var(--muted-foreground)"
-            strokeDasharray="3 3"
-            opacity={0.5}
-            data-testid="chart-quadrant-line-vertical"
-          />
-          <ReferenceLine
-            y={5}
-            stroke="var(--muted-foreground)"
-            strokeDasharray="3 3"
-            opacity={0.5}
-            data-testid="chart-quadrant-line-horizontal"
-          />
+          {/* Quadrant divider lines at 5,5 - only shown in Position view per AC1 */}
+          {isPositionView && (
+            <>
+              <ReferenceLine
+                x={5}
+                stroke="var(--muted-foreground)"
+                strokeDasharray="3 3"
+                opacity={0.5}
+                data-testid="chart-quadrant-line-vertical"
+              />
+              <ReferenceLine
+                y={5}
+                stroke="var(--muted-foreground)"
+                strokeDasharray="3 3"
+                opacity={0.5}
+                data-testid="chart-quadrant-line-horizontal"
+              />
+            </>
+          )}
 
-          {/* Gap area indicators - show only for quadrants with 0-1 data points */}
-          {gapQuadrants.includes('premium') && (
+          {/* Gap area indicators - show only in Position view for quadrants with 0-1 data points */}
+          {isPositionView && gapQuadrants.includes('premium') && (
             <ReferenceArea
               x1={5}
               x2={10}
@@ -444,7 +737,7 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
               onBlur={() => setHoveredQuadrant(null)}
             />
           )}
-          {gapQuadrants.includes('value') && (
+          {isPositionView && gapQuadrants.includes('value') && (
             <ReferenceArea
               x1={1}
               x2={5}
@@ -460,7 +753,7 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
               onBlur={() => setHoveredQuadrant(null)}
             />
           )}
-          {gapQuadrants.includes('budget') && (
+          {isPositionView && gapQuadrants.includes('budget') && (
             <ReferenceArea
               x1={1}
               x2={5}
@@ -476,7 +769,7 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
               onBlur={() => setHoveredQuadrant(null)}
             />
           )}
-          {gapQuadrants.includes('low-quality') && (
+          {isPositionView && gapQuadrants.includes('low-quality') && (
             <ReferenceArea
               x1={5}
               x2={10}
@@ -496,8 +789,8 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
           <XAxis
             type="number"
             dataKey="x"
-            domain={[1, 10]}
-            name="Price"
+            domain={axisDomains.x}
+            name={METRIC_CONFIGS[axisConfig.xMetric].label}
             data-testid="chart-x-axis"
             label={{
               value: axisLabels.x,
@@ -508,8 +801,8 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
           <YAxis
             type="number"
             dataKey="y"
-            domain={[1, 10]}
-            name="Quality"
+            domain={axisDomains.y}
+            name={METRIC_CONFIGS[axisConfig.yMetric].label}
             data-testid="chart-y-axis"
             label={{
               value: axisLabels.y,
@@ -519,7 +812,16 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
             }}
           />
 
-          <Tooltip
+          {/* Z-axis controls bubble size based on market share */}
+          <ZAxis
+            type="number"
+            dataKey="z"
+            domain={Z_AXIS_DOMAIN}
+            range={[BUBBLE_SIZE.MIN, BUBBLE_SIZE.MAX]}
+            name="Market Share"
+          />
+
+          <RechartsTooltip
             cursor={{ strokeDasharray: '3 3' }}
             content={({ active, payload }) => {
               // Show gap area tooltip when hovering over a gap quadrant
@@ -538,14 +840,101 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
               if (active && payload && payload.length) {
                 const data = payload[0].payload as ChartPoint;
                 const pointIsStale = isStale(data.updated_at);
+                const hasPriceRange = data.priceRange.min !== null || data.priceRange.max !== null;
+                const priceRangeText = hasPriceRange
+                  ? `₱${data.priceRange.min ?? '?'} - ₱${data.priceRange.max ?? '?'}`
+                  : null;
+                const majorPlayer = isMajorPlayer(data.marketSharePercent);
+
                 return (
-                  <div className="bg-popover border rounded-md p-2 shadow-md">
-                    <p className="font-medium">{data.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Price: {data.x} | Quality: {data.y}
-                    </p>
+                  <div className="bg-popover border rounded-md p-3 shadow-md min-w-[200px] max-w-[280px]">
+                    {/* Header with name and badges */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-medium">
+                          {data.name}
+                          {majorPlayer && <span className="ml-1 text-amber-500">★</span>}
+                        </p>
+                        {data.parentCompany && (
+                          <p className="text-xs text-muted-foreground">{data.parentCompany}</p>
+                        )}
+                      </div>
+                      {data.marketSharePercent !== null && (
+                        <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${
+                          majorPlayer ? 'bg-amber-100 text-amber-700 font-medium' : 'bg-primary/10 text-primary'
+                        }`}>
+                          {data.marketSharePercent}%
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Category and data completeness */}
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {data.category && (
+                        <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+                          {data.category}
+                        </span>
+                      )}
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                        data.dataCompleteness >= 70 ? 'bg-green-50 text-green-600' :
+                        data.dataCompleteness >= 40 ? 'bg-amber-50 text-amber-600' :
+                        'bg-red-50 text-red-600'
+                      }`}>
+                        {data.dataCompleteness}% data
+                      </span>
+                    </div>
+
+                    {/* Core metrics grid */}
+                    <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      <span>Price: {data.x}/10</span>
+                      <span>Quality: {data.y}/10</span>
+                      {data.distributionReach !== null && (
+                        <span>Reach: {data.distributionReach}%</span>
+                      )}
+                      {data.skuCount !== null && (
+                        <span>SKUs: {data.skuCount}</span>
+                      )}
+                      {data.yearsInMarket !== null && (
+                        <span>{data.yearsInMarket}y in market</span>
+                      )}
+                    </div>
+
+                    {/* Price range */}
+                    {priceRangeText && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {priceRangeText}
+                      </p>
+                    )}
+
+                    {/* Distribution channels */}
+                    {data.channels && data.channels.length > 0 && (
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        📍 {data.channels.slice(0, 3).join(', ')}{data.channels.length > 3 ? '...' : ''}
+                      </p>
+                    )}
+
+                    {/* Notes preview */}
+                    {data.notes && (
+                      <p className="text-[10px] text-muted-foreground mt-2 pt-1 border-t italic line-clamp-2">
+                        &quot;{data.notes.slice(0, 80)}{data.notes.length > 80 ? '...' : ''}&quot;
+                      </p>
+                    )}
+
+                    {/* Distance to Kel */}
+                    {!data.isKel && data.threatLevel && data.distanceToKel !== null && (
+                      <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded border ${getThreatColorClass(data.threatLevel)}`}>
+                          {data.threatLevel}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {data.distanceToKel.toFixed(1)} from Kel
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Staleness warning */}
                     {pointIsStale && (
-                      <p className="text-xs text-warning mt-1">
+                      <p className="text-xs text-amber-600 mt-2 border-t pt-2">
                         {getStalenessMessage(data.updated_at)}
                       </p>
                     )}
@@ -577,14 +966,23 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
           >
             {competitorData.map((entry) => {
               const pointIsStale = isStale(entry.updated_at);
+              const opacity = getBubbleOpacity(entry.distributionReach);
+              const majorPlayer = isMajorPlayer(entry.marketSharePercent);
+
+              // Base color with opacity for distribution reach
+              // Stale points get additional 50% transparency
+              const baseOpacity = pointIsStale ? opacity * 0.5 : opacity;
+
               return (
                 <Cell
                   key={entry.id}
+                  id={entry.id}
                   data-testid={pointIsStale ? 'stale-chart-point' : 'chart-data-point'}
-                  fill={pointIsStale
-                    ? 'color-mix(in srgb, var(--chart-competitor) 50%, transparent)'
-                    : 'var(--chart-competitor)'
-                  }
+                  fill="var(--chart-competitor)"
+                  fillOpacity={baseOpacity}
+                  stroke={majorPlayer ? 'var(--chart-competitor)' : 'none'}
+                  strokeWidth={majorPlayer ? 2 : 0}
+                  filter={majorPlayer ? 'url(#major-player-glow)' : undefined}
                 />
               );
             })}
@@ -621,8 +1019,8 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
             </Scatter>
           )}
 
-          {/* Quadrant Labels - hidden on small mobile (< 375px) to prevent overlap */}
-          {!isSmallMobile && (
+          {/* Quadrant Labels - only shown in Position view, hidden on small mobile (< 375px) */}
+          {!isSmallMobile && isPositionView && (
             <>
               <text
                 x="82%"
@@ -667,51 +1065,211 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
       </ResponsiveContainer>
         )}
 
+        {/* Quadrant Statistics Overlay - shows aggregate stats in each quadrant corner */}
+        {/* Only show in Position view (Price vs Quality) where quadrants are meaningful */}
+        {!isPitchMode && hasValidDimensions && competitors && isPositionView && (
+          <QuadrantStatsOverlay
+            competitors={competitors}
+            isVisible={!isSmallMobile}
+          />
+        )}
+
+        {/* Opportunity Score Overlay - shows strategic opportunity scores per quadrant */}
+        {/* Only show in Position view (Price vs Quality) where quadrants are meaningful */}
+        {!isPitchMode && hasValidDimensions && competitors && isPositionView && (
+          <OpportunityScoreOverlay
+            competitors={competitors}
+            kelPosition={competitors.find((c) => c.is_kel_position) ?? null}
+            isVisible={!isSmallMobile}
+          />
+        )}
+
+        {/* Proximity Ranking Panel - shows competitors ranked by distance to Kel */}
+        {/* Only show in Position view where proximity calculation is meaningful */}
+        {/* Positioned at top-left below quadrant stats to avoid blocking Budget/axis labels */}
+        {!isPitchMode && hasValidDimensions && competitors && kelPositionData && !isSmallMobile && isPositionView && (
+          <div className="absolute top-14 left-2 w-52 z-10">
+            <ProximityRankingPanel
+              competitors={competitors}
+              kelPosition={kelPositionData}
+              onCompetitorClick={(competitor) => {
+                // Find the position and trigger the detail sheet
+                const svgPos = svgPositions.positions.get(competitor.id);
+                if (svgPos) {
+                  setSelectedCompetitor(competitor);
+                  setPopoverAnchor({ x: svgPos.x, y: svgPos.y });
+                }
+              }}
+              maxDisplay={5}
+              defaultExpanded={false}
+            />
+          </div>
+        )}
+
         {/* HTML Click Overlay Layer for accessible click targets (Story 6.7)
             Provides reliable click handling for E2E tests and screen readers.
             Uses SVG positions read from Recharts for perfect alignment.
+            Overlapping points are spread in a radial pattern for individual access.
             Only rendered for Maho (Kel has read-only access) */}
-        {isMaho && !isPitchMode && containerSize && containerSize.width > 0 && (
-          <div
-            data-testid="chart-click-layer"
-            className="absolute inset-0 pointer-events-none"
-            aria-hidden="true"
-          >
-            {chartData.map((point) => {
-              // Only render overlays when we have confirmed SVG positions
-              // This prevents misaligned overlays during resize transitions
-              const svgPos = svgPositions.positions.get(point.id);
-              if (!svgPos) return null; // Don't render until SVG position is confirmed
+        {isMaho && !isPitchMode && containerSize && containerSize.width > 0 && (() => {
+          // Calculate offsets for overlapping points
+          const overlapOffsets = calculateOverlapOffsets(svgPositions.positions);
 
-              const competitor = competitors?.find((c) => c.id === point.id);
-              if (!competitor) return null;
+          return (
+            <div
+              data-testid="chart-click-layer"
+              className="absolute inset-0 pointer-events-none"
+              aria-hidden="true"
+            >
+              {chartData.map((point) => {
+                // Only render overlays when we have confirmed SVG positions
+                // This prevents misaligned overlays during resize transitions
+                const svgPos = svgPositions.positions.get(point.id);
+                if (!svgPos) return null; // Don't render until SVG position is confirmed
 
-              return (
-                <button
-                  key={point.id}
-                  data-testid="chart-click-overlay"
-                  data-generic-testid="chart-click-overlay"
-                  className={`chart-click-overlay absolute w-10 h-10 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-auto cursor-pointer
-                    border-2 border-transparent
-                    hover:border-primary/40 hover:bg-primary/15 hover:scale-110
-                    focus:border-primary focus:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
-                    active:scale-95
-                    transition-all duration-200 ease-out
-                    ${point.isKel ? 'ring-1 ring-primary/30' : 'ring-1 ring-muted-foreground/20'}`}
-                  style={{ left: svgPos.x, top: svgPos.y }}
-                  aria-label={`Click to edit ${point.name}: Price ${point.x}, Quality ${point.y}${point.isKel ? ' (Kel Target)' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    triggerHaptic('light');
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setPopoverAnchor({ x: rect.left + rect.width / 2, y: rect.top });
-                    setSelectedCompetitor(competitor);
-                  }}
-                />
-              );
-            })}
-          </div>
-        )}
+                const competitor = competitors?.find((c) => c.id === point.id);
+                if (!competitor) return null;
+
+                // Apply offset for overlapping points
+                const offset = overlapOffsets.get(point.id) ?? { x: 0, y: 0 };
+                const finalX = svgPos.x + offset.x;
+                const finalY = svgPos.y + offset.y;
+                const hasOffset = offset.x !== 0 || offset.y !== 0;
+
+                const pointIsStale = isStale(point.updated_at);
+                const isInComparison = selectedForComparison.includes(point.id);
+
+                return (
+                  <Tooltip key={point.id}>
+                    <TooltipTrigger asChild>
+                      <button
+                        data-testid="chart-click-overlay"
+                        data-generic-testid="chart-click-overlay"
+                        className={`chart-click-overlay absolute w-10 h-10 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-auto cursor-pointer
+                          border-2 z-10
+                          hover:border-primary/40 hover:bg-primary/15 hover:scale-110 hover:z-20
+                          focus:border-primary focus:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:z-20
+                          active:scale-95 active:z-20
+                          transition-all duration-200 ease-out
+                          ${isInComparison ? 'border-green-500 bg-green-500/20 ring-2 ring-green-500/40' : 'border-transparent'}
+                          ${point.isKel ? 'ring-1 ring-primary/30' : isInComparison ? '' : 'ring-1 ring-muted-foreground/20'}
+                          ${hasOffset ? 'ring-2 ring-offset-1' : ''}`}
+                        style={{ left: finalX, top: finalY }}
+                        aria-label={`Click to edit ${point.name}: Price ${point.x}, Quality ${point.y}${point.isKel ? ' (Kel Target)' : ''}${hasOffset ? ' (overlapping position)' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerHaptic('light');
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setPopoverAnchor({ x: rect.left + rect.width / 2, y: rect.top });
+                          setSelectedCompetitor(competitor);
+                        }}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      className="bg-popover text-popover-foreground border shadow-md min-w-[200px] max-w-[280px]"
+                    >
+                      <div className="text-left">
+                        {/* Header with name and market share badge */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-medium">
+                              {point.name}
+                              {point.isKel ? ' ⭐' : ''}
+                              {isMajorPlayer(point.marketSharePercent) && !point.isKel && <span className="ml-1 text-amber-500">★</span>}
+                            </p>
+                            {point.parentCompany && (
+                              <p className="text-xs text-muted-foreground">{point.parentCompany}</p>
+                            )}
+                          </div>
+                          {point.marketSharePercent !== null && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${
+                              isMajorPlayer(point.marketSharePercent) ? 'bg-amber-100 text-amber-700 font-medium' : 'bg-primary/10 text-primary'
+                            }`}>
+                              {point.marketSharePercent}%
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Category and data completeness badges */}
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {point.category && (
+                            <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+                              {point.category}
+                            </span>
+                          )}
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                            point.dataCompleteness >= 70 ? 'bg-green-50 text-green-600' :
+                            point.dataCompleteness >= 40 ? 'bg-amber-50 text-amber-600' :
+                            'bg-red-50 text-red-600'
+                          }`}>
+                            {point.dataCompleteness}% data
+                          </span>
+                        </div>
+
+                        {/* Core metrics grid */}
+                        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                          <span>Price: {point.x}/10</span>
+                          <span>Quality: {point.y}/10</span>
+                          {point.distributionReach !== null && (
+                            <span>Reach: {point.distributionReach}%</span>
+                          )}
+                          {point.skuCount !== null && (
+                            <span>SKUs: {point.skuCount}</span>
+                          )}
+                          {point.yearsInMarket !== null && (
+                            <span>{point.yearsInMarket}y in market</span>
+                          )}
+                        </div>
+
+                        {/* Price range in PHP */}
+                        {(point.priceRange.min !== null || point.priceRange.max !== null) && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            ₱{point.priceRange.min ?? '?'} - ₱{point.priceRange.max ?? '?'}
+                          </p>
+                        )}
+
+                        {/* Distribution channels */}
+                        {point.channels && point.channels.length > 0 && (
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            📍 {point.channels.slice(0, 3).join(', ')}{point.channels.length > 3 ? '...' : ''}
+                          </p>
+                        )}
+
+                        {/* Notes preview */}
+                        {point.notes && (
+                          <p className="text-[10px] text-muted-foreground mt-2 pt-1 border-t italic line-clamp-2">
+                            &quot;{point.notes.slice(0, 60)}{point.notes.length > 60 ? '...' : ''}&quot;
+                          </p>
+                        )}
+
+                        {/* Distance to Kel / Threat Level */}
+                        {!point.isKel && point.threatLevel && point.distanceToKel !== null && (
+                          <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded border ${getThreatColorClass(point.threatLevel)}`}>
+                              {point.threatLevel === 'critical' ? '🎯' : point.threatLevel === 'high' ? '⚠️' : point.threatLevel === 'moderate' ? '👀' : '✓'} {point.threatLevel}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              {point.distanceToKel.toFixed(1)} from Kel
+                              {point.proximityRank && ` · #${point.proximityRank}`}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Staleness warning */}
+                        {pointIsStale && (
+                          <p className="text-xs text-amber-600 mt-2 border-t pt-1">
+                            {getStalenessMessage(point.updated_at)}
+                          </p>
+                        )}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Edit popover (desktop) or bottom sheet (mobile) for clicked data points */}
@@ -737,6 +1295,10 @@ export function ScatterChart({ isMaho, onEditClick, onDeleteClick, onAddClick, i
             setPopoverAnchor(null);
           }}
           isMobile={isMobile}
+          isSelectedForComparison={selectedForComparison.includes(selectedCompetitor.id)}
+          onToggleComparison={onToggleComparison ? () => onToggleComparison(selectedCompetitor.id) : undefined}
+          kelPosition={kelPositionData}
+          proximityRank={getProximityRank(selectedCompetitor.id, competitors, kelPositionData)}
         />
       )}
     </div>

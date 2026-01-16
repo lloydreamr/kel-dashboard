@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -11,11 +11,18 @@ import {
   MarkKelPositionButton,
   KelPositionDialog,
   ChartLegend,
+  ChartFilters,
+  ChartStatsBar,
   ScatterChartSkeleton,
   EnterPitchModeButton,
   PdfExportContent,
   PitchCompetitorTable,
+  ComparisonPanel,
+  SmartInsightsPanel,
+  ChartAxisSelector,
+  DEFAULT_AXIS_CONFIG,
 } from '@/components/visualization';
+import type { ChartFiltersValue, ChartAxisConfig } from '@/components/visualization';
 import { MiBreadcrumb } from '@/components/market-intelligence';
 import { useProfile } from '@/hooks/auth';
 import { useDeleteCompetitor, useCompetitorData } from '@/hooks/competitors';
@@ -72,6 +79,9 @@ export function VisualizationPageClient({
   const [editingCompetitor, setEditingCompetitor] = useState<CompetitorDataPoint | null>(null);
   const [deletingCompetitor, setDeletingCompetitor] = useState<CompetitorDataPoint | null>(null);
   const [kelDialogOpen, setKelDialogOpen] = useState(false);
+  const [filters, setFilters] = useState<ChartFiltersValue>({ category: null, channel: null });
+  const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
+  const [axisConfig, setAxisConfig] = useState<ChartAxisConfig>(DEFAULT_AXIS_CONFIG);
 
   const deleteMutation = useDeleteCompetitor();
   const { data: competitors, isLoading: competitorsLoading } = useCompetitorData();
@@ -79,6 +89,57 @@ export function VisualizationPageClient({
   // Find existing Kel position for conditional button text
   const existingKelPosition = competitors?.find((c) => c.is_kel_position);
   const hasKelPosition = !!existingKelPosition;
+
+  // Check if any competitor has market share data (for bubble legend)
+  const hasMarketShareData = competitors?.some((c) => c.market_share_percent != null) ?? false;
+
+  // Apply filters to competitors (UX: Always show Kel position even when filtered out)
+  const filteredCompetitors = useMemo(() => {
+    if (!competitors) return [];
+
+    return competitors.filter((c) => {
+      // Always show Kel position regardless of filters
+      if (c.is_kel_position) return true;
+
+      // Category filter
+      if (filters.category && c.category !== filters.category) {
+        return false;
+      }
+
+      // Channel filter (check if competitor has this channel in their primary_channels array)
+      if (filters.channel && c.primary_channels) {
+        if (!c.primary_channels.includes(filters.channel)) {
+          return false;
+        }
+      } else if (filters.channel && !c.primary_channels) {
+        // If filtering by channel but competitor has no channel data, hide them
+        return false;
+      }
+
+      return true;
+    });
+  }, [competitors, filters]);
+
+  // Derive selected competitors for comparison panel
+  const selectedCompetitors = useMemo(() => {
+    if (!competitors) return [];
+    return competitors.filter((c) => selectedForComparison.includes(c.id) && !c.is_kel_position);
+  }, [competitors, selectedForComparison]);
+
+  // Comparison mode handlers
+  const handleToggleComparison = useCallback((id: string) => {
+    setSelectedForComparison((prev) =>
+      prev.includes(id) ? prev.filter((cid) => cid !== id) : [...prev, id]
+    );
+  }, []);
+
+  const handleRemoveFromComparison = useCallback((id: string) => {
+    setSelectedForComparison((prev) => prev.filter((cid) => cid !== id));
+  }, []);
+
+  const handleClearComparison = useCallback(() => {
+    setSelectedForComparison([]);
+  }, []);
 
   // PDF download handler (Story 11.2)
   // Uses useCallback to maintain stable reference for Zustand registration
@@ -173,7 +234,7 @@ export function VisualizationPageClient({
               onDeleteClick={handleDeleteClick}
               onAddClick={handleAddClick}
             />
-            <ChartLegend hasKelPosition={hasKelPosition} isLoading={competitorsLoading} />
+            <ChartLegend hasKelPosition={hasKelPosition} isLoading={competitorsLoading} hasMarketShareData={hasMarketShareData} />
           </div>
 
           {/* Competitor Comparison Table (Story 11.4) */}
@@ -223,14 +284,50 @@ export function VisualizationPageClient({
       </div>
 
       <div className="bg-card rounded-lg border p-4">
+        <ChartStatsBar competitors={competitors ?? []} />
+        <ChartFilters
+          value={filters}
+          onChange={setFilters}
+          filteredCount={filteredCompetitors.filter(c => !c.is_kel_position).length}
+          totalCount={competitors?.filter(c => !c.is_kel_position).length ?? 0}
+        />
+        {/* Phase 3: Flexible Views - Axis selector with preset views */}
+        <div className="mb-4 pb-3 border-b border-border">
+          <ChartAxisSelector
+            value={axisConfig}
+            onChange={setAxisConfig}
+            compact={true}
+          />
+        </div>
         <ScatterChart
           isMaho={isMaho}
           onEditClick={handleEditClick}
           onDeleteClick={handleDeleteClick}
           onAddClick={handleAddClick}
+          competitors={filteredCompetitors}
+          selectedForComparison={selectedForComparison}
+          onToggleComparison={handleToggleComparison}
+          axisConfig={axisConfig}
         />
-        <ChartLegend hasKelPosition={hasKelPosition} isLoading={competitorsLoading} />
+        <ChartLegend hasKelPosition={hasKelPosition} isLoading={competitorsLoading} hasMarketShareData={hasMarketShareData} />
       </div>
+
+      {/* Smart Insights Panel - auto-generated strategic intelligence */}
+      <div className="mt-6">
+        <SmartInsightsPanel
+          competitors={competitors ?? []}
+          kelPosition={existingKelPosition ?? null}
+          maxInsights={4}
+        />
+      </div>
+
+      {/* Comparison Panel - shows selected competitors side-by-side */}
+      <ComparisonPanel
+        competitors={selectedCompetitors}
+        kelPosition={existingKelPosition ?? null}
+        onRemove={handleRemoveFromComparison}
+        onClearAll={handleClearComparison}
+      />
 
       {/* Add/Edit Dialog */}
       <CompetitorDialog
