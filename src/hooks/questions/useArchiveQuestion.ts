@@ -8,6 +8,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { useOfflineGuard, isOfflineError } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { questionsRepo } from '@/lib/repositories/questions';
 
@@ -28,12 +29,19 @@ import type { Question } from '@/types/question';
  */
 export function useArchiveQuestion() {
   const queryClient = useQueryClient();
+  const { guardOffline } = useOfflineGuard();
 
   return useMutation({
-    mutationFn: (id: string) => questionsRepo.archive(id),
+    mutationFn: (id: string) => {
+      return questionsRepo.archive(id);
+    },
 
     // Optimistic update: Remove from questions list immediately
     onMutate: async (id: string) => {
+      // Check offline status FIRST before any async operations
+      // This prevents mutation from getting stuck on cancelQueries when offline
+      guardOffline(); // Throws OfflineError if offline
+
       // Cancel outgoing refetches
       await queryClient.cancelQueries({
         queryKey: queryKeys.questions.all,
@@ -63,6 +71,8 @@ export function useArchiveQuestion() {
           context.previousQuestions
         );
       }
+      // Skip duplicate toast if offline error (guardOffline already showed toast)
+      if (isOfflineError(error)) return;
       toast.error('Failed to archive question', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });

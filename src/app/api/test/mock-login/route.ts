@@ -41,6 +41,7 @@ const TEST_USERS = {
  *
  * Query params:
  * - role: 'maho' | 'kel' (default: 'maho')
+ * - redirectTo: URL path to redirect after login (default: '/')
  */
 export async function GET(request: Request) {
   // Security check: Only allow in test mode AND non-production (defense-in-depth)
@@ -57,11 +58,25 @@ export async function GET(request: Request) {
   const roleParam = searchParams.get('role') || 'maho';
   const role = roleParam === 'kel' ? 'kel' : 'maho';
 
+  // Parse optional redirectTo param (for testing post-login redirects)
+  const redirectToParam = searchParams.get('redirectTo');
+
   const testUser = TEST_USERS[role];
 
-  // Create redirect response to dashboard - we'll add cookies to this
-  const url = new URL('/', request.url);
-  const response = NextResponse.redirect(url);
+  // Create redirect response - we'll add cookies to this
+  // Use the Host header to get the actual hostname the client used (e.g., localhost:3000)
+  // This avoids issues where request.url contains 0.0.0.0 when Next.js binds to all interfaces
+  const host = request.headers.get('host') || 'localhost:3000';
+  const protocol = host.includes('localhost') ? 'http' : 'https';
+
+  // Validate redirectTo is a safe relative path (prevent open redirect)
+  let redirectPath = '/';
+  if (redirectToParam && redirectToParam.startsWith('/') && !redirectToParam.startsWith('//')) {
+    redirectPath = redirectToParam;
+  }
+
+  const redirectUrl = `${protocol}://${host}${redirectPath}`;
+  const response = NextResponse.redirect(redirectUrl);
 
   // Collect cookies to set
   const cookiesToSet: { name: string; value: string; options: object }[] = [];

@@ -3,13 +3,16 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 
+import { Button } from '@/components/ui/button';
 import { useCreateQuestion } from '@/hooks/questions/useCreateQuestion';
+import { cn } from '@/lib/utils';
 
 import { QuestionFormSkeleton } from './QuestionFormSkeleton';
 import {
   createQuestionSchema,
   CATEGORY_OPTIONS,
   type CreateQuestionFormData,
+  type QuestionCategory,
 } from './questionSchema';
 
 interface QuestionFormProps {
@@ -38,20 +41,22 @@ export function QuestionForm({ userId, onCancel, onSuccess }: QuestionFormProps)
     defaultValues: {
       title: '',
       description: '',
-      category: 'product', // Default category
+      category: '' as CreateQuestionFormData['category'], // Empty = no selection (placeholder)
     },
     mode: 'onChange',
   });
 
   const titleValue = watch('title');
-  const isButtonDisabled = !titleValue || !isValid || isPending;
+  const categoryValue = watch('category');
+  const isButtonDisabled = !titleValue || !categoryValue || !isValid || isPending;
 
   const onSubmit = (data: CreateQuestionFormData) => {
+    // Category is validated by Zod schema - safe to cast
     mutate(
       {
         title: data.title,
         description: data.description || null,
-        category: data.category,
+        category: data.category as QuestionCategory,
         created_by: userId,
       },
       {
@@ -87,7 +92,7 @@ export function QuestionForm({ userId, onCancel, onSuccess }: QuestionFormProps)
           autoFocus
           placeholder="What strategic question needs answering?"
           data-testid="question-title-input"
-          className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+          className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         {errors.title && (
           <p className="text-sm text-destructive" role="alert">
@@ -110,7 +115,7 @@ export function QuestionForm({ userId, onCancel, onSuccess }: QuestionFormProps)
           rows={3}
           placeholder="Add context or details about this question..."
           data-testid="question-description-input"
-          className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+          className="w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>
 
@@ -120,41 +125,48 @@ export function QuestionForm({ userId, onCancel, onSuccess }: QuestionFormProps)
           htmlFor="category"
           className="block text-sm font-medium text-foreground"
         >
-          Category
+          Category <span className="text-destructive">*</span>
         </label>
         <select
           {...register('category')}
           id="category"
           data-testid="question-category-select"
-          className="min-h-[48px] w-full rounded-md border border-border bg-surface px-4 py-3 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20"
+          className={cn(
+            'min-h-12 w-full rounded-md border bg-surface px-4 py-3 focus:outline-none focus:ring-2 focus:ring-ring/20',
+            !categoryValue ? 'text-muted-foreground' : 'text-foreground',
+            errors.category ? 'border-destructive' : 'border-border focus:border-primary'
+          )}
         >
+          <option value="" disabled hidden>
+            Select category...
+          </option>
           {CATEGORY_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
+            <option key={option.value} value={option.value} className="text-foreground">
               {option.label}
             </option>
           ))}
         </select>
+        {errors.category && (
+          <p className="text-sm text-destructive" role="alert" data-testid="category-validation-error">
+            {errors.category.message}
+          </p>
+        )}
       </div>
 
       {/* Form actions */}
       <div className="flex justify-end gap-3 pt-2">
         {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="min-h-[48px] rounded-md px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          >
+          <Button type="button" onClick={onCancel} variant="ghost">
             Cancel
-          </button>
+          </Button>
         )}
-        <button
+        <Button
           type="submit"
           disabled={isButtonDisabled}
           data-testid="question-submit"
-          className="min-h-[48px] rounded-md bg-primary px-6 py-3 font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isPending ? 'Creating...' : 'Create Question'}
-        </button>
+        </Button>
       </div>
     </form>
   );

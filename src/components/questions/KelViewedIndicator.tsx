@@ -2,7 +2,7 @@
 
 import { formatRelativeTime } from '@/lib/utils/date';
 
-interface KelViewedIndicatorProps {
+export interface KelViewedIndicatorProps {
   viewedAt: string | null;
 }
 

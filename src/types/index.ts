@@ -17,6 +17,15 @@ export type {
   Question,
   QuestionInsert,
   QuestionUpdate,
+  Milestone,
+  MilestoneInsert,
+  MilestoneUpdate,
+  MilestoneNote,
+  MilestoneNoteInsert,
+  MilestoneNoteUpdate,
+  CompetitorDataPoint,
+  CompetitorDataPointInsert,
+  CompetitorDataPointUpdate,
 } from './database';
 
 // Re-export question domain types
@@ -26,6 +35,65 @@ export type {
   CreateQuestionInput,
   UpdateQuestionInput,
 } from './question';
+
+// Re-export milestone domain types
+export type {
+  ClarityCategory,
+  MilestoneStatus,
+  MilestoneProgress,
+  CreateMilestoneNoteInput,
+  UpdateMilestoneNoteInput,
+  UpdateMilestoneStatusInput,
+  MarkMilestoneCompleteInput,
+} from './milestone';
+
+// Re-export competitor domain types
+export type {
+  CreateCompetitorInput,
+  UpdateCompetitorInput,
+} from './competitor';
+
+// Re-export company domain types
+export type {
+  Company,
+  CompanyInsert,
+  CompanyUpdate,
+  CategoryFilterKey,
+} from './company';
+export { CATEGORY_LABELS } from './company';
+
+// Re-export product domain types
+export type {
+  Product,
+  ProductInsert,
+  ProductUpdate,
+  ProductWithCompany,
+  ProductCategoryFilterKey,
+  PriceTierFilterKey,
+} from './product';
+export { PRODUCT_CATEGORY_LABELS, PRICE_TIER_LABELS } from './product';
+
+// Re-export research doc domain types
+export type {
+  ResearchDoc,
+  ResearchDocInsert,
+  ResearchDocUpdate,
+  ResearchCategoryFilterKey,
+} from './researchDoc';
+export { RESEARCH_CATEGORY_LABELS } from './researchDoc';
+
+// Re-export opportunity domain types
+export type {
+  OpportunityCategoryFilterKey,
+  OpportunityStatusFilterKey,
+} from './opportunity';
+export {
+  getConfidenceLevel,
+  CATEGORY_LABELS as OPPORTUNITY_CATEGORY_LABELS,
+  CATEGORY_COLORS as OPPORTUNITY_CATEGORY_COLORS,
+  STATUS_LABELS as OPPORTUNITY_STATUS_LABELS,
+  CONFIDENCE_COLORS,
+} from './opportunity';
 
 import type { Profile } from './database';
 

@@ -44,6 +44,28 @@ export const env = {
     return getOptionalEnvVar('SUPABASE_SERVICE_ROLE_KEY');
   },
 
+  // ─────────────────────────────────────────────────────────────────
+  // AI / Embeddings (Server-side only)
+  // ─────────────────────────────────────────────────────────────────
+
+  /**
+   * OpenAI API key for embedding generation.
+   * Server-side only - NEVER expose to client.
+   * Required for: embeddings:generate script, semantic search API.
+   */
+  get OPENAI_API_KEY(): string | undefined {
+    return getOptionalEnvVar('OPENAI_API_KEY');
+  },
+
+  /**
+   * Anthropic API key for Claude chat completions.
+   * Server-side only - NEVER expose to client.
+   * Required for: AI chat API endpoint.
+   */
+  get ANTHROPIC_API_KEY(): string | undefined {
+    return getOptionalEnvVar('ANTHROPIC_API_KEY');
+  },
+
   /** Current environment */
   get NODE_ENV(): string {
     return process.env.NODE_ENV ?? 'development';
@@ -70,6 +92,16 @@ export const env = {
    */
   get NEXT_PUBLIC_OFFLINE_ENABLED(): string | undefined {
     return getOptionalEnvVar('NEXT_PUBLIC_OFFLINE_ENABLED');
+  },
+
+  /**
+   * Enables offline read-only mode UI.
+   * Shows offline banner and blocks writes when offline.
+   * Set to "true" to enable. Default: undefined (disabled).
+   * This is separate from OFFLINE_MODE (full sync) - just shows UI feedback.
+   */
+  get NEXT_PUBLIC_OFFLINE_READ(): string | undefined {
+    return getOptionalEnvVar('NEXT_PUBLIC_OFFLINE_READ');
   },
 } as const;
 

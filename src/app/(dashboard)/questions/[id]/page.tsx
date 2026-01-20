@@ -47,6 +47,9 @@ async function getTestUser(): Promise<{ id: string; email: string } | null> {
   return null;
 }
 
+// UUID v4 regex pattern for validation
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 /**
  * Question detail page - view question and add/edit recommendation.
  * Server component that handles auth and passes IDs to client component.
@@ -55,6 +58,12 @@ export default async function QuestionDetailPage({
   params,
 }: QuestionDetailPageProps) {
   const { id } = await params;
+
+  // Guard: Redirect invalid IDs (like "new") to questions list
+  // This prevents Supabase 400 errors from querying with non-UUID IDs
+  if (!UUID_REGEX.test(id)) {
+    redirect('/market-intelligence/questions');
+  }
 
   // Check for test user first (only in PLAYWRIGHT_TEST_MODE)
   const testUser = await getTestUser();

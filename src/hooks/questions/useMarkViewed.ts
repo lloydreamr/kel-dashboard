@@ -8,6 +8,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 
+import { useOfflineGuard } from '@/hooks/offline';
 import { queryKeys } from '@/lib/queryKeys';
 import { questionsRepo } from '@/lib/repositories/questions';
 
@@ -27,9 +28,13 @@ import { questionsRepo } from '@/lib/repositories/questions';
 export function useMarkViewed() {
   const queryClient = useQueryClient();
   const markedRef = useRef<Set<string>>(new Set());
+  const { guardOffline } = useOfflineGuard();
 
   const mutation = useMutation({
-    mutationFn: (questionId: string) => questionsRepo.markViewed(questionId),
+    mutationFn: (questionId: string) => {
+      guardOffline(); // Throws OfflineError if offline
+      return questionsRepo.markViewed(questionId);
+    },
     onSuccess: (updatedQuestion) => {
       // Update the cache with the new viewed_by_kel_at timestamp
       queryClient.setQueryData(

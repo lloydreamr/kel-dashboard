@@ -8,27 +8,49 @@
  * Tracks when Kel views questions and displays viewed indicator to Maho.
  */
 
+import { Pencil } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { DecisionSection } from '@/components/decisions/DecisionSection';
+import {
+  EvidenceEditForm,
+  EvidenceList,
+  EvidencePanel,
+  EvidenceSection,
+  RemoveEvidenceDialog,
+  type CreateEvidenceFormData,
+} from '@/components/evidence';
 import { ArchiveButton } from '@/components/questions/ArchiveButton';
 import { CategoryBadge } from '@/components/questions/CategoryBadge';
-import { DecisionHistoryPlaceholder } from '@/components/questions/DecisionHistoryPlaceholder';
 import { EvidenceCountBadge } from '@/components/questions/EvidenceCountBadge';
 import { KelViewedIndicator } from '@/components/questions/KelViewedIndicator';
+import { MarkCurrentButton } from '@/components/questions/MarkCurrentButton';
+import { QuestionEditForm } from '@/components/questions/QuestionEditForm';
 import { RecommendationDisplay } from '@/components/questions/RecommendationDisplay';
 import { RecommendationForm } from '@/components/questions/RecommendationForm';
 import { SendToKelButton } from '@/components/questions/SendToKelButton';
+import { SendToKelChecklist } from '@/components/questions/SendToKelChecklist';
 import { StatusBadge } from '@/components/questions/StatusBadge';
+import { UpdateStaleButton } from '@/components/questions/UpdateStaleButton';
+import { StaleDataBadge } from '@/components/ui/StaleDataBadge';
 import { useProfile } from '@/hooks/auth/useProfile';
+import { useDecision } from '@/hooks/decisions/useDecision';
+import { useDeleteEvidence } from '@/hooks/evidence/useDeleteEvidence';
+import { useEvidence } from '@/hooks/evidence/useEvidence';
+import { useUpdateEvidence } from '@/hooks/evidence/useUpdateEvidence';
 import { useArchiveQuestion } from '@/hooks/questions/useArchiveQuestion';
 import { useMarkReadyForKel } from '@/hooks/questions/useMarkReadyForKel';
 import { useMarkViewed } from '@/hooks/questions/useMarkViewed';
 import { useQuestion } from '@/hooks/questions/useQuestion';
 import { useUpdateQuestion } from '@/hooks/questions/useUpdateQuestion';
 
+import type { QuestionEditFormData } from '@/components/questions/QuestionEditForm';
 import type { RecommendationFormData } from '@/components/questions/recommendationSchema';
+import type { QuestionCategory, QuestionStatus } from '@/types/question';
+import type { Evidence } from '@/types/evidence';
+import type { DecisionType } from '@/types/decision';
 
 interface QuestionDetailClientProps {
   questionId: string;
@@ -38,13 +60,24 @@ export function QuestionDetailClient({
   questionId,
 }: QuestionDetailClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: question, isLoading, error } = useQuestion(questionId);
   const { data: profile } = useProfile();
   const { mutate: updateQuestion, isPending } = useUpdateQuestion();
   const { mutate: archiveQuestion, isPending: isArchiving } = useArchiveQuestion();
   const { markReadyForKel, isPending: isSending } = useMarkReadyForKel();
   const { markViewed, hasMarked } = useMarkViewed();
+  const { data: evidence, isLoading: isEvidenceLoading } = useEvidence(questionId);
+  const { mutate: updateEvidence, isPending: isUpdating } = useUpdateEvidence(questionId);
+  const { mutate: deleteEvidence, isPending: isDeleting } = useDeleteEvidence(questionId);
+  const { data: decision } = useDecision(questionId);
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [selectedEvidence, setSelectedEvidence] = useState<Evidence | null>(null);
+  const [editingEvidence, setEditingEvidence] = useState<Evidence | null>(null);
+  const [removingEvidence, setRemovingEvidence] = useState<Evidence | null>(null);
+
+  const evidenceCount = evidence?.length ?? 0;
 
   const hasRecommendation = !!question?.recommendation;
   const isDraft = question?.status === 'draft';
@@ -67,6 +100,15 @@ export function QuestionDetailClient({
     }
   }, [isKel, question, questionId, markViewed, hasMarked]);
 
+  // Auto-open edit mode when ?edit=true is in URL (from QuestionCardActions)
+  useEffect(() => {
+    if (searchParams.get('edit') === 'true' && isMaho && !isArchived) {
+      setIsEditingTitle(true);
+      // Clear the query param for cleaner URL
+      router.replace(`/questions/${questionId}`, { scroll: false });
+    }
+  }, [searchParams, isMaho, isArchived, questionId, router]);
+
   const handleSubmitRecommendation = (data: RecommendationFormData) => {
     updateQuestion(
       {
@@ -82,6 +124,56 @@ export function QuestionDetailClient({
         },
       }
     );
+  };
+
+  const handleSubmitTitleEdit = (data: QuestionEditFormData) => {
+    updateQuestion(
+      {
+        id: questionId,
+        updates: {
+          title: data.title,
+          description: data.description,
+        },
+      },
+      {
+        onSuccess: () => {
+          setIsEditingTitle(false);
+        },
+      }
+    );
+  };
+
+  const handleEditEvidence = (data: CreateEvidenceFormData) => {
+    if (!editingEvidence) return;
+    updateEvidence(
+      {
+        id: editingEvidence.id,
+        updates: {
+          title: data.title,
+          url: data.url,
+          section_anchor: data.section_anchor,
+          excerpt: data.excerpt,
+        },
+      },
+      {
+        onSuccess: () => {
+          setEditingEvidence(null);
+        },
+      }
+    );
+  };
+
+  const handleRemoveEvidence = () => {
+    if (!removingEvidence) return;
+    deleteEvidence(removingEvidence.id, {
+      onSuccess: () => {
+        setRemovingEvidence(null);
+        // Close panel if this evidence was being viewed
+        if (selectedEvidence?.id === removingEvidence.id) {
+          setSelectedEvidence(null);
+        }
+      },
+    });
   };
 
   if (isLoading) {
@@ -124,11 +216,16 @@ export function QuestionDetailClient({
             <div className="flex items-center gap-2">
               <CategoryBadge
                 questionId={questionId}
-                category={question.category}
+                category={question.category as QuestionCategory}
                 isEditable={isMaho && !isArchived}
               />
-              <StatusBadge status={question.status} isPending={isSending} />
-              <EvidenceCountBadge count={0} />
+              <StatusBadge
+                status={question.status as QuestionStatus}
+                decisionType={decision?.decision_type as DecisionType}
+                isPending={isSending}
+              />
+              <EvidenceCountBadge count={evidenceCount} />
+              <StaleDataBadge updatedAt={question.updated_at} />
             </div>
 
             {/* Kel viewed indicator (shown to Maho only) */}
@@ -137,15 +234,44 @@ export function QuestionDetailClient({
             )}
           </div>
 
-          <h1
-            data-testid="question-title"
-            className="text-xl font-semibold text-foreground"
-          >
-            {question.title}
-          </h1>
+          {/* Title and description - editable or read-only */}
+          {isEditingTitle ? (
+            <QuestionEditForm
+              initialValues={{
+                title: question.title,
+                description: question.description,
+              }}
+              onSubmit={handleSubmitTitleEdit}
+              onCancel={() => setIsEditingTitle(false)}
+              isSubmitting={isPending}
+            />
+          ) : (
+            <>
+              <div className="flex items-start justify-between gap-2">
+                <h1
+                  data-testid="question-title"
+                  className="text-xl font-semibold text-foreground"
+                >
+                  {question.title}
+                </h1>
+                {/* Edit button - Maho only, non-archived */}
+                {isMaho && !isArchived && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingTitle(true)}
+                    data-testid="question-edit-button"
+                    className="flex-shrink-0 p-2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Edit question title and description"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
 
-          {question.description && (
-            <p className="text-foreground">{question.description}</p>
+              {question.description && (
+                <p className="text-foreground">{question.description}</p>
+              )}
+            </>
           )}
 
           {/* Archive action (Maho only, non-archived questions) */}
@@ -156,13 +282,27 @@ export function QuestionDetailClient({
           )}
         </div>
 
+        {/* Stale data action buttons (Maho only, non-archived, when stale) */}
+        {isMaho && !isArchived && (
+          <div className="mt-4 flex items-center gap-2">
+            <UpdateStaleButton
+              updatedAt={question.updated_at}
+              onUpdate={() => setIsEditing(true)}
+            />
+            <MarkCurrentButton
+              questionId={questionId}
+              updatedAt={question.updated_at}
+            />
+          </div>
+        )}
+
         {/* Recommendation section */}
         <div data-testid="question-recommendation" className="mt-6">
           {!hasRecommendation && !isEditing && (
             <button
               onClick={() => setIsEditing(true)}
               data-testid="add-recommendation-button"
-              className="w-full rounded-md border-2 border-dashed border-border bg-background px-4 py-6 min-h-[48px] text-sm font-medium text-muted-foreground hover:border-primary hover:text-foreground"
+              className="w-full rounded-md border-2 border-dashed border-border bg-background px-4 py-6 min-h-12 text-sm font-medium text-muted-foreground hover:border-primary hover:text-foreground"
             >
               + Add Recommendation
             </button>
@@ -193,23 +333,83 @@ export function QuestionDetailClient({
             />
           )}
 
-          {/* Send to Kel button (only for draft status) */}
+          {/* Send to Kel section (only for draft status) */}
           {isDraft && (
-            <div className="mt-6">
-              <SendToKelButton
+            <div className="mt-6 space-y-3">
+              <SendToKelChecklist
+                hasEvidence={evidenceCount > 0}
                 hasRecommendation={hasRecommendation}
-                onConfirm={() => markReadyForKel(questionId, question.status)}
+                evidenceCount={evidenceCount}
+              />
+              <SendToKelButton
+                hasEvidence={evidenceCount > 0}
+                hasRecommendation={hasRecommendation}
+                onConfirm={() => markReadyForKel(questionId, question.status as QuestionStatus)}
                 isPending={isSending}
               />
             </div>
           )}
+
+          {/* Evidence list */}
+          <div className="mt-6">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">
+              Supporting Evidence
+            </h3>
+            <EvidenceList
+              evidence={evidence}
+              isLoading={isEvidenceLoading}
+              isMaho={!isKel}
+              onItemClick={(item) => setSelectedEvidence(item)}
+              onEditClick={(item) => setEditingEvidence(item)}
+              onRemoveClick={(item) => setRemovingEvidence(item)}
+            />
+
+            {/* Edit evidence form (shown when editing) */}
+            {editingEvidence && (
+              <div className="mt-4">
+                <EvidenceEditForm
+                  evidence={editingEvidence}
+                  onCancel={() => setEditingEvidence(null)}
+                  onSubmit={handleEditEvidence}
+                  isSubmitting={isUpdating}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Evidence section (Maho only) */}
+          {isMaho && !isArchived && profile?.id && (
+            <EvidenceSection
+              questionId={questionId}
+              userId={profile.id}
+              canAdd={isMaho}
+            />
+          )}
         </div>
 
-        {/* Decision history placeholder (Epic 4) */}
+        {/* Decision section (Story 4-7) */}
         <div className="mt-6">
-          <DecisionHistoryPlaceholder questionId={questionId} />
+          <DecisionSection
+            questionId={questionId}
+            questionStatus={question.status as QuestionStatus}
+          />
         </div>
       </div>
+
+      {/* Evidence Panel */}
+      <EvidencePanel
+        evidence={selectedEvidence}
+        onClose={() => setSelectedEvidence(null)}
+      />
+
+      {/* Remove Evidence Dialog */}
+      <RemoveEvidenceDialog
+        open={!!removingEvidence}
+        onOpenChange={(open) => !open && setRemovingEvidence(null)}
+        evidenceTitle={removingEvidence?.title ?? ''}
+        onConfirm={handleRemoveEvidence}
+        isPending={isDeleting}
+      />
     </main>
   );
 }

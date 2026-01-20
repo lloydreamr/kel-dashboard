@@ -11,8 +11,12 @@ export { CategoryEmptyState } from './CategoryEmptyState';
 export { CategorySection } from './CategorySection';
 export { DecisionHistoryPlaceholder } from './DecisionHistoryPlaceholder';
 export { EvidenceCountBadge } from './EvidenceCountBadge';
+export { FilterEmptyState } from './FilterEmptyState';
 export { KelViewedIndicator } from './KelViewedIndicator';
+export type { KelViewedIndicatorProps } from './KelViewedIndicator';
 export { QuestionCard } from './QuestionCard';
+export { QuestionCardActions } from './QuestionCardActions';
+export { QuestionEditForm, type QuestionEditFormData } from './QuestionEditForm';
 export { QuestionForm } from './QuestionForm';
 export { QuestionFormSkeleton } from './QuestionFormSkeleton';
 export {
@@ -29,5 +33,9 @@ export {
   type RecommendationFormData,
 } from './recommendationSchema';
 export { RestoreButton } from './RestoreButton';
+export { SearchInput } from './SearchInput';
 export { SendToKelButton } from './SendToKelButton';
+export { SendToKelChecklist } from './SendToKelChecklist';
 export { StatusBadge } from './StatusBadge';
+export type { StatusBadgeProps } from './StatusBadge';
+export { StatusFilter } from './StatusFilter';

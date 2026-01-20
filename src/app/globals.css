@@ -3,7 +3,7 @@
 @plugin "tailwindcss-animate";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *), @media (prefers-color-scheme: dark));
 
 /* Kel Dashboard Design Tokens */
 :root {
@@ -11,6 +11,7 @@
   --primary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
+  --chart-competitor: var(--muted-foreground);
   --border: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --surface: #FFFFFF;
@@ -96,18 +97,59 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    /* Core background/foreground - CRITICAL for dark mode to work */
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+
+    /* Card and popover surfaces */
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+
+    /* Primary colors - sage green for Kel brand */
     --primary: #86A789;
     --primary-foreground: #1a1a1a;
+
+    /* Secondary and accent */
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+
+    /* Muted colors */
     --muted: #27272a;
     --muted-foreground: #a1a1aa;
+    --chart-competitor: #94a3b8; /* slate-400 - better contrast on dark (~4.7:1) */
+
+    /* Borders and inputs */
     --border: #3f3f46;
+    --input: oklch(1 0 0 / 15%);
     --ring: #86A789;
+
+    /* Surface and status colors */
     --surface: #27272a;
     --destructive: #f87171;
     --success: #4ade80;
     --success-foreground: #1a1a1a;
     --warning: #fbbf24;
     --warning-foreground: #1a1a1a;
+
+    /* Sidebar */
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: #86A789;
+    --sidebar-primary-foreground: #1a1a1a;
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: #86A789;
+  }
+
+  /* Explicit body styles for system dark mode preference */
+  html, body {
+    background-color: oklch(0.145 0 0) !important;
+    color: oklch(0.985 0 0);
   }
 }
 
@@ -116,37 +158,62 @@ body {
 }
 
 .dark {
+  /* Core background/foreground */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
+
+  /* Card and popover surfaces */
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+
+  /* Primary colors - sage green for Kel brand (matches media query) */
+  --primary: #86A789;
+  --primary-foreground: #1a1a1a;
+
+  /* Secondary and accent */
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+
+  /* Muted colors */
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --chart-competitor: #94a3b8; /* slate-400 - better contrast on dark (~4.7:1) */
+
+  /* Borders and inputs */
+  --border: #3f3f46;
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: #86A789;
+
+  /* Surface - CRITICAL: was missing, caused white backgrounds */
+  --surface: #27272a;
+
+  /* Status colors */
+  --destructive: #f87171;
+  --success: #4ade80;
+  --success-foreground: #1a1a1a;
+  --warning: #fbbf24;
+  --warning-foreground: #1a1a1a;
+
+  /* Charts */
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+
+  /* Sidebar */
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: #86A789;
+  --sidebar-primary-foreground: #1a1a1a;
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: #86A789;
 }
 
 @layer base {
@@ -155,5 +222,242 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Prose typography styles for markdown content */
+.prose {
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-links: var(--primary);
+  --tw-prose-bold: var(--foreground);
+  --tw-prose-counters: var(--muted-foreground);
+  --tw-prose-bullets: var(--muted-foreground);
+  --tw-prose-hr: var(--border);
+  --tw-prose-quotes: var(--foreground);
+  --tw-prose-quote-borders: var(--border);
+  --tw-prose-code: var(--foreground);
+  --tw-prose-th-borders: var(--border);
+  --tw-prose-td-borders: var(--border);
+}
+
+/* Prose table styling */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.875rem;
+}
+
+.prose thead {
+  background-color: var(--muted);
+  border-bottom: 2px solid var(--border);
+}
+
+.prose th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.prose td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.prose tbody tr:hover {
+  background-color: var(--muted);
+}
+
+.prose tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Dark mode prose adjustments */
+.dark .prose thead {
+  background-color: var(--muted);
+}
+
+.dark .prose tbody tr:hover {
+  background-color: var(--muted);
+}
+
+/* ============================================
+   Code Block Syntax Highlighting
+   ============================================ */
+
+/* Base code block styling */
+.prose pre {
+  background-color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.prose code {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.875em;
+}
+
+/* Inline code */
+.prose :not(pre) > code {
+  background-color: var(--muted);
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+/* Syntax highlighting - Light mode (GitHub-inspired) */
+.prose pre code .hljs-keyword,
+.prose pre code .hljs-selector-tag,
+.prose pre code .hljs-literal,
+.prose pre code .hljs-section,
+.prose pre code .hljs-link {
+  color: #d73a49;
+}
+
+.prose pre code .hljs-string,
+.prose pre code .hljs-title,
+.prose pre code .hljs-name,
+.prose pre code .hljs-type,
+.prose pre code .hljs-attribute,
+.prose pre code .hljs-symbol,
+.prose pre code .hljs-bullet,
+.prose pre code .hljs-addition,
+.prose pre code .hljs-variable,
+.prose pre code .hljs-template-tag,
+.prose pre code .hljs-template-variable {
+  color: #22863a;
+}
+
+.prose pre code .hljs-comment,
+.prose pre code .hljs-quote,
+.prose pre code .hljs-deletion,
+.prose pre code .hljs-meta {
+  color: #6a737d;
+}
+
+.prose pre code .hljs-number,
+.prose pre code .hljs-regexp,
+.prose pre code .hljs-built_in,
+.prose pre code .hljs-literal {
+  color: #005cc5;
+}
+
+.prose pre code .hljs-function .hljs-keyword {
+  color: #6f42c1;
+}
+
+/* Syntax highlighting - Dark mode */
+.dark .prose pre code .hljs-keyword,
+.dark .prose pre code .hljs-selector-tag,
+.dark .prose pre code .hljs-literal,
+.dark .prose pre code .hljs-section,
+.dark .prose pre code .hljs-link {
+  color: #ff7b72;
+}
+
+.dark .prose pre code .hljs-string,
+.dark .prose pre code .hljs-title,
+.dark .prose pre code .hljs-name,
+.dark .prose pre code .hljs-type,
+.dark .prose pre code .hljs-attribute,
+.dark .prose pre code .hljs-symbol,
+.dark .prose pre code .hljs-bullet,
+.dark .prose pre code .hljs-addition,
+.dark .prose pre code .hljs-variable,
+.dark .prose pre code .hljs-template-tag,
+.dark .prose pre code .hljs-template-variable {
+  color: #7ee787;
+}
+
+.dark .prose pre code .hljs-comment,
+.dark .prose pre code .hljs-quote,
+.dark .prose pre code .hljs-deletion,
+.dark .prose pre code .hljs-meta {
+  color: #8b949e;
+}
+
+.dark .prose pre code .hljs-number,
+.dark .prose pre code .hljs-regexp,
+.dark .prose pre code .hljs-built_in {
+  color: #79c0ff;
+}
+
+.dark .prose pre code .hljs-function .hljs-keyword {
+  color: #d2a8ff;
+}
+
+/* Theme transition for smooth dark/light mode toggle (BUG-002 AC5)
+   Only transition color properties to avoid layout shift */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, fill 0.2s ease;
+}
+
+/* Disable transitions during initial page load to prevent flash */
+.no-transitions * {
+  transition: none !important;
+}
+
+/* ============================================
+   Print Styles (Story 11.3)
+   ============================================ */
+@media print {
+  /* A4 page setup with margins (Task 1.1) */
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  /* Reset to print-friendly defaults (Task 1.8, 1.9) */
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000000;
+    background: #ffffff;
+  }
+
+  /* Hide all navigation and UI chrome (Task 1.2-1.7) */
+  [data-testid="nav-sidebar"],
+  [data-testid="nav-drawer"],
+  [data-testid="pitch-mode-header"],
+  [data-testid="quick-capture-widget"],
+  [data-testid="offline-banner"],
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Chart container optimization for A4 (Task 3.1, 3.2, 3.3) */
+  [data-testid="print-preview-content"] {
+    max-width: 680px;
+    margin: 0 auto;
+    break-inside: avoid;
+  }
+
+  /* Page break control (Task 4.1, 4.2, 4.3) */
+  h1, h2, h3 {
+    break-after: avoid;
+  }
+
+  .bg-card {
+    break-inside: avoid;
+  }
+
+  /* Keep legend with chart (Task 4.4) */
+  [data-testid="chart-legend"] {
+    break-inside: avoid;
+    break-before: avoid;
+  }
+
+  /* Ensure images and charts don't overflow and stay together */
+  img, svg {
+    max-width: 100% !important;
+    break-inside: avoid;
   }
 }

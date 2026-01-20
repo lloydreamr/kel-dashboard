@@ -37,13 +37,16 @@ export function CategorySection({ category, count, children }: CategorySectionPr
       data-testid={`category-section-${category}`}
       className={`rounded-lg border ${colors.border} ${colors.bg} overflow-hidden`}
     >
-      <header className={`flex items-center justify-between px-4 py-3 ${colors.text}`}>
-        <h2 className="font-semibold capitalize">{label}</h2>
-        <span className="text-sm font-medium">
-          {count} {count === 1 ? 'question' : 'questions'}
+      {/* Compact header on mobile, more spacious on larger screens */}
+      <header className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 ${colors.bg} ${colors.text}`}>
+        <h2 className="font-semibold capitalize text-sm sm:text-base">{label}</h2>
+        {/* Short count on mobile, full text on larger screens */}
+        <span className="text-xs sm:text-sm font-medium">
+          <span className="sm:hidden">({count})</span>
+          <span className="hidden sm:inline">{count} {count === 1 ? 'question' : 'questions'}</span>
         </span>
       </header>
-      <div className="bg-background p-4">
+      <div className="bg-surface p-3 sm:p-4">
         {children}
       </div>
     </section>

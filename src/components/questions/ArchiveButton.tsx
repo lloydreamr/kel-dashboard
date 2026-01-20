@@ -35,9 +35,9 @@ export function ArchiveButton({ onConfirm, isPending = false }: ArchiveButtonPro
           size="sm"
           data-testid="archive-button"
           disabled={isPending}
-          className="min-h-[48px] text-muted-foreground hover:text-destructive hover:border-destructive"
+          className="text-muted-foreground hover:text-destructive hover:border-destructive"
         >
-          <Archive className="h-4 w-4 mr-2" />
+          <Archive className="h-4 w-4" />
           {isPending ? 'Archiving...' : 'Archive'}
         </Button>
       </AlertDialogTrigger>
@@ -49,10 +49,10 @@ export function ArchiveButton({ onConfirm, isPending = false }: ArchiveButtonPro
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="min-h-[48px]">Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="min-h-[48px] bg-destructive hover:bg-destructive/90"
+            className="bg-destructive hover:bg-destructive/90"
           >
             Archive
           </AlertDialogAction>

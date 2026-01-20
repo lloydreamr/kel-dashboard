@@ -5,12 +5,22 @@
  * for working with strategic questions.
  */
 
+import type { Question } from './database';
+
 // Re-export database types for convenience
 export type {
   Question,
   QuestionInsert,
   QuestionUpdate,
 } from './database';
+
+/**
+ * Question with evidence count for list display.
+ * Includes the count of evidence items attached to the question.
+ */
+export interface QuestionWithEvidenceCount extends Question {
+  evidence_count: number;
+}
 
 /**
  * Valid question status values.
@@ -91,3 +101,120 @@ export const CATEGORY_LABELS: Record<QuestionCategory, string> = {
   product: 'Product',
   distribution: 'Distribution',
 };
+
+/**
+ * Filter keys for status filtering UI.
+ * Maps to one or more QuestionStatus values.
+ */
+export type StatusFilterKey = 'all' | 'draft' | 'sent' | 'decided';
+
+/**
+ * Configuration for a single status filter option.
+ */
+export interface StatusFilterConfig {
+  /** Display text in UI (desktop) */
+  label: string;
+  /** Abbreviated label for mobile viewports */
+  shortLabel: string;
+  /** Array of QuestionStatus values to match, or null for "all" */
+  statuses: QuestionStatus[] | null;
+}
+
+/**
+ * Configuration for status filters.
+ * - label: Display text in UI
+ * - statuses: Array of QuestionStatus values to match, or null for "all"
+ */
+export const STATUS_FILTER_CONFIG: Record<StatusFilterKey, StatusFilterConfig> = {
+  all: { label: 'All', shortLabel: 'All', statuses: null },
+  draft: { label: 'Draft', shortLabel: 'Dft', statuses: ['draft'] },
+  sent: { label: 'Sent to Kel', shortLabel: 'Sent', statuses: ['ready_for_kel'] },
+  decided: { label: 'Decided', shortLabel: 'Dec', statuses: ['approved', 'exploring_alternatives'] },
+};
+
+/**
+ * Array of filter keys in display order.
+ */
+export const STATUS_FILTER_KEYS: StatusFilterKey[] = ['all', 'draft', 'sent', 'decided'];
+
+// ============================================================================
+// Category Filter Types (Story 13.3)
+// ============================================================================
+
+/**
+ * Filter keys for category filtering UI.
+ * - 'all': Show all categories with grouped view
+ * - 'market', 'product', 'distribution': Show only that category
+ */
+export type CategoryFilterKey = 'all' | 'market' | 'product' | 'distribution';
+
+/**
+ * Configuration for a single category filter option.
+ */
+export interface CategoryFilterConfig {
+  /** Display text in UI (desktop) */
+  label: string;
+  /** Abbreviated label for mobile viewports */
+  shortLabel: string;
+}
+
+/**
+ * Configuration for category filters.
+ * - label: Display text in UI
+ * - shortLabel: Abbreviated label for mobile
+ */
+export const CATEGORY_FILTER_CONFIG: Record<CategoryFilterKey, CategoryFilterConfig> = {
+  all: { label: 'All Categories', shortLabel: 'All' },
+  market: { label: 'Market', shortLabel: 'Mkt' },
+  product: { label: 'Product', shortLabel: 'Prod' },
+  distribution: { label: 'Distribution', shortLabel: 'Dist' },
+};
+
+/**
+ * Array of category filter keys in display order.
+ */
+export const CATEGORY_FILTER_KEYS: CategoryFilterKey[] = ['all', 'market', 'product', 'distribution'];
+
+/**
+ * Count of questions for each category filter option.
+ * Used for displaying counts in category tabs.
+ */
+export type CategoryCounts = Record<CategoryFilterKey, number>;
+
+// ============================================================================
+// Sort Types (UX Audit: Sorting Options)
+// ============================================================================
+
+/**
+ * Sort options for questions list.
+ * - 'newest': Created date, newest first (default)
+ * - 'oldest': Created date, oldest first
+ * - 'updated': Recently updated first
+ * - 'title': Alphabetical by title
+ * - 'evidence': Most evidence first
+ */
+export type SortKey = 'newest' | 'oldest' | 'updated' | 'title' | 'evidence';
+
+/**
+ * Configuration for a sort option.
+ */
+export interface SortConfig {
+  /** Display label in dropdown */
+  label: string;
+}
+
+/**
+ * Configuration for all sort options.
+ */
+export const SORT_CONFIG: Record<SortKey, SortConfig> = {
+  newest: { label: 'Newest first' },
+  oldest: { label: 'Oldest first' },
+  updated: { label: 'Recently updated' },
+  title: { label: 'Alphabetical' },
+  evidence: { label: 'Most evidence' },
+};
+
+/**
+ * Array of sort keys in display order.
+ */
+export const SORT_KEYS: SortKey[] = ['newest', 'oldest', 'updated', 'title', 'evidence'];

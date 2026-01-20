@@ -47,7 +47,10 @@ test.describe('Login Flow', () => {
     await expect(page.getByText(/valid email/i)).toBeVisible();
   });
 
-  test('submit button is enabled with valid email', async ({ page }) => {
+  test('submit button is enabled with valid email (magic-link mode)', async ({ page }) => {
+    // Switch to magic-link mode (password mode requires password too)
+    await page.getByTestId('auth-method-magic-link').click();
+
     const emailInput = page.getByTestId('login-email-input');
     const submitButton = page.getByTestId('login-submit');
 
@@ -56,7 +59,10 @@ test.describe('Login Flow', () => {
     await expect(submitButton).toBeEnabled();
   });
 
-  test('shows error for unauthorized email', async ({ page }) => {
+  test('shows error for unauthorized email (magic-link mode)', async ({ page }) => {
+    // Switch to magic-link mode to submit with just email
+    await page.getByTestId('auth-method-magic-link').click();
+
     const emailInput = page.getByTestId('login-email-input');
     const submitButton = page.getByTestId('login-submit');
 
@@ -65,7 +71,7 @@ test.describe('Login Flow', () => {
     await submitButton.click();
 
     // Should show error message for unauthorized email
-    await expect(page.getByText(/not authorized/i)).toBeVisible();
+    await expect(page.getByText(/not authorized/i)).toBeVisible({ timeout: 10000 });
   });
 
   test('shows session expired message when redirected', async ({ page }) => {

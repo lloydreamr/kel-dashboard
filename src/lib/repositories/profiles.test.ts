@@ -154,7 +154,7 @@ describe('profilesRepo', () => {
       });
 
       try {
-        // @ts-expect-error - testing invalid role
+        // @ts-expect-error - Testing invalid role value
         await profilesRepo.update({ role: 'invalid' });
         expect.fail('Should have thrown');
       } catch (error) {

@@ -3,7 +3,22 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { QuestionsList } from './QuestionsList';
 
-import type { Question } from '@/types/question';
+import type { Profile } from '@/types';
+import type { QuestionWithEvidenceCount } from '@/types/question';
+
+// Mock Next.js navigation (needed by QuestionCard)
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
+
+// Mock QuestionCardActions to avoid QueryClient dependency
+vi.mock('./QuestionCardActions', () => ({
+  QuestionCardActions: ({ questionId }: { questionId: string }) => (
+    <div data-testid="question-card-actions" data-question-id={questionId} />
+  ),
+}));
 
 // Mock the useQuestions hook directly
 const mockUseQuestions = vi.fn();
@@ -11,10 +26,32 @@ vi.mock('@/hooks/questions/useQuestions', () => ({
   useQuestions: () => mockUseQuestions(),
 }));
 
+// Mock the useProfile hook for role-specific testing
+const mockUseProfile = vi.fn();
+vi.mock('@/hooks/auth', () => ({
+  useProfile: () => mockUseProfile(),
+}));
+
+// Also mock the direct import path used by QuestionCard
+vi.mock('@/hooks/auth/useProfile', () => ({
+  useProfile: () => mockUseProfile(),
+}));
+
+// Factory for mock profile
+function createMockProfile(role: 'maho' | 'kel'): Partial<Profile> {
+  return {
+    id: `test-${role}-id`,
+    email: `${role}@test.com`,
+    role,
+    created_at: '2025-12-01T00:00:00Z',
+    updated_at: '2025-12-01T00:00:00Z',
+  };
+}
+
 // Mock date for consistent relative time
 const mockNow = new Date('2025-12-23T12:00:00Z');
 
-const mockQuestions: Question[] = [
+const mockQuestions: QuestionWithEvidenceCount[] = [
   {
     id: 'q-1',
     title: 'Market question 1',
@@ -27,6 +64,7 @@ const mockQuestions: Question[] = [
     created_by: 'user-123',
     created_at: '2025-12-23T10:00:00Z',
     updated_at: '2025-12-23T10:00:00Z',
+    evidence_count: 2,
   },
   {
     id: 'q-2',
@@ -40,6 +78,7 @@ const mockQuestions: Question[] = [
     created_by: 'user-123',
     created_at: '2025-12-23T09:00:00Z',
     updated_at: '2025-12-23T09:00:00Z',
+    evidence_count: 5,
   },
   {
     id: 'q-3',
@@ -53,6 +92,7 @@ const mockQuestions: Question[] = [
     created_by: 'user-123',
     created_at: '2025-12-23T08:00:00Z',
     updated_at: '2025-12-23T08:00:00Z',
+    evidence_count: 0,
   },
 ];
 
@@ -61,6 +101,8 @@ describe('QuestionsList', () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     vi.setSystemTime(mockNow);
+    // Default to Maho role for backwards compatibility with existing tests
+    mockUseProfile.mockReturnValue({ data: createMockProfile('maho') });
   });
 
   afterEach(() => {
@@ -79,6 +121,60 @@ describe('QuestionsList', () => {
     expect(screen.getByTestId('questions-list-skeleton')).toBeInTheDocument();
   });
 
+  describe('Role-Specific Empty States', () => {
+    it('shows Maho-specific empty state with action button (AC #3)', () => {
+      mockUseProfile.mockReturnValue({ data: createMockProfile('maho') });
+      mockUseQuestions.mockReturnValue({
+        data: [],
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionsList />);
+
+      expect(screen.getByTestId('questions-empty-state')).toBeInTheDocument();
+      expect(
+        screen.getByText('No questions yet. Create your first strategic question.')
+      ).toBeInTheDocument();
+      expect(screen.getByTestId('empty-state-action')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /new question/i })).toBeInTheDocument();
+    });
+
+    it('shows Kel-specific empty state without action button (AC #4)', () => {
+      mockUseProfile.mockReturnValue({ data: createMockProfile('kel') });
+      mockUseQuestions.mockReturnValue({
+        data: [],
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionsList />);
+
+      expect(screen.getByTestId('questions-empty-state')).toBeInTheDocument();
+      expect(
+        screen.getByText('No questions yet. Maho will add questions for your review.')
+      ).toBeInTheDocument();
+      expect(screen.queryByTestId('empty-state-action')).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /new question/i })).not.toBeInTheDocument();
+    });
+
+    it('uses consistent dashed border styling (AC #5)', () => {
+      mockUseQuestions.mockReturnValue({
+        data: [],
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionsList />);
+
+      const emptyState = screen.getByTestId('questions-empty-state');
+      expect(emptyState).toHaveClass('border-dashed');
+      expect(emptyState).toHaveClass('border-border');
+      expect(emptyState).toHaveClass('bg-muted/20');
+    });
+  });
+
+  // Legacy test - preserved for backwards compatibility
   it('shows global empty state when no questions exist', () => {
     mockUseQuestions.mockReturnValue({
       data: [],
@@ -137,8 +233,8 @@ describe('QuestionsList', () => {
     // Product has 1 question
     expect(screen.getByText('Product question 1')).toBeInTheDocument();
 
-    // Distribution should show empty state
-    expect(screen.getByText('No Distribution questions yet')).toBeInTheDocument();
+    // Distribution should show empty state (Maho sees actionable message)
+    expect(screen.getByText('No Distribution questions yet. Add one to get started.')).toBeInTheDocument();
   });
 
   it('shows correct count in category headers', () => {
@@ -164,8 +260,8 @@ describe('QuestionsList', () => {
 
     render(<QuestionsList />);
 
-    // Distribution has no questions
-    expect(screen.getByText('No Distribution questions yet')).toBeInTheDocument();
+    // Distribution has no questions (Maho sees actionable message)
+    expect(screen.getByText('No Distribution questions yet. Add one to get started.')).toBeInTheDocument();
     expect(screen.getByTestId('category-empty-state')).toBeInTheDocument();
   });
 
@@ -186,5 +282,56 @@ describe('QuestionsList', () => {
     expect(screen.getByText('Draft')).toBeInTheDocument();
     expect(screen.getByText('Sent to Kel')).toBeInTheDocument();
     expect(screen.getByText('Approved')).toBeInTheDocument();
+  });
+
+  // Story 13.3: viewMode tests
+  describe('viewMode prop', () => {
+    it('renders grouped view by default (AC #5)', () => {
+      mockUseQuestions.mockReturnValue({
+        data: mockQuestions,
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionsList />);
+
+      // Should show category sections
+      expect(screen.getByTestId('category-section-market')).toBeInTheDocument();
+      expect(screen.getByTestId('category-section-product')).toBeInTheDocument();
+      expect(screen.getByTestId('category-section-distribution')).toBeInTheDocument();
+    });
+
+    it('renders flat view without category sections when viewMode is "flat" (AC #4)', () => {
+      mockUseQuestions.mockReturnValue({
+        data: mockQuestions,
+        isLoading: false,
+        error: null,
+      });
+
+      render(<QuestionsList questions={mockQuestions} viewMode="flat" />);
+
+      // Should NOT show category sections
+      expect(screen.queryByTestId('category-section-market')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('category-section-product')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('category-section-distribution')).not.toBeInTheDocument();
+
+      // Should still show question cards
+      const questionCards = screen.getAllByTestId('question-card');
+      expect(questionCards).toHaveLength(3);
+    });
+
+    it('renders questions list container in both modes', () => {
+      mockUseQuestions.mockReturnValue({
+        data: mockQuestions,
+        isLoading: false,
+        error: null,
+      });
+
+      const { rerender } = render(<QuestionsList questions={mockQuestions} viewMode="grouped" />);
+      expect(screen.getByTestId('questions-list')).toBeInTheDocument();
+
+      rerender(<QuestionsList questions={mockQuestions} viewMode="flat" />);
+      expect(screen.getByTestId('questions-list')).toBeInTheDocument();
+    });
   });
 });

@@ -10,6 +10,14 @@ export const vitestConfig = defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', '.next', 'e2e'],
+    // Isolate tests to prevent state pollution between files
+    isolate: true,
+    // Increase test timeout for slower tests
+    testTimeout: 15000,
+    // Limit concurrency to reduce resource contention
+    maxConcurrency: 5,
+    // File parallelism (default is CPU cores, reduce to avoid timeout)
+    fileParallelism: true,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

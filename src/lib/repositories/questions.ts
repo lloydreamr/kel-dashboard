@@ -16,6 +16,7 @@ import type {
   QuestionCategory,
   CreateQuestionInput,
   UpdateQuestionInput,
+  QuestionWithEvidenceCount,
 } from '@/types/question';
 
 /**
@@ -42,6 +43,32 @@ export const questionsRepo = {
     }
 
     return data ?? [];
+  },
+
+  /**
+   * Get all non-archived questions with evidence counts
+   * Returns questions with the count of attached evidence items
+   *
+   * @returns Array of questions with evidence_count
+   * @throws RepositoryError on database errors
+   */
+  getAllWithEvidenceCount: async (): Promise<QuestionWithEvidenceCount[]> => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('questions')
+      .select('*, evidence(count)')
+      .neq('status', 'archived')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw mapPostgrestError(error);
+    }
+
+    // Transform the result to flatten evidence count
+    return (data ?? []).map((question) => ({
+      ...question,
+      evidence_count: question.evidence?.[0]?.count ?? 0,
+    }));
   },
 
   /**
@@ -116,6 +143,33 @@ export const questionsRepo = {
     }
 
     return data ?? [];
+  },
+
+  /**
+   * Get questions filtered by category with evidence counts
+   *
+   * @param category - Question category to filter by
+   * @returns Array of questions with evidence_count
+   * @throws RepositoryError on database errors
+   */
+  getByCategoryWithEvidenceCount: async (category: QuestionCategory): Promise<QuestionWithEvidenceCount[]> => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('questions')
+      .select('*, evidence(count)')
+      .eq('category', category)
+      .neq('status', 'archived')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw mapPostgrestError(error);
+    }
+
+    // Transform the result to flatten evidence count
+    return (data ?? []).map((question) => ({
+      ...question,
+      evidence_count: question.evidence?.[0]?.count ?? 0,
+    }));
   },
 
   /**
@@ -300,8 +354,90 @@ export const questionsRepo = {
 
     return data;
   },
+
+  /**
+   * Touch the updated_at timestamp without changing content.
+   * Used for "Mark as Current" to clear stale data warnings.
+   *
+   * @param id - Question ID to touch
+   * @returns Updated question with new updated_at
+   * @throws RepositoryError if not found or access denied
+   */
+  touchUpdatedAt: async (id: string): Promise<Question> => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('questions')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw mapPostgrestError(error);
+    }
+
+    if (!data) {
+      throw new RepositoryError(
+        'Question not found',
+        RepositoryErrorCode.NOT_FOUND
+      );
+    }
+
+    return data;
+  },
+
+  /**
+   * Update question status
+   * Used for decision-related status changes (approved, exploring_alternatives)
+   *
+   * @param id - Question ID to update
+   * @param status - New status value
+   * @returns Updated question
+   * @throws RepositoryError if not found or access denied
+   */
+  updateStatus: async (id: string, status: QuestionStatus): Promise<Question> => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('questions')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw mapPostgrestError(error);
+    }
+
+    if (!data) {
+      throw new RepositoryError(
+        'Question not found',
+        RepositoryErrorCode.NOT_FOUND
+      );
+    }
+
+    return data;
+  },
+
+  /**
+   * Permanently delete a question
+   * WARNING: This cannot be undone - use archive() for soft delete
+   *
+   * @param id - Question ID to delete
+   * @throws RepositoryError if not found or access denied
+   */
+  delete: async (id: string): Promise<void> => {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('questions')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw mapPostgrestError(error);
+    }
+  },
 };
 
 // Re-export types for consumers
-export type { Question, CreateQuestionInput, UpdateQuestionInput };
+export type { Question, CreateQuestionInput, UpdateQuestionInput, QuestionWithEvidenceCount };
 export type { QuestionStatus, QuestionCategory };

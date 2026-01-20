@@ -25,7 +25,7 @@ export function RestoreButton({ onRestore, isPending = false }: RestoreButtonPro
       onClick={onRestore}
       className="text-muted-foreground hover:text-primary hover:border-primary"
     >
-      <RotateCcw className="h-4 w-4 mr-2" />
+      <RotateCcw className="h-4 w-4" />
       {isPending ? 'Restoring...' : 'Restore'}
     </Button>
   );

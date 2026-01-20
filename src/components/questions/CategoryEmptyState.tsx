@@ -4,17 +4,25 @@ import type { QuestionCategory } from '@/types/question';
 
 interface CategoryEmptyStateProps {
   category: QuestionCategory;
+  /** User role determines the message (AC: #5) */
+  isMaho?: boolean;
 }
 
-export function CategoryEmptyState({ category }: CategoryEmptyStateProps) {
+export function CategoryEmptyState({ category, isMaho = false }: CategoryEmptyStateProps) {
   const label = CATEGORY_LABELS[category];
 
   return (
-    <p
+    <div
       data-testid="category-empty-state"
-      className="py-4 text-center text-sm text-muted-foreground"
+      role="status"
+      aria-label={`No ${label} questions`}
+      className="rounded-lg border border-dashed border-border bg-muted/20 p-4 text-center"
     >
-      No {label} questions yet
-    </p>
+      <p className="text-sm text-muted-foreground">
+        {isMaho
+          ? `No ${label} questions yet. Add one to get started.`
+          : `No ${label} questions yet.`}
+      </p>
+    </div>
   );
 }

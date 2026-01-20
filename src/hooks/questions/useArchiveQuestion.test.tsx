@@ -2,23 +2,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { createMockQuestion } from '@/test/factories';
+
 import { useArchiveQuestion } from './useArchiveQuestion';
 
-import type { Question } from '@/types/database';
-
-const mockQuestion: Question = {
+// Use factory for archived question mock
+const mockQuestion = createMockQuestion({
   id: 'q-123',
-  title: 'Test Question',
-  description: null,
-  category: 'market',
-  recommendation: null,
-  recommendation_rationale: null,
   status: 'archived',
-  created_by: 'user-123',
-  created_at: '2025-01-01T00:00:00Z',
-  updated_at: '2025-01-02T00:00:00Z',
-  viewed_by_kel_at: null,
-};
+});
 
 vi.mock('@/lib/repositories/questions', () => ({
   questionsRepo: {

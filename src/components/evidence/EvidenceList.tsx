@@ -1,0 +1,80 @@
+'use client';
+
+import { ErrorState } from '@/components/ui/error-state';
+
+import { EvidenceEmptyState } from './EvidenceEmptyState';
+import { EvidenceItem } from './EvidenceItem';
+import { EvidenceListSkeleton } from './EvidenceListSkeleton';
+
+import type { Evidence } from '@/types/evidence';
+
+interface EvidenceListProps {
+  evidence: Evidence[] | undefined;
+  isLoading: boolean;
+  /** Error from data fetch */
+  error?: Error | null;
+  /** Callback for retry button in error state */
+  onRetry?: () => void;
+  /** User role for empty state message (default: Kel) */
+  isMaho?: boolean;
+  /** Called when an evidence item is clicked */
+  onItemClick?: (evidence: Evidence) => void;
+  /** Called when edit button is clicked on an evidence item */
+  onEditClick?: (evidence: Evidence) => void;
+  /** Called when remove button is clicked on an evidence item */
+  onRemoveClick?: (evidence: Evidence) => void;
+}
+
+/**
+ * Evidence list container with loading, empty, and populated states.
+ * Renders numbered list of evidence items below recommendation.
+ */
+export function EvidenceList({
+  evidence,
+  isLoading,
+  error,
+  onRetry,
+  isMaho = false,
+  onItemClick,
+  onEditClick,
+  onRemoveClick,
+}: EvidenceListProps) {
+  const canModify = isMaho;
+
+  // Loading state
+  if (isLoading) {
+    return <EvidenceListSkeleton />;
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <ErrorState
+        message="Failed to load evidence"
+        onRetry={onRetry}
+      />
+    );
+  }
+
+  // Empty state
+  if (!evidence || evidence.length === 0) {
+    return <EvidenceEmptyState isMaho={isMaho} />;
+  }
+
+  // Populated state
+  return (
+    <div data-testid="evidence-list" className="space-y-3">
+      {evidence.map((item, index) => (
+        <EvidenceItem
+          key={item.id}
+          evidence={item}
+          number={index + 1}
+          onClick={() => onItemClick?.(item)}
+          canModify={canModify}
+          onEdit={() => onEditClick?.(item)}
+          onRemove={() => onRemoveClick?.(item)}
+        />
+      ))}
+    </div>
+  );
+}

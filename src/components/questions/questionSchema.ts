@@ -1,13 +1,41 @@
 import { z } from 'zod';
 
 /**
- * Schema for creating a new question.
- * Title is required, description is optional.
+ * Valid category values for questions.
  */
-export const createQuestionSchema = z.object({
+export const QUESTION_CATEGORIES = ['market', 'product', 'distribution'] as const;
+export type QuestionCategory = (typeof QUESTION_CATEGORIES)[number];
+
+/**
+ * Schema for form input. Allows empty string for category to represent placeholder state.
+ */
+const formInputSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
-  category: z.enum(['market', 'product', 'distribution']),
+  category: z.string(),
+});
+
+/**
+ * Schema for creating a new question.
+ * Title is required, description is optional, category must be explicitly selected.
+ * Uses superRefine to validate category is a valid non-empty value.
+ */
+export const createQuestionSchema = formInputSchema.superRefine((data, ctx) => {
+  if (!data.category) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Please select a category',
+      path: ['category'],
+    });
+    return;
+  }
+  if (!QUESTION_CATEGORIES.includes(data.category as QuestionCategory)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Please select a valid category',
+      path: ['category'],
+    });
+  }
 });
 
 /**

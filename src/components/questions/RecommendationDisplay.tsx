@@ -49,7 +49,7 @@ export function RecommendationDisplay({
         <button
           onClick={onEdit}
           data-testid="edit-recommendation-button"
-          className="rounded-md border border-border px-3 py-2 min-h-[48px] text-sm font-medium text-foreground hover:bg-muted"
+          className="rounded-md border border-border px-3 py-2 min-h-12 text-sm font-medium text-foreground hover:bg-muted"
         >
           Edit
         </button>
